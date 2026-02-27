@@ -1,0 +1,75 @@
+/* TipTapTest.css */
+.tiptap-content p {
+  margin: 0.5rem 0;
+  padding: 4px;
+  transition: background 0.2s;
+}
+
+/* Efeito visual de "bloco" ao passar o mouse ou focar */
+.tiptap-content p:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+}
+
+.bubble-menu {
+  display: flex;
+  background-color: #333;
+  padding: 5px;
+  border-radius: 8px;
+  gap: 5px;
+}
+
+.bubble-menu button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.bubble-menu button.is-active {
+  color: #ffab00; /* Cor da sua marca */
+}
+
+.slash-menu {
+  z-index: 9999;
+}
+
+.slash-item.is-selected {
+  background: #f3f4f6;
+  color: #ffab00; /* Cor padrão Elétrica & Art */
+}
+
+/* TipTapEditor.css */
+.tiptap-container blockquote {
+  border-left: 4px solid #ffab00; /* Laranja da Elétrica & Art */
+  border-left: #29f 4px solid;
+  border-radius: 0.7rem;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #555;
+  font-style: italic;
+  background: #fff9f0;
+  background-color: #27f3;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* Estilo para as tabelas */
+.tiptap-container table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+}
+.tiptap-container th,
+.tiptap-container td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.tiptap.ProseMirror:focus-visible {
+  border: none;
+  box-shadow: #0000 0 0 0;
+  outline: none;
+}

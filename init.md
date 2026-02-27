@@ -14,6 +14,12 @@ pn add tiptap/react @tiptap/starter-kit @tiptap/pm
 
 pnpm add react-hook-form @hookform/resolvers
 
+pnpm add @tiptap/react @tiptap/starter-kit @tiptap/extension-color @tiptap/extension-text-style @tiptap/extension-highlight @tiptap/extension-placeholder @tiptap/extension-image @tiptap/extension-table @tiptap/extension-table-row @tiptap/extension-table-cell @tiptap/extension-table-header @react-pdf/renderer
+
+pnpm add -D @tailwindcss/typography
+
+pn add tippy.js @tiptap/core @tiptap/react/menus @tiptap/extensions @tailwindcss/typography
+
 pn add crypto-js html2pdf.js jspdf modern-screenshot react-to-print secure-ls tippy.js
 
 pn add zod

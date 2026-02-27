@@ -1,0 +1,1005 @@
+/* --- [ Budget.css ] --- */
+budget-page {
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+
+  margin: auto;
+  flex: 1;
+
+  display: flex;
+
+  transition: opacity 0.5s ease;
+
+  width: calc(100% - 0rem);
+  padding: 1rem 1rem 150px;
+  background: #f5f5f5;
+}
+
+page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+doc-id {
+  background: #fff;
+  width: calc(100% - 1rem);
+  padding: 0.2em;
+  margin: 0;
+  border-radius: 0 0 1rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  border-left: 5px solid #e5e5e5;
+  border-right: 5px solid #e5e5e5;
+  text-transform: uppercase;
+  color: #003b6b;
+}
+doc-id * {
+  font-size: 0.6rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+doc-id span {
+  display: flex;
+  flex-flow: row;
+  padding: 0.2rem 0.5rem;
+  gap: 0.5rem;
+}
+
+/* --- [ doc-title ] --- */
+doc-title {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5em;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1em;
+  background: #00aeb0;
+  background: var(--sv-marine);
+  background: var(--sv-sombra-azul);
+  color: #003b6b;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 1rem 1rem;
+
+  background: #e8f1ff00;
+  padding: 0 !important;
+}
+
+doc-title_layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1rem 0;
+  background: #e8f1ff00;
+}
+
+doc-title_type {
+  padding: 1rem 0 2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--sv-azul-bebe);
+  color: var(--sv-sombra-azul);
+  color: #fff;
+}
+
+doc-title_title {
+  background: var(--sv-marine);
+  padding: 0.5rem 0;
+  color: #fff !important;
+  font-weight: 700;
+  /* color: #003b6b; */
+
+  display: block;
+  font-size: 1em;
+  font-family: "inter", "Roboto", sans-serif;
+  overflow-wrap: break-word;
+}
+
+/* --- [ client-section ] --- */
+cliente-section {
+  display: flex;
+  padding-top: 1em;
+}
+
+cliente-section > ui {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  width: 100%;
+  border-radius: 1rem;
+  overflow: clip;
+}
+
+cliente-section > ui > header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: center;
+  color: var(--sv-azul-bebe);
+  padding: 0.5em;
+  background: var(--sv-sombra-azul);
+  border-radius: 1rem 1rem 0 0;
+}
+
+cliente-section > ui > header > ui {
+  padding: 0.5em;
+  width: 100%;
+  height: 46px;
+  height: 26px;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  /* border-top: #0505 2px dotted; */
+  /* border-bottom: #0505 2px dotted; */
+  border-radius: 12px;
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1em;
+  background: var(--sv-sodalita);
+}
+
+cliente-section > ui > header > ui > t {
+  font-family: "inter", "Roboto", sans-serif;
+  overflow-wrap: break-word;
+  display: block;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--sv-azul-bebe);
+}
+
+cliente-section > ui > content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 1em;
+}
+
+cliente-section > ui > content > card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: 1.1em;
+  background: #bdcfea;
+}
+
+cliente-section > ui > content > card > ui {
+  padding: 1em;
+  background: #fff;
+}
+
+cliente-section > ui > content > card > ui t {
+  font-family: "inter", "Roboto", sans-serif;
+  font-weight: normal;
+  overflow-wrap: break-word;
+  display: block;
+  font-size: 1em;
+}
+
+/* --- [ budget-body ] --- */
+budget-body {
+  display: block;
+  unicode-bidi: isolate;
+}
+
+budget-body > clause {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1em 0;
+  overflow: hidden;
+  background: #f5f5f5;
+  margin: 8px 0;
+  break-before: auto;
+}
+
+budget-body > clause > ui {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #fff0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+clause-header {
+  color: var(--sv-azul-bebe);
+  width: 100%;
+  padding: 0.5em;
+  background: var(--sv-sodalita);
+  border-radius: 1rem 1rem 0 0;
+  display: flex;
+}
+
+clause-header > ui {
+  display: flex;
+  width: 100%;
+  height: 46px;
+  height: 26px;
+  border-radius: 12px;
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1em;
+  background: var(--sv-sombra-azul);
+}
+
+clause-header > ui > t {
+  font-family: "inter", "Roboto", sans-serif;
+  overflow-wrap: break-word;
+  display: block;
+  font-size: 1em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+clause-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 1em;
+  background: #fff;
+  overflow: hidden;
+}
+
+subclause {
+  unicode-bidi: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+subclause > ui {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+subclause-header {
+  display: block;
+  unicode-bidi: isolate;
+  background: #fff0;
+  padding: 1em 0.5em;
+  border-bottom: #7773 1px solid;
+}
+
+subclause-header > t6 {
+  display: block;
+  font-family: "Montserrat", sans-serif;
+  font-weight: bold;
+  font-optical-sizing: auto;
+  font-style: normal;
+  margin: 0;
+  font-size: 1em;
+}
+
+subclause-body {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0.5em 0.5em;
+}
+
+blockquote,
+tagc,
+.tagc {
+  display: block;
+  padding: 10px 14px;
+  background: rgba(34, 119, 255, 0.1);
+  background: #e8f1ff;
+  color: #0075bd;
+  border-radius: 12px;
+  margin: 8px 0;
+  border-left: 4px solid #27f;
+}
+
+/* --- [ footer-content ] --- */
+footer-content {
+  display: block;
+  unicode-bidi: isolate;
+  color: #666;
+}
+
+footer-content_top {
+  padding: 1em 0;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+footer-content_top > content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 1em;
+}
+
+footer-content_top > content > t6 {
+  display: block;
+  font-family: "Montserrat", sans-serif;
+  font-weight: bold;
+  font-optical-sizing: auto;
+  font-style: normal;
+  margin: 0;
+  font-size: 1em;
+  color: #333;
+}
+
+footer-content_top > content > p {
+  font-family: "inter", "Roboto", sans-serif;
+  font-weight: normal;
+  padding: 1rem 0 1.5rem;
+}
+
+tagb {
+  display: block;
+  padding: 1.5em;
+  background: #0df;
+  color: #00559c;
+  border-radius: 22px;
+}
+
+tagb > p {
+  font-family: "inter", "Roboto", sans-serif;
+  font-weight: normal;
+  overflow-wrap: break-word;
+  margin: 1em 0;
+}
+
+footer-content_bottom {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1em 0;
+  overflow: hidden;
+  background: #f5f5f5;
+  margin: 8px 0;
+}
+
+footer-content_bottom > ui {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: var(--sv-sodalita);
+  background: #fff0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+footer-content_bottom > ui > header {
+  display: block;
+  unicode-bidi: isolate;
+  color: var(--sv-azul-bebe);
+  width: 100%;
+  padding: 0.5em;
+  background: var(--sv-sodalita);
+}
+
+footer-content_bottom > ui > header > ui {
+  display: flex;
+  width: 100%;
+  height: 46px;
+  height: 26px;
+  border-radius: 12px;
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1em;
+  background: var(--sv-sombra-azul);
+}
+
+footer-content_bottom > ui > header > ui > t {
+  font-family: "inter", "Roboto", sans-serif;
+  overflow-wrap: break-word;
+  display: block;
+  font-size: 1em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+footer-content_bottom > ui > content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 1em;
+  background: #fff;
+  overflow: hidden;
+}
+
+signatures {
+  display: flex !important;
+  flex-direction: row !important;
+  padding: 1.5em !important;
+  gap: 2em !important;
+}
+
+signature {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+signature > content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 1em;
+}
+
+signature sig-name {
+  border-top: #16181c 2px solid;
+  text-align: center;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+/* --- regras para truncar nomes e titulos nos cards */
+.info-content h3,
+.info-content p {
+  white-space: nowrap; /* Impede a quebra de linha */
+  overflow: hidden; /* Esconde o texto que ultrapassar o container */
+  text-overflow: ellipsis; /* Adiciona os "..." no final */
+  width: 100%; /* Garante que o elemento ocupe a largura disponível */
+  display: block;
+}
+
+.info-content h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  /* color: #333; */
+}
+
+.info-content p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  /* color: #666; */
+}
+
+/* Garante que o container flexível não "empurre" os ícones para fora */
+.orcamento-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  /* overflow: hidden;  */
+}
+
+.info-content {
+  flex: 1; /* Faz com que o texto ocupe todo o espaço central */
+  min-width: 0; /* TRUQUE CRÍTICO: permite que o flex-item encolha abaixo do conteúdo */
+  cursor: pointer;
+}
+
+/*
+*
+cliente-section
+  ui
+    header
+      ui
+        t
+          {cliente}
+    content
+      card
+        ui
+          t
+*/
+
+/* --- [ NewBudget.css ] --- */
+page,
+page-content {
+  display: flex;
+  flex-direction: column;
+}
+page {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+page-content {
+  padding: 1rem;
+}
+
+page-content label {
+  gap: 0 !important;
+}
+
+grid-duo {
+  display: flex;
+  flex-flow: row;
+  gap: 0.5rem;
+}
+
+.page-subtitle {
+  color: #00559c;
+  border-bottom: #ffab0055 2px solid;
+}
+.subtitle-header {
+  padding: 0 1rem;
+}
+
+.label-text,
+label > t {
+  display: grid;
+  font-weight: bold;
+  color: #333;
+  font-size: 0.8rem;
+  gap: 0;
+  padding: 0.5rem 0;
+  font-family: "Poppins", sans-serif !important;
+}
+
+input,
+select,
+button,
+btn {
+  font-family: "Poppins", sans-serif !important;
+  height: 56px;
+  width: 100%;
+  flex: 1;
+  border-radius: 9px;
+  border: #e5e5e500 1px solid;
+  outline: transparent;
+  padding: 1rem;
+  font-size: 1rem;
+  background: #f5f5f5;
+  color: var(--text, #666);
+  accent-color: var(--accent, #daa520);
+}
+select {
+  color: #666 !important;
+}
+
+footer.footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+button.btnSave {
+  background: var(--sv-sodalita);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/**
+* classes 
+*/
+.pd {
+  pad: 1rem;
+}
+
+.flex-1 {
+  flex: 1;
+}
+.flex-9 {
+  flex: 0.9;
+}
+.flex-8 {
+  flex: 0.8;
+}
+.flex-7 {
+  flex: 0.7;
+}
+.flex-6 {
+  flex: 0.6;
+}
+.flex-5 {
+  flex: 0.5;
+}
+.flex-4 {
+  flex: 0.4;
+}
+.flex-3 {
+  flex: 0.3;
+}
+.flex-2 {
+  flex: 0.2;
+}
+.flex-0 {
+  flex: 0.1;
+}
+
+/* --- [ print.css ] --- */
+/**
+* --- [ print ] --- */
+clause-header,
+subclause-header,
+footer-content,
+footer-content_top,
+footer-content_bottom {
+  break-inside: avoid !important;
+}
+
+clause-header,
+subclause-header,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  break-after: avoid;
+}
+
+footer-content_top {
+  break-before: auto;
+  margin: 4px 0 4px 0;
+}
+
+footer-content_bottom {
+  break-before: auto;
+}
+
+/* --- end print --- */
+.dash-page {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 180px;
+}
+
+.dash-header {
+  position: sticky;
+  top: 72px;
+  z-index: 10;
+  background: #f0f2f5;
+  padding: 1rem;
+}
+
+.search-input {
+  height: 50px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  padding: 0 15px;
+  width: 100%;
+  font-family: inherit;
+}
+
+.orcamento-list {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/*.orcamento-card {
+  background: white;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-radius: 13px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+}*/
+
+.client-avatar-dash {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #eee;
+  flex-shrink: 0;
+}
+
+.client-avatar-dash img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info-content {
+  flex: 1;
+  cursor: pointer;
+}
+
+.info-content h3 {
+  margin: 0;
+  /* color: #333; */
+  font-size: 1.1rem;
+}
+
+.info-content p {
+  margin: 5px 0 0;
+  /* color: #777; */
+  font-size: 0.85rem;
+}
+
+.sync-status {
+  font-size: 0.8rem;
+  margin-left: 5px;
+}
+
+ol,
+ul,
+menu {
+  list-style: initial;
+}
+
+/* Esconde elementos da interface na impressão */
+@media print {
+  btn_createPDF,
+  footer,
+  fab,
+  .app-bar,
+  app-bar,
+  .fab-container,
+  #loading_overlay,
+  nav.bottom-nav,
+  .no-print {
+    display: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4;
+    /* margin: 0mm; */
+    /* margin: 5mm 0 5mm 0; */
+    @bottom-right {
+      content: "Pág. " counter(page) " de " counter(pages);
+      font-size: 9pt;
+      padding-bottom: 5px;
+      padding-right: 5px;
+    }
+    /* margin: 1cm; /* Sua margem atual */
+    /* Não é possível colocar 'background' direto aqui, então usamos o truque abaixo */
+    /* margin-left: 10x; */
+    /* margin-right: 10x; */
+  }
+
+  body {
+    /* Chrome, Safari, Edge */
+    -webkit-print-color-adjust: exact !important;
+    /* Firefox e padrão W3C */
+    print-color-adjust: exact !important;
+
+    /* margin-left: 10x; */
+    /* margin-right: 10x; */
+  }
+  html,
+  body {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    display: block !important; /* Remove flexbox que pode bugar quebras */
+    /* background: white !important; */
+  }
+  html {
+    background: #f5f5f5 !important;
+  }
+
+  /* Força o container do orçamento a ocupar todo o espaço necessário */
+  homepage,
+  home-page,
+  invoice_html {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    position: static !important; /* Remove fixação ou sticky */
+    /* padding: 0 !important; */
+    /* margin: 0 !important; */
+  }
+
+  doc_id {
+    width: calc(100% - 1rem);
+    padding: 0.2em;
+    margin: 0.2em 0 0;
+    border-radius: 0 0 1rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    font-size: 0.8rem;
+    border-left: 5px solid #e5e5e5;
+    border-right: 5px solid #e5e5e5;
+    text-transform: uppercase;
+    color: #003b6b;
+  }
+  doc_id * {
+    font-size: 0.8rem !important;
+  }
+
+  /* Garante que as cláusulas quebrem de página corretamente se necessário */
+  article {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    display: block !important;
+  }
+
+  /* Ajuste para que cabeçalhos não fiquem sozinhos no fim da página */
+  clause-header,
+  subclause-header {
+    break-after: avoid !important;
+  }
+
+  subclause-body > * {
+    break-before: auto !important;
+    break-inside: avoid !important;
+    break-after: auto !important;
+  }
+
+  tagc,
+  .tagc {
+    display: block;
+    margin: 0.5rem 0;
+    padding: 10px 14px;
+    background: rgba(34, 119, 255, 0.1);
+    background: #e8f1ff;
+    color: #0075bd;
+    border-radius: 12px;
+    margin: 8px 0;
+    border-left: 4px solid #27f;
+  }
+
+  footer-content {
+    height: 100%;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 270mm !important; /* Altura aproximada de uma folha A4 menos margens */
+    break-before: page !important; /* MÁGICA: Sempre começa em uma folha nova */
+    page-break-before: always !important;
+    margin: 0 !important;
+    padding: 1cm 0 !important;
+  }
+
+  /* O topo do rodapé (texto de agradecimento) */
+  footer-content_top {
+    flex: 0 !important; /* Não cresce */
+  }
+
+  /* O fundo do rodapé (assinaturas) */
+  footer-content_bottom {
+    flex: 1 !important; /* CRESCE: Ocupa todo o espaço restante da folha */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-end !important; /* Empurra o conteúdo para a base */
+    height: 100%;
+    margin-bottom: 2cm !important; /* Espaço de segurança no fim da folha */
+  }
+
+  footer-content_bottom > ui {
+    flex: 1;
+  }
+
+  footer-content_bottom ui content {
+    height: 100%;
+    flex: 1;
+  }
+
+  /* Espaçamento interno das assinaturas */
+  signatures {
+    display: flex !important;
+    flex-direction: row !important; /* Rafael de um lado, Cliente do outro */
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    gap: 2cm !important;
+    margin-top: 4cm !important; /* Espaço generoso para assinar */
+  }
+
+  signature {
+    flex: 1 !important;
+    /* border-top: 1px solid #000 !important; /* Linha da assinatura */
+    font-size: 1rem;
+  }
+
+  sig-name {
+    padding-top: 1.5rem !important;
+    border-color: #333 !important;
+    color: #00559c;
+  }
+}
+
+/* --- [ TipTap.css ] --- */
+/* TipTapTest.css */
+.tiptap-content p {
+  margin: 0.5rem 0;
+  padding: 4px;
+  transition: background 0.2s;
+}
+
+/* Efeito visual de "bloco" ao passar o mouse ou focar */
+.tiptap-content p:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+}
+
+.bubble-menu {
+  display: flex;
+  background-color: #333;
+  padding: 5px;
+  border-radius: 8px;
+  gap: 5px;
+}
+
+.bubble-menu button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.bubble-menu button.is-active {
+  color: #ffab00; /* Cor da sua marca */
+}
+
+.slash-menu {
+  z-index: 9999;
+}
+
+.slash-item.is-selected {
+  background: #f3f4f6;
+  color: #ffab00; /* Cor padrão Elétrica & Art */
+}
+
+/* TipTapEditor.css */
+.tiptap-container blockquote {
+  border-left: 4px solid #ffab00; /* Laranja da Elétrica & Art */
+  border-left: #29f 4px solid;
+  border-radius: 0.7rem;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #555;
+  font-style: italic;
+  background: #fff9f0;
+  background-color: #27f3;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* Estilo para as tabelas */
+.tiptap-container table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+}
+.tiptap-container th,
+.tiptap-container td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.tiptap.ProseMirror:focus-visible {
+  border: none;
+  box-shadow: #0000 0 0 0;
+  outline: none;
+}
