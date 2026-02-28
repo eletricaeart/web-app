@@ -1,3 +1,4 @@
+// lib/EASyncClient.ts
 "use client";
 
 type SyncAction = "create" | "update" | "delete";
