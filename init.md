@@ -28,4 +28,4 @@ pnpm add swr
 **shadcn**
 pnx shadcn@latest init
 
-pnx shadcn@latest add card button input sonner drawer skeleton command popover
+pnx shadcn@latest add card button input sonner drawer skeleton command popover select calendar

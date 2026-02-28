@@ -10,7 +10,15 @@ import { CircleNotch } from "@phosphor-icons/react";
 import { eaSyncClient } from "@/lib/EASyncClient";
 import * as Default_Divider from "@/components/Divider";
 
-// Importações Shadcn/UI
+// Importações Shadcn/UI (DatePicker e Select)
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { getYear, setYear, setMonth, getMonth } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -18,6 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { format, parseISO, isValid } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+
+import "./style.css";
 
 /**
  * Interfaces de Tipagem
@@ -81,6 +94,12 @@ export default function NewBudgetPage() {
       },
     ],
   });
+
+  // Helper para converter string yyyy-mm-dd para objeto Date (Shadcn compat)
+  const getSelectedDate = () => {
+    const date = parseISO(budget.docTitle.emissao);
+    return isValid(date) ? date : undefined;
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -231,6 +250,7 @@ export default function NewBudgetPage() {
         <View tag="page-content">
           <h3 className="page-subtitle">Dados do orçamento</h3>
 
+          {/* Campo Título */}
           <View className="formGroup">
             <label className="label" style={{ margin: 0, padding: "5px 0" }}>
               <View tag="t">Título</View>
@@ -251,22 +271,70 @@ export default function NewBudgetPage() {
 
           <View tag="budget-infos" className="pd">
             <View tag="grid-duo">
-              <label className="flex-5">
+              {/* SHADCN DATE PICKER (Substituindo o input date nativo) */}
+
+              <label className="date-picker flex-5 flex flex-col gap-1">
                 <View tag="t">Data de Emissão</View>
-                <input
-                  type="date"
-                  className="input"
-                  value={budget.docTitle.emissao}
-                  onChange={(e) =>
-                    setBudget({
-                      ...budget,
-                      docTitle: { ...budget.docTitle, emissao: e.target.value },
-                    })
-                  }
-                />
+                {/* <input */}
+                {/*   type="date" */}
+                {/*   className="input" */}
+                {/*   value={budget.docTitle.emissao} */}
+                {/*   onChange={(e) => */}
+                {/*     setBudget({ */}
+                {/*       ...budget, */}
+                {/*       docTitle: { ...budget.docTitle, emissao: e.target.value }, */}
+                {/*     }) */}
+                {/*   } */}
+                {/* /> */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`w-full h-[45px] justify-start text-left font-normal border-[#ccc] ${
+                        !budget.docTitle.emissao && "text-muted-foreground"
+                      }`}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {budget.docTitle.emissao ? (
+                        format(getSelectedDate()!, "dd/MM/yyyy")
+                      ) : (
+                        <span>Selecione uma data</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={getSelectedDate()}
+                      onSelect={(date) => {
+                        if (date) {
+                          setBudget({
+                            ...budget,
+                            docTitle: {
+                              ...budget.docTitle,
+                              emissao: format(date, "yyyy-MM-dd"),
+                            },
+                          });
+                        }
+                      }}
+                      // Habilita os Dropdowns de Mês e Ano
+                      captionLayout="dropdown"
+                      // Define o intervalo de anos (ex: 10 anos atrás até 10 anos no futuro)
+                      fromYear={getYear(new Date()) - 100}
+                      toYear={getYear(new Date()) + 100}
+                      locale={ptBR}
+                      initialFocus
+                      // Estilização para garantir que os selects fiquem visíveis e bonitos
+                      classNames={{
+                        // caption_label: "hidden", // Esconde o label fixo para mostrar o dropdown
+                        caption_dropdowns: "flex justify-center gap-1",
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </label>
 
-              {/* Implementação do Shadcn Select */}
+              {/* SHADCN SELECT (Validade) */}
               <label className="flex-5 flex flex-col gap-1">
                 <View tag="t">Validade</View>
                 <Select

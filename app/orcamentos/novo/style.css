@@ -1,0 +1,19 @@
+nav:has(button:nth-child(1)):has(button:nth-child(2)):not(
+    :has(button:nth-child(3))
+  ) {
+  align-items: center;
+  justify-content: space-between;
+}
+
+nav:has(button:nth-child(2)):not(:has(button:nth-child(3))) button {
+  /* styles for the two buttons */
+  flex: unset !important;
+  width: 0;
+  height: 100% !important;
+  margin: 0;
+  padding: 0.5rem 1rem;
+}
+
+button {
+  background-color: #0000;
+}
