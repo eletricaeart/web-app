@@ -1,0 +1,13 @@
+@font-face {
+  font-family: "GodOfThunder";
+  src: url("./fonts/GodOfThunder.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Classe utilitária para uso rápido via CSS */
+.thunder-text {
+  font-family: "GodOfThunder", sans-serif;
+  text-transform: uppercase;
+}

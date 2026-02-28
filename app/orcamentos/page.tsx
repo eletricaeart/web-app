@@ -3,8 +3,8 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
-// import FAB from "@/components/layout/FAB";
-// import AppBar from "@/components/layout/AppBar";
+import FAB from "@/components/ui/FAB";
+import AppBar from "@/components/layout/AppBar";
 // import BottomNavBar from "@/components/layout/BottomNavBar";
 // import SearchBar from "@/components/SearchBar/SearchBar";
 // import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
@@ -94,7 +94,7 @@ export default function Budgets() {
 
   return (
     <>
-      {/* <AppBar title="Orçamentos" /> */}
+      <AppBar title="Orçamentos" />
 
       {shareData.orc && (
         <BudgetShareMenu
@@ -257,8 +257,8 @@ export default function Budgets() {
         </main>
       </View>
 
-      {/*<FAB actions={fabConfig} hasBottomNav={true} />
-      <BottomNavBar />*/}
+      <FAB actions={fabConfig} hasBottomNav={true} />
+      {/*<BottomNavBar />*/}
     </>
   );
 }

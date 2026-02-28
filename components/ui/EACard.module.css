@@ -1,4 +1,5 @@
-.ea-card {
+.ea-card,
+.ea_card {
   font-size: 2.5vw;
   display: grid !important;
   grid-template-columns: 0.35fr 0.65fr;
@@ -12,7 +13,7 @@
 
   margin: 0;
 
-  background-image: url("/public/pix/bgs/bg3.png");
+  background-image: url("/pix/bgs/bg3.png");
   background-color: #0009;
   background-size: cover;
   border-radius: 1rem;

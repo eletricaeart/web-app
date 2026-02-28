@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import "../styles/orcamentos-legacy.css";
 import BottomNavbar from "@/components/layout/BottomNavbar";
@@ -15,6 +16,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const godOfThunder = localFont({
+  src: "./fonts/GodOfThunder.ttf", // caminho para o arquivo
+  variable: "--font-thunder", // Nome da variável CSS
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +41,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-br">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased pb-24`}
+        className={`${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} antialiased pb-24`}
       >
         {children}
         <Toaster richColors position="top-center" />

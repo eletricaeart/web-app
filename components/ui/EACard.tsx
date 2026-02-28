@@ -1,20 +1,24 @@
 // import React from "react";
 import styles from "./EACard.module.css";
 import View from "../layout/View";
+import Image from "next/image";
 
 // Centralizando os paths das imagens conforme seu EACard.js
 const IMAGE_PATHS = {
-  // logo: "/assets/imgs/favicons/EA-logo.png",
-  logo: "pix/ea/EA-logo.png",
-  // name: "/assets/imgs/ea/ea-Name.png",
-  name: "pix/ea/ea-Name.png",
+  logo: "/pix/ea/EA-logo.png",
+  name: "/pix/ea/ea-Name.png",
 };
 
 const EACard = () => {
   return (
-    <View tag="ea-card">
+    <View tag="ea-card" className={styles.ea_card}>
       <div className={styles.logoArea}>
         <img src={IMAGE_PATHS.logo} alt="EA Logo" className={styles.logoImg} />
+        {/* <Image */}
+        {/*   src={IMAGE_PATHS.logo} */}
+        {/*   alt="EA Logo" */}
+        {/*   className={styles.logoImg} */}
+        {/* /> */}
       </div>
 
       <div className={styles.description}>
@@ -24,6 +28,11 @@ const EACard = () => {
             alt="Elétrica & Art"
             className={styles.nameImg}
           />
+          {/* <Image */}
+          {/*   src={IMAGE_PATHS.name} */}
+          {/*   alt="Elétrica & Art" */}
+          {/*   className={styles.nameImg} */}
+          {/* /> */}
         </div>
 
         <span style={{ fontSize: "0.9em", fontWeight: "bold" }}>

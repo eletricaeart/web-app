@@ -1,0 +1,116 @@
+appbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 72px;
+  background: #00559c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow:
+    #0003 0 0 6px,
+    #008 0 0 6px;
+  z-index: 9000;
+  border-bottom: 2px solid #00559c99;
+
+  flex-direction: row;
+}
+
+navigation-slot {
+  background-color: #ffab0000;
+  height: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+navigation-slot button {
+  color: #ffab00; /* Cor padrão dos seus ícones */
+}
+
+main-slot {
+  background: transparent;
+  flex: 1;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+}
+actions-slot {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.vmenu-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+}
+
+.vmenu-icon {
+  font-size: 24px;
+  color: #ffab00;
+}
+
+.vmenu-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  display: none;
+  flex-direction: column;
+  min-width: 180px;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.vmenu-dropdown.active {
+  display: flex;
+}
+
+.vmenu-item {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.vmenu-item:hover {
+  background: #f5f5f5;
+}
+
+.vmenu-item span {
+  font-size: 1.2rem;
+}

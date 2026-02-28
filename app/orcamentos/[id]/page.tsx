@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-// import EACard from "@/components/ui/EACard";
-// import AppBar from "@/components/layout/AppBar";
-// import FAB from "@/components/layout/FAB";
+import EACard from "@/components/ui/EACard";
+import AppBar from "@/components/layout/AppBar";
+import FAB from "@/components/ui/FAB";
 import Text from "@/components/ui/Text";
 import { processTextToHtml } from "@/utils/TextPreProcessor";
 import View from "@/components/layout/View";
@@ -112,7 +112,7 @@ export default function Budget() {
   if (loading) {
     return (
       <>
-        {/* <AppBar backAction={() => router.back()} /> */}
+        <AppBar backAction={() => router.back()} />
         <BudgetSkeleton />
       </>
     );
@@ -121,7 +121,7 @@ export default function Budget() {
   if (!data) {
     return (
       <>
-        {/* <AppBar backAction={() => router.back()} /> */}
+        <AppBar backAction={() => router.back()} />
         <div className="p-10 text-center">Orçamento não encontrado.</div>
       </>
     );
@@ -129,7 +129,7 @@ export default function Budget() {
 
   return (
     <>
-      {/* <AppBar backAction={() => router.back()} /> */}
+      <AppBar backAction={() => router.back()} />
 
       {/* <BudgetShareMenu */}
       {/*   open={isShareOpen} */}
@@ -143,7 +143,7 @@ export default function Budget() {
       <View tag="pageContainer">
         <View tag="budget-page" ref={budgetRef}>
           <View tag="page-header">
-            {/* <EACard /> */}
+            <EACard />
             <View tag="doc-id">
               <span>
                 <b>Data de Emissão:</b>
@@ -164,7 +164,7 @@ export default function Budget() {
                 <Text
                   size="1.2rem"
                   color="var(--sv-sombra-azuljnk, #fff)"
-                  shadow="var(--sv-sodalita)"
+                  shadow="var(--sv-sodalita, #00559c)"
                   font='font-family: "inter", "Roboto", sans-serif'
                 >
                   {data.docTitle.subtitle}
@@ -224,7 +224,7 @@ export default function Budget() {
         </View>
       </View>
 
-      {/* <FAB actions={fabActions} hasBottomNav={false} /> */}
+      <FAB actions={fabActions} hasBottomNav={false} />
     </>
   );
 }
