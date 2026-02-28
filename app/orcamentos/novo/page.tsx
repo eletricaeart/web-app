@@ -7,9 +7,9 @@ import AppBar from "@/components/layout/AppBar";
 import ClientForm from "@/components/forms/ClientForm";
 import ClauseManager from "@/components/forms/ClauseManager";
 import View from "@/components/layout/View";
-// import Divider from "@/components/ui/divider";
 import { CircleNotch } from "@phosphor-icons/react";
 import { eaSyncClient } from "@/lib/EASyncClient";
+import * as Default_Divider from "@/components/Divider";
 
 export default function NewBudgetPage() {
   const searchParams = useSearchParams();
@@ -263,7 +263,7 @@ export default function NewBudgetPage() {
             </View>
           </View>
 
-          {/* <Divider padding="2rem" height="2px" color="transparent" /> */}
+          <Divider />
 
           <h3 className="page-subtitle">Dados do cliente</h3>
 
@@ -277,7 +277,7 @@ export default function NewBudgetPage() {
           />
         </View>
 
-        {/* <Divider padding="2rem" height="2px" color="transparent" /> */}
+        <Divider />
 
         <View tag="clauses-holder">
           <header className="subtitle-header">
@@ -338,3 +338,7 @@ function formatDateForInput(dateStr: string) {
 
   return new Date().toISOString().split("T")[0];
 }
+
+const Divider = () => (
+  <Default_Divider.default spacing="2rem" color="transparent" />
+);

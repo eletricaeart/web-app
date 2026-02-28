@@ -73,3 +73,15 @@
   box-shadow: #0000 0 0 0;
   outline: none;
 }
+
+/* --- inside the TipTap input --- */
+.tiptap-container h1 {
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.tiptap-container ul,
+.tiptap-container ol {
+  padding: 0.5rem 0 1rem 2rem;
+  color: #27f;
+}

@@ -24,6 +24,7 @@
   border-right-color: initial;
   border-left-color: initial;
   margin-right: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   display: grid;
   background: rgba(255, 68, 68, 0.3);
@@ -144,6 +145,7 @@
   border-left-color: initial;
   margin-right: 0.75rem;
   font-weight: 700;
+  font-size: 0.8rem;
   display: grid;
   background: #ffab0033;
   border-style: none none solid;

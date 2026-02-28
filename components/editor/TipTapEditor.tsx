@@ -93,7 +93,7 @@ export default function TipTapEditor({
 
   return (
     <div
-      className="relative border border-slate-100 shadow-inner overflow-hidden"
+      className="tiptap-container relative border border-slate-100 shadow-inner overflow-hidden"
       style={{ background: bg, borderRadius: radius }}
     >
       {editor && (

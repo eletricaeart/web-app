@@ -540,7 +540,9 @@ grid-duo {
 
 .page-subtitle {
   color: #00559c;
-  border-bottom: #ffab0055 2px solid;
+  border-bottom: #fc0 2px solid;
+  margin-bottom: 1rem;
+  font-family: geist;
 }
 .subtitle-header {
   padding: 0 1rem;
