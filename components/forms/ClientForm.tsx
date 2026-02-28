@@ -183,7 +183,9 @@ export default function ClientForm({
             </DrawerContent>
           </Drawer>
 
-          <View className="t label-text">Nome / Empresa</View>
+          <View tag="t" className="label-text">
+            Nome / Empresa
+          </View>
         </View>
         <input
           type="text"
@@ -199,7 +201,7 @@ export default function ClientForm({
       {/* CEP */}
       <View tag="cep-input">
         <label>
-          <View className="t">
+          <View tag="t">
             CEP{" "}
             {loadingCep && (
               <span className={"styles.cepLoading"}>Buscando...</span>
@@ -225,7 +227,7 @@ export default function ClientForm({
       >
         <View tag="logradouro-input">
           <label className={"styles.label"}>
-            <View className="t">Logradouro (Rua/Av)</View>
+            <View tag="t">Logradouro (Rua/Av)</View>
             <input
               type="text"
               id="c_rua"
@@ -237,7 +239,7 @@ export default function ClientForm({
         </View>
         <View tag="numero-input">
           <label className={"styles.label"}>
-            <View className="t">Número</View>
+            <View tag="t">Número</View>
             <input
               type="text"
               id="c_num"
@@ -252,7 +254,7 @@ export default function ClientForm({
 
       <View tag="bairro-input">
         <label className={"styles.label"}>
-          <View className="t">Bairro</View>
+          <View tag="t">Bairro</View>
           <input
             type="text"
             id="c_bairro"
@@ -265,7 +267,7 @@ export default function ClientForm({
       </View>
       <View tag="cidade-input">
         <label className={"styles.label"}>
-          <View className="t">Cidade/UF</View>
+          <View tag="t">Cidade/UF</View>
           <input
             type="text"
             id="c_cidade"
