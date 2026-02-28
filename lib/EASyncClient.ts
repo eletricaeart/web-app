@@ -99,22 +99,29 @@ class EASyncClient {
   ========================= */
 
   async pull(entity: string) {
-    if (!navigator.onLine) {
+    if (!navigator.onLine) return this.getLocalData(entity);
+
+    try {
+      const res = await fetch(`/api/data/${entity}`, { cache: "no-store" });
+
+      // Se o servidor não responder OK, não toque no cache local!
+      if (!res.ok) return this.getLocalData(entity);
+
+      const remote = await res.json();
+
+      // SÓ ATUALIZA SE RECEBER UM ARRAY VÁLIDO
+      if (Array.isArray(remote)) {
+        this.setLocalData(entity, remote);
+        return remote;
+      }
+
+      // Se o remote vier estranho ou vazio (mas você tem dados),
+      // mantenha o local por segurança.
+      return this.getLocalData(entity);
+    } catch (error) {
+      // Em caso de erro de rede, o Rafael continua vendo os dados no celular
       return this.getLocalData(entity);
     }
-
-    const res = await fetch(`/api/data/${entity}`, {
-      cache: "no-store",
-    });
-
-    const remote = await res.json();
-
-    if (Array.isArray(remote)) {
-      this.setLocalData(entity, remote);
-      return remote;
-    }
-
-    return [];
   }
 
   /* =========================

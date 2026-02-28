@@ -1,18 +1,16 @@
-// app/api/data/[entity]/route.ts
 import { NextResponse } from "next/server";
 import { fetchFromGAS } from "@/lib/gas";
 import { getSession } from "@/lib/auth";
 
 export async function GET(
   request: Request,
-  { params }: { params: { entity: string } },
+  { params }: { params: Promise<{ entity: string }> }, // Ajuste para Promise
 ) {
-  const { entity } = params;
+  const { entity } = await params;
   const session = await getSession();
 
-  if (!session) {
+  if (!session)
     return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
-  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -23,18 +21,20 @@ export async function GET(
       data: id ? { entity, id } : { entity },
     });
 
+    // Se o GAS retornar erro, não mandamos um array vazio, mandamos o erro
+    if (data && data.status === "error") {
+      return NextResponse.json([], { status: 200 });
+    }
+
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      { message: "Erro ao buscar dados" },
-      { status: 500 },
-    );
+    return NextResponse.json([], { status: 200 });
   }
 }
 
 export async function POST(
   request: Request,
-  { params }: { params: { entity: string } },
+  { params }: { params: Promise<{ entity: string }> },
 ) {
   const { entity } = await params;
   const session = await getSession();
@@ -44,13 +44,7 @@ export async function POST(
 
   try {
     const body = await request.json();
-
-    // Injetamos o ID do usuário logado como owner_id automaticamente no servidor!
-    const payload = {
-      ...body,
-      entity,
-      owner_id: session.id,
-    };
+    const payload = { ...body, entity, owner_id: session.id };
 
     const result = await fetchFromGAS({
       method: "POST",
@@ -59,9 +53,6 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json(
-      { message: "Erro ao salvar dados" },
-      { status: 500 },
-    );
+    return NextResponse.json({ status: "error" }, { status: 500 });
   }
 }
