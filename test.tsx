@@ -120,7 +120,13 @@ export default function ClauseManager({
             </View>
           </View>
 
-          <View tag="subclause-field">
+
+
+
+
+
+
+          <CardContent tag="subclause-field">
             {clause.items.map((item: any, iIdx: number) => (
               <>
                 <View
@@ -134,20 +140,20 @@ export default function ClauseManager({
                   >
                     <label className={styles.subclauseTitle}>
                       <span className="label-text">Subtítulo</span>
-                      <Input
-                        placeholder="Subtítulo (Ex: Cozinha)"
-                        className="subclause-subtitle"
-                        value={item.subtitulo}
-                        onChange={(e) =>
-                          updateItem(
-                            clause.id,
-                            item.id,
-                            "subtitulo",
-                            e.target.value,
-                          )
-                        }
-                      />
-                    </label>
+                  <Input
+                    placeholder="Subtítulo (Ex: Cozinha)"
+                    className="subclause-subtitle"
+                    value={item.subtitulo}
+                    onChange={(e) =>
+                      updateItem(
+                        clause.id,
+                        item.id,
+                        "subtitulo",
+                        e.target.value,
+                      )
+                    }
+                  />
+                  </label>
 
                     <label
                       // className="subclause-before-options"
@@ -162,7 +168,7 @@ export default function ClauseManager({
                         <span className="label-text">Conteúdo</span>
                         <span className={styles.btn_helpTips}>ajuda</span>
                       </View>
-                      {/*<BlockNoteTest
+{/*<BlockNoteTest
                         bg="#f5f5f5"
                         radius="9px"
                         value={item.content}
@@ -171,15 +177,15 @@ export default function ClauseManager({
                         }
                         placeholder="Use / para comandos..."
                       />*/}
-                      <TipTapEditor
-                        value={item.content}
-                        onChange={(val) =>
-                          updateItem(clause.id, item.id, "content", val)
-                        }
-                        bg="#f5f5f5"
+                <TipTapEditor
+                  value={item.content}
+                  onChange={(val) =>
+                    updateItem(clause.id, item.id, "content", val)
+                  }
+                  bg="#f5f5f5"
                         radius="9px"
-                      />
-                    </label>
+                />
+              </label>
                   </View>
                 </View>
                 <View
@@ -208,9 +214,8 @@ export default function ClauseManager({
                 </View>
               </>
             ))}
-          </View>
 
-          <View
+            <View
             tag="footer-options"
             style={{
               display: "flex",

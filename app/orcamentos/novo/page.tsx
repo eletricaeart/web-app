@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-// import AppBar from "@/components/layout/AppBar";
+import AppBar from "@/components/layout/AppBar";
 // import PageHeader from "@/components/ui/PageHeader/PageHeader";
 import ClientForm from "@/components/forms/ClientForm";
-import ClauseManager from "@/components/orcamentos/clause-manager";
+import ClauseManager from "@/components/forms/ClauseManager";
 import View from "@/components/layout/View";
 // import Divider from "@/components/ui/divider";
 import { CircleNotch } from "@phosphor-icons/react";
@@ -183,14 +183,14 @@ export default function NewBudgetPage() {
 
   return (
     <>
-      {/* <AppBar */}
-      {/*   title={isEditing ? `Edição` : `Novo Orçamento`} */}
-      {/*   backAction={() => { */}
-      {/*     localStorage.removeItem("ea_draft_budget"); */}
-      {/*     localStorage.removeItem("ea_selected_client"); */}
-      {/*     router.back(); */}
-      {/*   }} */}
-      {/* /> */}
+      <AppBar
+        title={isEditing ? `Edição` : `Novo Orçamento`}
+        backAction={() => {
+          localStorage.removeItem("ea_draft_budget");
+          localStorage.removeItem("ea_selected_client");
+          router.back();
+        }}
+      />
 
       <View tag="page">
         {/* <PageHeader center shadow="#9fabb555"> */}
@@ -202,7 +202,7 @@ export default function NewBudgetPage() {
 
           <View className="formGroup">
             <label className="label" style={{ margin: 0, padding: "5px 0" }}>
-              <View className="t">Título</View>
+              <View tag="t">Título</View>
               <input
                 type="text"
                 className="input"
@@ -221,7 +221,7 @@ export default function NewBudgetPage() {
           <View tag="budget-infos" className="pd">
             <View tag="grid-duo">
               <label className="flex-5">
-                <View className="t">Data de Emissão</View>
+                <View tag="t">Data de Emissão</View>
                 <input
                   type="date"
                   className="input"
@@ -239,7 +239,7 @@ export default function NewBudgetPage() {
               </label>
 
               <label className="flex-5">
-                <View className="t">Validade</View>
+                <View tag="t">Validade</View>
                 <select
                   className="select"
                   value={budget.docTitle.validade}
