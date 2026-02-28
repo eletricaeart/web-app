@@ -1,0 +1,22 @@
+/* Pressable.module.css */
+.pressable {
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pressable:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
+
+.pressable:focus-visible {
+  outline: 2px solid var(--tw-ring-color, #3b82f6);
+  outline-offset: 2px;
+}
