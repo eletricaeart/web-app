@@ -1,0 +1,27 @@
+.container {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.textShadow {
+  position: relative;
+  display: grid;
+  color: var(--text-color, #fff);
+  font-weight: bold;
+  z-index: 1;
+  font-family: "inter", "Roboto", sans-serif;
+  /* O tamanho e a cor base virão via inline style (props) */
+}
+
+.textShadow::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--shadow-text-color, #00f);
+  /* Fallback para navegadores que não suportam stroke */
+  -webkit-text-stroke-width: var(--shadow-stroke, 10px);
+  -webkit-text-stroke-color: var(--shadow-color, #29f);
+  filter: drop-shadow(0px 4px rgba(0, 0, 0, 0.3));
+  z-index: -1;
+}

@@ -1,124 +1,279 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useEASync } from "@/hooks/useEASync";
+// import FAB from "@/components/layout/FAB";
+// import AppBar from "@/components/layout/AppBar";
+// import BottomNavBar from "@/components/layout/BottomNavBar";
+// import SearchBar from "@/components/SearchBar/SearchBar";
+// import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
+import {
+  FilePlus,
+  ArrowsCounterClockwise,
+  Trash,
+  CloudCheck,
+  ArrowsClockwise,
+  DotsThreeOutlineVertical,
+  PencilSimple,
+  Copy,
+  ShareNetwork,
+} from "@phosphor-icons/react";
 import View from "@/components/layout/View";
-import ClauseManager from "@/components/forms/ClauseManager"; // O que você me enviou
-import { useData } from "@/hooks/useData"; // Nossa ponte com o GAS
-import { CircleNotch, CaretLeft } from "@phosphor-icons/react";
-import "@/styles/orcamentos-legacy.css";
+import { CID, getCleanDate } from "@/utils/helpers";
 
-export default function NewBudgetPage() {
+/* shadcn components */
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+/* styles */
+// import "@/styles/Budget.css";
+
+export default function Budgets() {
+  const [shareData, setShareData] = useState({ open: false, orc: null });
+  const hiddenBudgetRef = useRef(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const editId = searchParams.get("id");
-  const { items: orcamentos, saveData } = useData("orcamentos");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [budget, setBudget] = useState({
-    id: null,
-    docTitle: {
-      text: "",
-      emissao: new Date().toISOString().split("T")[0],
-      validade: "15 dias",
+  const handleOpenShare = (orc: any) => {
+    setShareData({ open: true, orc });
+  };
+
+  const {
+    data: orcamentos,
+    save: saveOrcamento,
+    pull: syncOrcamentos,
+  } = useEASync("orcamentos");
+
+  const { data: clientes } = useEASync("clientes");
+
+  const AVATARS = {
+    masc: "/pix/avatar/default_avatar_masc.webp",
+    fem: "/pix/avatar/default_avatar_fem.webp",
+  };
+
+  const filteredOrcamentos = orcamentos
+    .filter(
+      (orc: any) =>
+        orc.cliente.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orc.docTitle.text.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+    .reverse();
+
+  const fabConfig = [
+    {
+      icon: <FilePlus size={28} weight="duotone" />,
+      label: "Novo Orçamento",
+      action: () => router.push("/novo-orcamento"),
     },
-    cliente: { name: "", cep: "", rua: "", num: "", bairro: "", cidade: "" },
-    clauses: [
-      {
-        id: Date.now(),
-        titulo: "",
-        items: [{ id: Date.now() + 1, subtitulo: "", content: "" }],
-      },
-    ],
-  });
+    {
+      icon: <ArrowsCounterClockwise size={28} weight="duotone" />,
+      label: "Sincronizar",
+      action: () => syncOrcamentos(),
+    },
+  ];
 
-  // Lógica de edição original sua
-  useEffect(() => {
-    if (editId && orcamentos.length > 0) {
-      const existing = orcamentos.find((o) => String(o.id) === String(editId));
-      if (existing) setBudget(existing);
+  const handleDelete = async (id: string, name: string) => {
+    const confirm = window.confirm(`Excluir orçamento de ${name}?`);
+    if (confirm) {
+      await saveOrcamento({ id }, "delete");
     }
-  }, [editId, orcamentos]);
+  };
 
-  const handleSave = async () => {
-    setLoading(true);
-    const action = budget.id ? "update" : "create";
-    const result = await saveData(budget, action);
-    if (result.success) {
-      router.push(`/orcamentos/${result.id}`);
-    }
-    setLoading(false);
+  const handleEdit = (orc: any) => {
+    router.push(`/novo-orcamento?natabiruta=${CID()}&id=${orc.id}`);
+  };
+
+  const handleDuplicate = async (orc: any) => {
+    const duplicated = { ...orc, id: "EA-" + Date.now() };
+    await saveOrcamento(duplicated, "create");
   };
 
   return (
-    <View tag="page" className="new-budget-page">
-      {/* Sua AppBar Original */}
-      <div
-        className="app-bar-legacy"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "1rem",
-          gap: "1rem",
-          background: "#fff",
-        }}
-      >
-        <button onClick={() => router.back()}>
-          <CaretLeft size={24} />
-        </button>
-        <span style={{ fontWeight: "bold" }}>
-          {budget.id ? "Editar Orçamento" : "Novo Orçamento"}
-        </span>
-      </div>
+    <>
+      {/* <AppBar title="Orçamentos" /> */}
 
-      <View tag="page-content">
-        <section className="subtitle-header">
-          <View tag="span" className="t label-text">
-            Título do Documento
-          </View>
-          <input
-            type="text"
-            value={budget.docTitle.text}
-            onChange={(e) =>
-              setBudget({
-                ...budget,
-                docTitle: { ...budget.docTitle, text: e.target.value },
-              })
-            }
-            placeholder="Ex: Instalação Elétrica Residencial"
-          />
-        </section>
-
-        {/* Aqui você pode inserir o seu ClientForm original ou os inputs diretos conforme o NewBudget.jsx */}
-
-        <Divider />
-
-        <ClauseManager
-          clauses={budget.clauses}
-          onClausesChange={(newClauses) =>
-            setBudget({ ...budget, clauses: newClauses })
-          }
+      {shareData.orc && (
+        <BudgetShareMenu
+          open={shareData.open}
+          onOpenChange={(open: boolean) => setShareData({ ...shareData, open })}
+          budgetRef={hiddenBudgetRef}
+          data={shareData.orc}
+          clientName={shareData.orc.cliente.name}
+          budgetTitle={shareData.orc.docTitle.text}
         />
+      )}
 
-        <footer className="footer">
-          <button className="btnSave" onClick={handleSave} disabled={loading}>
-            {loading ? (
-              <CircleNotch size={20} className="animate-spin" />
-            ) : budget.id ? (
-              "ATUALIZAR"
-            ) : (
-              "SALVAR"
-            )}
-          </button>
-        </footer>
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }} />
+
+      <View tag="budgets" className="dash-page">
+        {/* <SearchBar */}
+        {/*   placeholder="Buscar cliente ou serviço..." */}
+        {/*   onSearch={(val: string) => setSearchTerm(val)} */}
+        {/*   value={searchTerm} */}
+        {/* /> */}
+
+        <main className="orcamento-list">
+          {filteredOrcamentos.length > 0 ? (
+            filteredOrcamentos.map((orc: any) => {
+              const isTemp = String(orc.id).startsWith("TEMP_");
+
+              const clientData = clientes.find(
+                (c: any) => c.name === orc.cliente.name,
+              );
+
+              const avatarSrc = clientData
+                ? AVATARS[clientData.gender as "masc" | "fem"]
+                : AVATARS.masc;
+
+              return (
+                <div key={orc.id} className="orcamento-card">
+                  <div className="client-avatar-dash">
+                    <img src={avatarSrc} alt="Avatar" />
+                  </div>
+
+                  <div
+                    className="info-content"
+                    onClick={() => router.push(`/orcamentos/${orc.id}`)}
+                  >
+                    <small className="text-[#999] flex items-center justify-end gap-3">
+                      <span className="sync-status">
+                        {isTemp ? (
+                          <ArrowsClockwise
+                            size={16}
+                            weight="bold"
+                            color="#ffab00"
+                          />
+                        ) : (
+                          <CloudCheck
+                            size={16}
+                            weight="duotone"
+                            color="#4caf50"
+                          />
+                        )}
+                      </span>
+                      {getCleanDate(orc.docTitle.emissao)}
+                    </small>
+
+                    <h3 className="capitalize">{orc.cliente.name}</h3>
+
+                    <p className="text-blue-400">{orc.docTitle.text}</p>
+                  </div>
+
+                  <div className="options-container">
+                    {!isTemp && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <View
+                            tag="vmenu-btn"
+                            className="btn-options"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              outline: "none",
+                              cursor: "pointer",
+                              color: "#777",
+                            }}
+                          >
+                            <DotsThreeOutlineVertical
+                              size={24}
+                              weight="duotone"
+                            />
+                          </View>
+                        </PopoverTrigger>
+
+                        <PopoverContent
+                          className="w-48 p-0 bg-white"
+                          style={{
+                            border: "none",
+                            boxShadow: "#e5e5e5 0 0 10px 2px",
+                          }}
+                          align="end"
+                        >
+                          <div className="flex flex-col">
+                            <button
+                              className="menu-item"
+                              onClick={() => handleOpenShare(orc)}
+                              style={menuItemStyle}
+                            >
+                              <ShareNetwork size={18} weight="duotone" />
+                              Compartilhar
+                            </button>
+
+                            <button
+                              className="menu-item"
+                              onClick={() => handleEdit(orc)}
+                              style={menuItemStyle}
+                            >
+                              <PencilSimple size={18} weight="duotone" />
+                              Editar
+                            </button>
+
+                            <button
+                              className="menu-item"
+                              onClick={() => handleDuplicate(orc)}
+                              style={menuItemStyle}
+                            >
+                              <Copy size={18} weight="duotone" />
+                              Duplicar
+                            </button>
+
+                            <button
+                              className="menu-item delete"
+                              onClick={() =>
+                                handleDelete(orc.id, orc.cliente.name)
+                              }
+                              style={{
+                                ...menuItemStyle,
+                                color: "#ff4444",
+                                borderTop: "1px solid #f5f5f5",
+                              }}
+                            >
+                              <Trash size={18} weight="duotone" />
+                              Excluir
+                            </button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p
+              style={{
+                textAlign: "center",
+                padding: "2rem",
+                color: "#999",
+              }}
+            >
+              Nenhum orçamento encontrado.
+            </p>
+          )}
+        </main>
       </View>
-    </View>
+
+      {/*<FAB actions={fabConfig} hasBottomNav={true} />
+      <BottomNavBar />*/}
+    </>
   );
 }
 
-// O componente Divider que você mencionou
-function Divider() {
-  return (
-    <div style={{ height: "1px", background: "#e5e5e5", margin: "2rem 0" }} />
-  );
-}
+const menuItemStyle: React.CSSProperties = {
+  padding: "12px 15px",
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  width: "100%",
+  border: "none",
+  background: "none",
+  cursor: "pointer",
+  textAlign: "left",
+  fontFamily: "inherit",
+  fontSize: "0.9rem",
+  color: "#444",
+};

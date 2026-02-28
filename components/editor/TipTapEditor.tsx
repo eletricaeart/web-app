@@ -57,6 +57,7 @@ export default function TipTapEditor({
   radius = "1rem",
 }: TipTapEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       TextStyle,

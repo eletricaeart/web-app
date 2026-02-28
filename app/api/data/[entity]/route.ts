@@ -7,17 +7,22 @@ export async function GET(
   request: Request,
   { params }: { params: { entity: string } },
 ) {
-  const { entity } = await params;
+  const { entity } = params;
   const session = await getSession();
 
-  if (!session)
+  if (!session) {
     return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
+  }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
     const data = await fetchFromGAS({
       method: "GET",
-      data: { entity },
+      data: id ? { entity, id } : { entity },
     });
+
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(

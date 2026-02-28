@@ -1,129 +1,340 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useData } from "@/hooks/useData";
-import { Budget, BudgetService } from "@/lib/types/budget";
-import {
-  CaretLeft,
-  UserPlus,
-  Check,
-  IdentificationCard,
-  FileText,
-  PlusCircle,
-} from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+// import AppBar from "@/components/layout/AppBar";
+// import PageHeader from "@/components/ui/PageHeader/PageHeader";
+import ClientForm from "@/components/forms/ClientForm";
+import ClauseManager from "@/components/orcamentos/clause-manager";
+import View from "@/components/layout/View";
+// import Divider from "@/components/ui/divider";
+import { CircleNotch } from "@phosphor-icons/react";
+import { eaSyncClient } from "@/lib/EASyncClient";
 
-// Componentes que vamos usar para organizar o formulário
-import { ClienteSelector } from "@/components/orcamentos/cliente-selector";
-
-export default function NovoOrcamentoPage() {
+export default function NewBudgetPage() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const { saveData } = useData("orcamentos");
-  const { items: clientes } = useData<any>("clientes");
+
+  const editId = searchParams.get("id");
+  const isEditing = searchParams.get("natabiruta");
 
   const [loading, setLoading] = useState(false);
-
-  // Estado principal do Orçamento seguindo o nosso Type
-  const [formData, setFormData] = useState<Partial<Budget>>({
+  const [clientsCache, setClientsCache] = useState<any[]>([]);
+  const [budget, setBudget] = useState<any>({
+    id: null,
     docTitle: {
-      subtitle: "ORÇAMENTO DE SERVIÇOS",
-      emissao: new Date().toLocaleDateString("pt-BR"),
+      text: "",
+      emissao: new Date().toISOString().split("T")[0],
       validade: "15 dias",
-      text: "PROPOSTA TÉCNICA",
     },
-    servicos: [],
+    cliente: { name: "", cep: "", rua: "", num: "", bairro: "", cidade: "" },
+    clauses: [
+      {
+        id: Date.now(),
+        titulo: "",
+        items: [{ id: Date.now() + 1, subtitulo: "", content: "" }],
+      },
+    ],
   });
 
-  const handleSelectCliente = (cliente: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      cliente: {
-        name: cliente.name,
-        cep: cliente.cep || "",
-        rua: cliente.rua || "",
-        num: cliente.num || "",
-        bairro: cliente.bairro || "",
-        cidade: cliente.cidade || "",
-      },
+  // Inicialização
+  useEffect(() => {
+    const init = async () => {
+      if (editId) setLoading(true);
+
+      try {
+        const [clients, allBudgets] = await Promise.all([
+          eaSyncClient.pull("clientes"),
+          eaSyncClient.pull("orcamentos"),
+        ]);
+
+        setClientsCache(Array.isArray(clients) ? clients : []);
+
+        if (editId) {
+          let budgetToEdit = allBudgets.find(
+            (o: any) => String(o.id) === String(editId),
+          );
+
+          if (!budgetToEdit) {
+            const res = await fetch(`/api/data/orcamentos?id=${editId}`, {
+              cache: "no-store",
+            });
+            budgetToEdit = await res.json();
+          }
+
+          if (budgetToEdit) {
+            mapIncomingData(budgetToEdit);
+          }
+        } else {
+          const draftStr = localStorage.getItem("ea_draft_budget");
+          if (draftStr) {
+            const draft = JSON.parse(draftStr);
+            setBudget((prev: any) => ({ ...prev, ...draft }));
+          }
+        }
+      } catch (err) {
+        console.error("Erro na inicialização:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
+  }, [editId]);
+
+  const mapIncomingData = (data: any) => {
+    const mappedClauses = data.servicos.map((s: any) => ({
+      id: Math.random(),
+      titulo: s.titulo,
+      items: s.itens.map((it: any) => ({
+        id: Math.random(),
+        subtitulo: it.subtitulo,
+        content: it.detalhes
+          .map((d: any) => {
+            if (d.tipo === "brk") return "---";
+            if (d.tipo === "tagc") return `> ${d.conteudo}`;
+            if (d.tipo === "t6") return `# ${d.conteudo}`;
+            if (d.tipo === "ul")
+              return d.conteudo.map((li: string) => `- ${li}`).join("\n");
+            return d.conteudo;
+          })
+          .join("\n"),
+      })),
     }));
-    toast.info(`Cliente ${cliente.name} selecionado`);
+
+    setBudget({
+      id: data.id,
+      docTitle: {
+        text: data.docTitle.text,
+        emissao: formatDateForInput(data.docTitle.emissao),
+        validade: data.docTitle.validade,
+      },
+      cliente: data.cliente,
+      clauses: mappedClauses,
+    });
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+
+    const [y, m, d] = budget.docTitle.emissao.split("-");
+    const formattedDate = `${d}/${m}/${y}`;
+
+    const payload = {
+      id: editId || budget.id || `TEMP_${Date.now()}`,
+      cliente: budget.cliente,
+      docTitle: {
+        subtitle: "PROPOSTA DE ORÇAMENTO",
+        emissao: formattedDate,
+        validade: budget.docTitle.validade,
+        text: budget.docTitle.text,
+      },
+      servicos: budget.clauses.map((c: any) => ({
+        titulo: c.titulo,
+        itens: c.items.map((it: any) => ({
+          subtitulo: it.subtitulo,
+          detalhes: formatMarkdownForSheets(it.content),
+        })),
+      })),
+    };
+
+    const action = budget.id ? "update" : "create";
+
+    const result = await eaSyncClient.save("orcamentos", payload, action);
+
+    if (result.success) {
+      localStorage.removeItem("ea_draft_budget");
+      localStorage.removeItem("ea_selected_client");
+      router.push("/orcamentos");
+    } else {
+      alert("Erro ao salvar orçamento.");
+    }
+
+    setLoading(false);
+  };
+
+  const formatMarkdownForSheets = (text: string) => {
+    const detalhes: any[] = [];
+
+    text.split("\n").forEach((line) => {
+      const tl = line.trim();
+      if (!tl) return;
+
+      if (tl === "---") detalhes.push({ tipo: "brk", conteudo: "" });
+      else if (tl.startsWith(">"))
+        detalhes.push({ tipo: "tagc", conteudo: tl.replace(">", "").trim() });
+      else if (tl.startsWith("#"))
+        detalhes.push({ tipo: "t6", conteudo: tl.replace("#", "").trim() });
+      else if (tl.startsWith("*") || tl.startsWith("-")) {
+        const last = detalhes[detalhes.length - 1];
+        const content = tl.replace(/^[*|-]\s*/, "").trim();
+        if (last && last.tipo === "ul") last.conteudo.push(content);
+        else detalhes.push({ tipo: "ul", conteudo: [content] });
+      } else detalhes.push({ tipo: "p", conteudo: tl });
+    });
+
+    return detalhes;
+  };
+
+  const goToCreateClient = () => {
+    localStorage.setItem("ea_draft_budget", JSON.stringify(budget));
+    router.push("/cliente/novo");
   };
 
   return (
-    <main className="min-h-svh bg-slate-50 p-6 pb-32">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => router.back()}
-          className="p-2 -ml-2 text-slate-600 bg-white rounded-full shadow-sm"
-        >
-          <CaretLeft size={20} weight="bold" />
-        </button>
-        <h1 className="text-xl font-bold text-slate-900">Novo Orçamento</h1>
-      </div>
+    <>
+      {/* <AppBar */}
+      {/*   title={isEditing ? `Edição` : `Novo Orçamento`} */}
+      {/*   backAction={() => { */}
+      {/*     localStorage.removeItem("ea_draft_budget"); */}
+      {/*     localStorage.removeItem("ea_selected_client"); */}
+      {/*     router.back(); */}
+      {/*   }} */}
+      {/* /> */}
 
-      <div className="space-y-8">
-        {/* PASSO 1: SELEÇÃO DE CLIENTE */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 ml-1 text-indigo-950">
-            <IdentificationCard size={20} weight="duotone" />
-            <h2 className="font-bold uppercase text-xs tracking-widest">
-              Dados do Cliente
-            </h2>
-          </div>
+      <View tag="page">
+        {/* <PageHeader center shadow="#9fabb555"> */}
+        {/*   Proposta de Orçamento */}
+        {/* </PageHeader> */}
 
-          <ClienteSelector
-            clientes={clientes}
-            onSelect={handleSelectCliente}
-            selectedName={formData.cliente?.name}
+        <View tag="page-content">
+          <h3 className="page-subtitle">Dados do orçamento</h3>
+
+          <View className="formGroup">
+            <label className="label" style={{ margin: 0, padding: "5px 0" }}>
+              <View className="t">Título</View>
+              <input
+                type="text"
+                className="input"
+                placeholder="SERVIÇOS DE ELÉTRICA (RESIDENCIAL)"
+                value={budget.docTitle.text}
+                onChange={(e) =>
+                  setBudget({
+                    ...budget,
+                    docTitle: { ...budget.docTitle, text: e.target.value },
+                  })
+                }
+              />
+            </label>
+          </View>
+
+          <View tag="budget-infos" className="pd">
+            <View tag="grid-duo">
+              <label className="flex-5">
+                <View className="t">Data de Emissão</View>
+                <input
+                  type="date"
+                  className="input"
+                  value={budget.docTitle.emissao}
+                  onChange={(e) =>
+                    setBudget({
+                      ...budget,
+                      docTitle: {
+                        ...budget.docTitle,
+                        emissao: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label className="flex-5">
+                <View className="t">Validade</View>
+                <select
+                  className="select"
+                  value={budget.docTitle.validade}
+                  onChange={(e) =>
+                    setBudget({
+                      ...budget,
+                      docTitle: {
+                        ...budget.docTitle,
+                        validade: e.target.value,
+                      },
+                    })
+                  }
+                >
+                  <option value="7 dias">7 dias</option>
+                  <option value="15 dias">15 dias</option>
+                  <option value="30 dias">30 dias</option>
+                  <option value="60 dias">60 dias</option>
+                  <option value="90 dias">90 dias</option>
+                </select>
+              </label>
+            </View>
+          </View>
+
+          {/* <Divider padding="2rem" height="2px" color="transparent" /> */}
+
+          <h3 className="page-subtitle">Dados do cliente</h3>
+
+          <ClientForm
+            clientData={budget.cliente}
+            clientsCache={clientsCache}
+            onClientChange={(data: any) =>
+              setBudget({ ...budget, cliente: data })
+            }
+            onNewClientClick={goToCreateClient}
           />
+        </View>
 
-          {formData.cliente && (
-            <Card className="border-none shadow-sm bg-white/50 rounded-2xl animate-in fade-in slide-in-from-top-2">
-              <CardContent className="p-4 text-xs text-slate-500 space-y-1">
-                <p>
-                  <strong>Endereço:</strong> {formData.cliente.rua},{" "}
-                  {formData.cliente.num}
-                </p>
-                <p>
-                  {formData.cliente.bairro} - {formData.cliente.cidade} /{" "}
-                  {formData.cliente.cep}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </section>
+        {/* <Divider padding="2rem" height="2px" color="transparent" /> */}
 
-        {/* PASSO 2: DETALHES DO DOCUMENTO */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 ml-1 text-indigo-950">
-            <FileText size={20} weight="duotone" />
-            <h2 className="font-bold uppercase text-xs tracking-widest">
-              Configuração do PDF
-            </h2>
-          </div>
-          {/* Aqui entrarão os inputs de Subtítulo, Validade, etc */}
-          <Card className="p-4 rounded-2xl border-dashed border-2 border-slate-200 text-center text-slate-400 text-sm">
-            Área de Detalhes do Documento (Próximo passo)
-          </Card>
-        </section>
+        <View tag="clauses-holder">
+          <header className="subtitle-header">
+            <h3 className="page-subtitle">Cláusulas e Itens</h3>
+          </header>
 
-        {/* PASSO 3: SERVIÇOS/CLÁUSULAS */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 ml-1 text-indigo-950">
-            <PlusCircle size={20} weight="duotone" />
-            <h2 className="font-bold uppercase text-xs tracking-widest">
-              Serviços e Cláusulas
-            </h2>
-          </div>
-          <Card className="p-8 rounded-2xl border-dashed border-2 border-slate-200 text-center text-slate-400 text-sm">
-            O gerenciador de cláusulas será montado aqui.
-          </Card>
-        </section>
-      </div>
-    </main>
+          <ClauseManager
+            clauses={budget.clauses}
+            onClausesChange={(newClauses: any) =>
+              setBudget({ ...budget, clauses: newClauses })
+            }
+          />
+        </View>
+
+        <footer className="footer">
+          <button
+            className="btnSave"
+            onClick={handleSave}
+            disabled={loading}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "10px",
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+              transition: "all 0.3s ease",
+            }}
+          >
+            {loading ? (
+              <>
+                <CircleNotch size={20} weight="bold" className="animate-spin" />
+                <span>PROCESSANDO...</span>
+              </>
+            ) : (
+              <span>
+                {budget.id ? "ATUALIZAR ORÇAMENTO" : "SALVAR ORÇAMENTO"}
+              </span>
+            )}
+          </button>
+        </footer>
+      </View>
+    </>
   );
+}
+
+function formatDateForInput(dateStr: string) {
+  if (!dateStr) return new Date().toISOString().split("T")[0];
+
+  if (dateStr.includes("-")) {
+    return dateStr.split("T")[0];
+  }
+
+  if (dateStr.includes("/")) {
+    const [d, m, y] = dateStr.split("/");
+    return `${y}-${m}-${d}`;
+  }
+
+  return new Date().toISOString().split("T")[0];
 }

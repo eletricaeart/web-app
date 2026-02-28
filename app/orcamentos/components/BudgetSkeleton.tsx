@@ -1,3 +1,4 @@
+"use client";
 import { Skeleton } from "../../../components/ui/skeleton";
 import View from "@/components/layout/View";
 // import "../Budget.css"; // Reaproveita os espaçamentos originais
