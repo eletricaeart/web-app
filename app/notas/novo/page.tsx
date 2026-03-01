@@ -22,7 +22,7 @@ export default function NovaNota() {
   const searchParams = useSearchParams();
   const clienteIdParam = searchParams.get("clienteId");
 
-  const { data: clients } = useEASync("clientes");
+  const { data: clients } = useEASync("clientes") as { data: any[] };
   const { save: saveNota } = useEASync("notas");
 
   const [loading, setLoading] = useState(false);
