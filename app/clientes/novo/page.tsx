@@ -130,7 +130,9 @@ export default function ClienteForm() {
           <AvatarUpload
             value={formData.photo}
             gender={formData.gender}
-            onChange={(url) => setFormData((prev) => ({ ...prev, photo: url }))}
+            onChange={(url: string) =>
+              setFormData((prev) => ({ ...prev, photo: url }))
+            }
           />
 
           <View tag="card-ea-client" className="add-client-form">
