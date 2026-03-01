@@ -18,16 +18,29 @@ import {
 } from "@phosphor-icons/react";
 import "./Notas.css";
 
+// Interface para garantir a tipagem das Notas Técnicas
+interface NotaTecnica {
+  id: string | number;
+  title: string;
+  clienteNome: string;
+  important?: boolean;
+  date?: string;
+  content?: string;
+}
+
 export default function NotasLista() {
   const router = useRouter();
-  const { data: notes } = useEASync("notas");
+
+  // Utilizando o Generic <NotaTecnica> para tipar o retorno do hook
+  const { data: notes } = useEASync<NotaTecnica>("notas");
+
   const [term, setTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid"); // Padrão Grid
 
   const filtered = notes.filter(
-    (n: any) =>
-      n.title.toLowerCase().includes(term.toLowerCase()) ||
-      n.clienteNome.toLowerCase().includes(term.toLowerCase()),
+    (n) =>
+      (n.title?.toLowerCase() || "").includes(term.toLowerCase()) ||
+      (n.clienteNome?.toLowerCase() || "").includes(term.toLowerCase()),
   );
 
   return (
@@ -38,7 +51,7 @@ export default function NotasLista() {
         <div className="flex-1">
           <SearchBar
             placeholder="Buscar notas..."
-            onSearch={setTerm}
+            onSearch={(val: string) => setTerm(val)}
             value={term}
           />
         </div>
@@ -53,7 +66,7 @@ export default function NotasLista() {
 
       <View tag="page" className="p-6 pb-24 bg-slate-50">
         <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
-          {filtered.map((nota: any) => {
+          {filtered.map((nota) => {
             const isImportant = nota.important === true;
 
             // ESTILO IMPORTANTE (ESTILO QUICKACTION DA HOME)
