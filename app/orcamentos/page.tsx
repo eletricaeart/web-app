@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
 import FAB from "@/components/ui/FAB";
 import AppBar from "@/components/layout/AppBar";
-// import BottomNavBar from "@/components/layout/BottomNavBar";
-// import SearchBar from "@/components/SearchBar/SearchBar";
-// import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
+import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
 import {
   FilePlus,
   ArrowsCounterClockwise,
@@ -30,26 +28,53 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-/* styles */
-// import "@/styles/Budget.css";
+// --- Interfaces para Tipagem ---
+
+interface ClienteCache {
+  id: string | number;
+  name: string;
+  gender: string;
+}
+
+interface Orcamento {
+  id: string | number;
+  cliente: {
+    name: string;
+  };
+  docTitle: {
+    text: string;
+    emissao: string;
+    validade: string;
+    subtitle?: string;
+  };
+  servicos?: any[];
+}
+
+interface ShareState {
+  open: boolean;
+  orc: Orcamento | null;
+}
 
 export default function Budgets() {
-  const [shareData, setShareData] = useState({ open: false, orc: null });
-  const hiddenBudgetRef = useRef(null);
+  const [shareData, setShareData] = useState<ShareState>({
+    open: false,
+    orc: null,
+  });
+  const hiddenBudgetRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-
-  const handleOpenShare = (orc: any) => {
-    setShareData({ open: true, orc });
-  };
 
   const {
     data: orcamentos,
     save: saveOrcamento,
     pull: syncOrcamentos,
-  } = useEASync("orcamentos");
+  } = useEASync<Orcamento>("orcamentos");
 
-  const { data: clientes } = useEASync("clientes");
+  const { data: clientes } = useEASync<ClienteCache>("clientes");
+
+  const handleOpenShare = (orc: Orcamento) => {
+    setShareData({ open: true, orc });
+  };
 
   const AVATARS = {
     masc: "/pix/avatar/default_avatar_masc.webp",
@@ -58,9 +83,13 @@ export default function Budgets() {
 
   const filteredOrcamentos = orcamentos
     .filter(
-      (orc: any) =>
-        orc.cliente.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        orc.docTitle.text.toLowerCase().includes(searchTerm.toLowerCase()),
+      (orc) =>
+        (orc.cliente?.name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (orc.docTitle?.text || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()),
     )
     .reverse();
 
@@ -68,7 +97,7 @@ export default function Budgets() {
     {
       icon: <FilePlus size={28} weight="duotone" />,
       label: "Novo Orçamento",
-      action: () => router.push("/novo-orcamento"),
+      action: () => router.push("/orcamentos/novo"),
     },
     {
       icon: <ArrowsCounterClockwise size={28} weight="duotone" />,
@@ -77,18 +106,18 @@ export default function Budgets() {
     },
   ];
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = async (id: string | number, name: string) => {
     const confirm = window.confirm(`Excluir orçamento de ${name}?`);
     if (confirm) {
       await saveOrcamento({ id }, "delete");
     }
   };
 
-  const handleEdit = (orc: any) => {
-    router.push(`/novo-orcamento?natabiruta=${CID()}&id=${orc.id}`);
+  const handleEdit = (orc: Orcamento) => {
+    router.push(`/orcamentos/novo?natabiruta=${CID()}&id=${orc.id}`);
   };
 
-  const handleDuplicate = async (orc: any) => {
+  const handleDuplicate = async (orc: Orcamento) => {
     const duplicated = { ...orc, id: "EA-" + Date.now() };
     await saveOrcamento(duplicated, "create");
   };
@@ -108,26 +137,25 @@ export default function Budgets() {
         />
       )}
 
-      <div style={{ position: "absolute", left: "-9999px", top: 0 }} />
+      {/* Container invisível para a Ref do ShareMenu */}
+      <div
+        ref={hiddenBudgetRef}
+        style={{ position: "absolute", left: "-9999px", top: 0 }}
+      />
 
       <View tag="budgets" className="dash-page">
-        {/* <SearchBar */}
-        {/*   placeholder="Buscar cliente ou serviço..." */}
-        {/*   onSearch={(val: string) => setSearchTerm(val)} */}
-        {/*   value={searchTerm} */}
-        {/* /> */}
-
         <main className="orcamento-list">
           {filteredOrcamentos.length > 0 ? (
-            filteredOrcamentos.map((orc: any) => {
+            filteredOrcamentos.map((orc) => {
               const isTemp = String(orc.id).startsWith("TEMP_");
 
               const clientData = clientes.find(
-                (c: any) => c.name === orc.cliente.name,
+                (c) => c.name === orc.cliente.name,
               );
 
               const avatarSrc = clientData
-                ? AVATARS[clientData.gender as "masc" | "fem"]
+                ? AVATARS[clientData.gender as keyof typeof AVATARS] ||
+                  AVATARS.masc
                 : AVATARS.masc;
 
               return (
@@ -259,7 +287,6 @@ export default function Budgets() {
       </View>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
-      {/*<BottomNavBar />*/}
     </>
   );
 }
