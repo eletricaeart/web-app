@@ -40,7 +40,10 @@ export async function GET(
 
     await browser.close();
 
-    return new NextResponse(pdf, {
+    // Transformamos o Uint8Array em um Buffer ou Blob para o NextResponse aceitar
+    const pdfBuffer = Buffer.from(pdf);
+
+    return new NextResponse(pdfBuffer as any, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="Orcamento_${id}.pdf"`,
