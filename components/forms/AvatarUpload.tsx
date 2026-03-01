@@ -6,7 +6,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, SpinnerGap } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
-export default function AvatarUpload({ value, onChange, gender }) {
+// Interface para as props do componente
+interface AvatarUploadProps {
+  value: string;
+  onChange: (url: string) => void;
+  gender: string;
+}
+
+export default function AvatarUpload({
+  value,
+  onChange,
+  gender,
+}: AvatarUploadProps) {
   const [uploading, setUploading] = useState(false);
 
   const CLOUD = {
@@ -21,8 +32,10 @@ export default function AvatarUpload({ value, onChange, gender }) {
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
+    // Verificação de segurança para as variáveis de ambiente e arquivo
     if (!file || !CLOUD.name || !CLOUD.preset) {
-      console.error("Deu erro no Cloudinary Cloud Name ou no file");
+      console.error("Configurações do Cloudinary ou arquivo ausentes");
       return;
     }
 

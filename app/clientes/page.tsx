@@ -27,13 +27,28 @@ import {
 /* styles */
 import "./Clientes.css";
 
+// Interface alinhada com as definições anteriores para evitar 'any'
+interface Cliente {
+  id: string;
+  name: string;
+  doc?: string;
+  gender?: string;
+  photo?: string;
+  whatsapp?: string;
+  email?: string;
+  cidade?: string;
+  [key: string]: any; // Flexibilidade para outras propriedades do motor de busca
+}
+
 export default function ClientesLista() {
   const router = useRouter();
+
+  // Tipagem do hook useEASync com a interface Cliente
   const {
     data: allClients,
     pull: syncClients,
     save: saveClient,
-  } = useEASync("clientes");
+  } = useEASync<Cliente>("clientes");
 
   const [term, setTerm] = useState("");
 
@@ -44,11 +59,12 @@ export default function ClientesLista() {
 
   const handleDeleteQuick = async (id: string, name: string) => {
     if (window.confirm(`Excluir ${name}?`)) {
+      // O saveClient agora reconhece o payload baseado na interface
       await saveClient({ id }, "delete");
     }
   };
 
-  const filtered = allClients.filter((c: any) => {
+  const filtered = allClients.filter((c) => {
     const searchTerm = term.trim().toLowerCase();
     const nameMatches = c.name
       ? c.name.toLowerCase().includes(searchTerm)
@@ -82,7 +98,7 @@ export default function ClientesLista() {
 
       <View tag="clients-list">
         <div className="clients-container">
-          {filtered.map((c: any) => (
+          {filtered.map((c) => (
             <div
               key={c.id}
               className="client-card-wrapper"

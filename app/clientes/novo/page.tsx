@@ -21,17 +21,37 @@ import {
 
 import "../Clientes.css";
 
+// Interface para definir a estrutura do Cliente e evitar 'any'
+interface Cliente {
+  id: string;
+  name: string;
+  gender: string;
+  doc: string;
+  whatsapp: string;
+  email: string;
+  cep: string;
+  rua: string;
+  num: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  obs: string;
+  photo: string;
+}
+
 export default function ClienteForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
 
-  const { data: clients, save: saveClient } = useEASync("clientes");
+  // Uso do Generic <Cliente> para tipar o hook
+  const { data: clients, save: saveClient } = useEASync<Cliente>("clientes");
 
   const [loading, setLoading] = useState(false);
   const [fetchingCep, setFetchingCep] = useState(false);
 
-  const [formData, setFormData] = useState({
+  // Estado tipado com a interface Cliente
+  const [formData, setFormData] = useState<Cliente>({
     id: "",
     name: "",
     gender: "masc",
@@ -51,9 +71,7 @@ export default function ClienteForm() {
   // Carrega dados se for Edição
   useEffect(() => {
     if (editId && clients.length > 0) {
-      const clientToEdit = clients.find(
-        (c: any) => String(c.id) === String(editId),
-      );
+      const clientToEdit = clients.find((c) => String(c.id) === String(editId));
       if (clientToEdit) {
         setFormData((prev) => ({ ...prev, ...clientToEdit }));
       }
@@ -73,7 +91,7 @@ export default function ClienteForm() {
 
     setFetchingCep(true);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const res = await fetch(`https://viacep.com.br{cep}/json/`);
       const data = await res.json();
       if (!data.erro) {
         setFormData((prev) => ({
@@ -97,12 +115,13 @@ export default function ClienteForm() {
     setLoading(true);
     const action = editId ? "update" : "create";
 
-    const payload = {
+    const payload: Cliente = {
       ...formData,
       id: editId || `TEMP_${Date.now()}`,
     };
 
-    const res = await saveClient(payload, action);
+    // Tipagem do retorno do save conforme useEASync
+    const res = (await saveClient(payload, action)) as { success: boolean };
 
     if (res.success) {
       toast.success(editId ? "Cliente atualizado" : "Cliente cadastrado");
@@ -153,7 +172,7 @@ export default function ClienteForm() {
                   Gênero
                   <Select
                     value={formData.gender}
-                    onValueChange={(val) =>
+                    onValueChange={(val: string) =>
                       setFormData({ ...formData, gender: val })
                     }
                   >
