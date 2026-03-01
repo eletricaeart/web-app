@@ -90,7 +90,6 @@ export default function ClientesLista() {
             >
               <ClientCard
                 client={c}
-                AVATARS={AVATARS}
                 onClick={() => router.push(`/clientes/${c.id}`)}
                 options={
                   <div className="options-container">
