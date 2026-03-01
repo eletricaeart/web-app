@@ -1,3 +1,4 @@
+// app/clientes/novo/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,6 +8,7 @@ import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
 import { CircleNotch, FloppyDisk, MapPinPlus } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import AvatarUpload from "@/components/forms/AvatarUpload"; // Componente que faremos
 
 /* shadcn components */
 import {
@@ -39,8 +41,11 @@ export default function ClienteForm() {
     cep: "",
     rua: "",
     num: "",
+    complemento: "", // Novo campo
     bairro: "",
     cidade: "",
+    obs: "", // Novo campo
+    photo: "", // Novo campo (URL Cloudinary)
   });
 
   // Carrega dados se for Edição
@@ -50,12 +55,14 @@ export default function ClienteForm() {
         (c: any) => String(c.id) === String(editId),
       );
       if (clientToEdit) {
-        setFormData(clientToEdit);
+        setFormData((prev) => ({ ...prev, ...clientToEdit }));
       }
     }
   }, [editId, clients]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -90,8 +97,6 @@ export default function ClienteForm() {
     setLoading(true);
     const action = editId ? "update" : "create";
 
-    // Se for novo, o GAS mestre cuidará do ID (TEMP_...),
-    // se for edição, mantemos o ID atual.
     const payload = {
       ...formData,
       id: editId || `TEMP_${Date.now()}`,
@@ -101,7 +106,6 @@ export default function ClienteForm() {
 
     if (res.success) {
       toast.success(editId ? "Cliente atualizado" : "Cliente cadastrado");
-      // REGRA: router.replace remove a página de formulário da pilha de voltar
       if (editId) {
         router.replace(`/clientes/${editId}`);
       } else {
@@ -122,6 +126,13 @@ export default function ClienteForm() {
 
       <View tag="page" className="add-client-page">
         <View tag="page-content">
+          {/* Seção da Foto */}
+          <AvatarUpload
+            value={formData.photo}
+            gender={formData.gender}
+            onChange={(url) => setFormData((prev) => ({ ...prev, photo: url }))}
+          />
+
           <View tag="card-ea-client" className="add-client-form">
             <View tag="card-ea-header">IDENTIFICAÇÃO</View>
             <View tag="card-ea-body">
@@ -220,7 +231,7 @@ export default function ClienteForm() {
               </label>
 
               <div className="grid grid-cols-4 gap-4 mt-4">
-                <label className="col-span-3">
+                <label className="col-span-2">
                   Rua
                   <input
                     name="rua"
@@ -234,6 +245,15 @@ export default function ClienteForm() {
                     name="num"
                     value={formData.num}
                     onChange={handleChange}
+                  />
+                </label>
+                <label>
+                  Comp.
+                  <input
+                    name="complemento"
+                    value={formData.complemento}
+                    onChange={handleChange}
+                    placeholder="Apto..."
                   />
                 </label>
               </div>
@@ -256,6 +276,21 @@ export default function ClienteForm() {
                   />
                 </label>
               </div>
+            </View>
+          </View>
+
+          {/* Campo de Observações */}
+          <View tag="card-ea-client">
+            <View tag="card-ea-header">OBSERVAÇÕES INTERNAS</View>
+            <View tag="card-ea-body">
+              <textarea
+                name="obs"
+                className="input w-full p-2 rounded-md border h-24 bg-transparent outline-none"
+                style={{ fontFamily: "inherit", fontSize: "0.9rem" }}
+                value={formData.obs}
+                onChange={handleChange}
+                placeholder="Informações adicionais sobre o cliente..."
+              />
             </View>
           </View>
         </View>

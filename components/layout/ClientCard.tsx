@@ -1,6 +1,11 @@
+// components/layout/ClientCard.tsx
+"use client";
+
 import React from "react";
 import View from "./View";
 import "./ClientCard.css";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User, GenderFemale } from "@phosphor-icons/react";
 
 /**
  * Interface que define os dados esperados de um cliente.
@@ -12,6 +17,8 @@ interface ClientData {
   gender: "masc" | "fem" | string;
   cidade?: string;
   doc?: boolean | string;
+  photo?: string;
+  bairro?: string;
 }
 
 /**
@@ -22,12 +29,6 @@ interface ClientCardProps {
   client: ClientData;
   /** Função disparada ao clicar no avatar ou nas informações do cliente */
   onClick?: () => void;
-  /** Objeto contendo as URLs dos avatares (ex: { masc: 'url', fem: 'url' }) */
-  AVATARS: {
-    masc: string;
-    fem: string;
-    [key: string]: string;
-  };
   /** Elemento ou componente adicional (botões, menus, ícones) exibido no badge */
   options?: React.ReactNode;
 }
@@ -45,26 +46,47 @@ interface ClientCardProps {
 export default function ClientCard({
   client,
   onClick,
-  AVATARS,
   options,
 }: ClientCardProps) {
-  // Fallback seguro caso o gênero não seja encontrado no objeto AVATARS
-  const avatarSrc = AVATARS[client.gender] || AVATARS.masc;
+  // Avatares padrão
+  const defaultAvatars = {
+    masc: "/pix/avatar/default_avatar_masc.webp",
+    fem: "/pix/avatar/default_avatar_fem.webp",
+  };
 
   return (
     <View tag="client-card">
       <View tag="client-avatar" onClick={onClick} className="cursor-pointer">
-        <img
-          src={avatarSrc}
-          alt={`Avatar de ${client.name}`}
-          // Loading lazy para melhorar performance de grandes listas no Next.js
-          loading="lazy"
-        />
+        <Avatar className="w-12 h-12">
+          {/* Prioridade 1: Foto do Cloudinary */}
+          {/* Prioridade 2: Avatar padrão por gênero */}
+          <AvatarImage
+            src={
+              client.photo ||
+              defaultAvatars[client.gender as keyof typeof defaultAvatars] ||
+              defaultAvatars.masc
+            }
+            alt={client.name}
+            className="object-cover"
+          />
+          <AvatarFallback>
+            {client.gender === "fem" ? (
+              <GenderFemale size={24} />
+            ) : (
+              <User size={24} />
+            )}
+          </AvatarFallback>
+        </Avatar>
       </View>
 
       <View tag="client-info" onClick={onClick} className="cursor-pointer">
-        <h4 className="text-[#333] capitalize">{client.name.toLowerCase()}</h4>
-        <p>{client.cidade || "Cidade não informada"}</p>
+        <h4 className="text-[#333] capitalize font-bold">
+          {client.name.toLowerCase()}
+        </h4>
+        <p className="text-xs text-slate-500">
+          {client.cidade || "Cidade não informada"}
+          {client.bairro ? ` - ${client.bairro}` : ""}
+        </p>
       </View>
 
       {/* Área de ações ou status (Badge) */}

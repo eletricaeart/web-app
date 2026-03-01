@@ -55,6 +55,15 @@ export default function HomePage() {
             title="Notas"
             count="5"
           />
+          {/* CARD DA EQUIPE (USUÁRIOS) */}
+          <MenuCard
+            href="/equipe"
+            icon={<Lightning size={28} weight="duotone" />}
+            title="Equipe"
+            count="2"
+            color="bg-amber-50"
+            textColor="text-amber-600"
+          />
         </div>
       </div>
 

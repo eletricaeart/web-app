@@ -149,9 +149,12 @@ export default function ClientePerfil() {
           <div className="avatar-circle">
             <img
               src={
-                AVATARS[client.gender as keyof typeof AVATARS] || AVATARS.masc
+                client.photo || // Prioridade para a foto do Cloudinary
+                AVATARS[client.gender as keyof typeof AVATARS] ||
+                AVATARS.masc
               }
               alt={client.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }} // Garante que a foto preencha o círculo
             />
           </div>
           <h2 className="font-thunder text-2xl uppercase">{client.name}</h2>
