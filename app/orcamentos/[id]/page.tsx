@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import EACard from "@/components/ui/EACard";
 import AppBar from "@/components/layout/AppBar";
 import FAB from "@/components/ui/FAB";
@@ -11,6 +11,7 @@ import { processTextToHtml } from "@/utils/TextPreProcessor";
 import View from "@/components/layout/View";
 import BudgetSkeleton from "../components/BudgetSkeleton";
 // import BudgetShareMenu from "../components/BudgetShareMenu";
+import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
 import { Pen, FilePdf, ShareNetwork } from "@phosphor-icons/react";
 import { CID } from "@/utils/helpers";
 // import { eaSyncClient } from "@/lib/EASyncClient";
@@ -24,6 +25,9 @@ export default function Budget() {
   const router = useRouter();
   const { data: orcamentos } = useEASync("orcamentos");
   const budgetRef = useRef<HTMLDivElement | null>(null);
+
+  const searchParams = useSearchParams();
+  const isPrintMode = searchParams.get("print") === "true";
 
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [data, setData] = useState<any>(null);
@@ -130,16 +134,16 @@ export default function Budget() {
 
   return (
     <>
-      <AppBar backAction={() => router.back()} />
+      {!isPrintMode && <AppBar backAction={() => router.back()} />}
 
-      {/* <BudgetShareMenu */}
-      {/*   open={isShareOpen} */}
-      {/*   onOpenChange={setIsShareOpen} */}
-      {/*   budgetRef={budgetRef} */}
-      {/*   data={data} */}
-      {/*   clientName={data?.cliente?.name} */}
-      {/*   budgetTitle={data?.docTitle?.text} */}
-      {/* /> */}
+      <BudgetShareMenu
+        open={isShareOpen}
+        onOpenChange={setIsShareOpen}
+        budgetRef={budgetRef}
+        data={data}
+        clientName={data?.cliente?.name}
+        budgetTitle={data?.docTitle?.text}
+      />
 
       <View tag="pageContainer">
         <View tag="budget-page" ref={budgetRef}>
@@ -225,7 +229,7 @@ export default function Budget() {
         </View>
       </View>
 
-      <FAB actions={fabActions} hasBottomNav={false} />
+      {!isPrintMode && <FAB actions={fabActions} hasBottomNav={false} />}
     </>
   );
 }

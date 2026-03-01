@@ -1,0 +1,53 @@
+client-card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+client-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #eee;
+  flex-shrink: 0;
+}
+
+client-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+client-info {
+  flex: 1;
+}
+
+client-info h4 {
+  margin: 0;
+  /* color: var(--sv-sombra-azul); */
+  font-size: 1rem;
+  overflow-wrap: break-word;
+}
+
+client-info p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+client-badge {
+  /* background: #eef2ff; */
+  color: #4f46e5;
+  /* padding: 4px 8px; */
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}

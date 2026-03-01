@@ -1,3 +1,4 @@
+// components/forms/ClientForm.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -77,8 +78,10 @@ export default function ClientForm({
       c_cep: "cep",
       c_rua: "rua",
       c_num: "num",
+      c_complemento: "complemento",
       c_bairro: "bairro",
       c_cidade: "cidade",
+      c_obs: "obs",
     };
     onClientChange({ ...clientData, [fieldMap[id]]: value });
   };
@@ -223,7 +226,7 @@ export default function ClientForm({
       {/* Endereço */}
       <View
         tag="logradouro_numero-inputs"
-        style={{ gridTemplateColumns: "3fr 1fr" }}
+        style={{ gridTemplateColumns: "2fr 1fr 1fr" }}
       >
         <View tag="logradouro-input">
           <label className={"styles.label"}>
@@ -247,6 +250,17 @@ export default function ClientForm({
               placeholder="Ex: 50"
               value={clientData.num}
               onChange={handleChange}
+            />
+          </label>
+        </View>
+        <View tag="complemento-input">
+          <label className="styles.label">
+            <View tag="t">Comp.</View>
+            <input
+              id="c_complemento"
+              value={clientData.complemento}
+              onChange={handleChange}
+              placeholder="Apto..."
             />
           </label>
         </View>
@@ -275,6 +289,21 @@ export default function ClientForm({
             placeholder="Ex: Praia Grande - SP"
             value={clientData.cidade}
             onChange={handleChange}
+          />
+        </label>
+      </View>
+
+      {/* seção de observações sobre o cliente */}
+      <View tag="obs-input" className="mt-4">
+        <label className="styles.label">
+          <View tag="t">Observações Internas</View>
+          <textarea
+            id="c_obs"
+            className="input w-full p-2 rounded-md border h-20"
+            value={clientData.obs}
+            onChange={(e) =>
+              onClientChange({ ...clientData, obs: e.target.value })
+            }
           />
         </label>
       </View>
