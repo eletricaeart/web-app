@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { Skeleton } from "../../../components/ui/skeleton";
 import View from "@/components/layout/View";
 // import "../Budget.css"; // Reaproveita os espaçamentos originais
@@ -71,7 +72,7 @@ export default function BudgetSkeleton() {
       </View>
 
       {/* Simulação de Cláusulas (loop de 2 cláusulas) */}
-      {[1, 2].map((i) => (
+      {[1, 2].map((i: number) => (
         <View key={i} tag="cliente-section">
           <View tag="ui" className="w-full">
             <Skeleton

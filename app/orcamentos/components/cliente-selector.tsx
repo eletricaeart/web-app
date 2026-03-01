@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CaretUpDown, MagnifyingGlass } from "@phosphor-icons/react";
+import { Check, CaretUpDown } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,25 @@ import {
 } from "@/components/ui/popover";
 import { useState } from "react";
 
-export function ClienteSelector({ clientes, onSelect, selectedName }: any) {
+// Interface para definir a estrutura do cliente esperado
+interface Cliente {
+  id: string | number;
+  name: string;
+  [key: string]: any; // Permite outras propriedades vindas do hook useEASync
+}
+
+// Interface para as propriedades do componente
+interface ClienteSelectorProps {
+  clientes: Cliente[];
+  onSelect: (cliente: Cliente) => void;
+  selectedName: string;
+}
+
+export function ClienteSelector({
+  clientes,
+  onSelect,
+  selectedName,
+}: ClienteSelectorProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,7 +58,7 @@ export function ClienteSelector({ clientes, onSelect, selectedName }: any) {
           <CommandList>
             <CommandEmpty>Cliente não encontrado.</CommandEmpty>
             <CommandGroup>
-              {clientes.map((cliente: any) => (
+              {clientes.map((cliente) => (
                 <CommandItem
                   key={cliente.id}
                   value={cliente.name}
