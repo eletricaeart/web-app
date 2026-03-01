@@ -14,9 +14,18 @@ import {
   WhatsappLogo,
   EnvelopeSimple,
   MapPin,
+  DotsThreeOutlineVertical,
+  Notebook,
 } from "@phosphor-icons/react";
 import { getCleanDate } from "@/utils/helpers";
 import { toast } from "sonner";
+
+/* shadcn components */
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import "../Clientes.css";
 
@@ -51,6 +60,14 @@ export default function ClientePerfil() {
     (n: any) => String(n.clienteId) === String(client.id),
   );
 
+  // handler para deletar o cliente
+  const handleDelete = async () => {
+    if (confirm("Excluir este cliente permanentemente?")) {
+      await saveClient({ id: client.id }, "delete");
+      router.replace("/clientes"); // Substitui a pilha para não voltar pro perfil deletado
+    }
+  };
+
   const AVATARS = {
     masc: "/pix/avatar/default_avatar_masc.webp",
     fem: "/pix/avatar/default_avatar_fem.webp",
@@ -60,14 +77,69 @@ export default function ClientePerfil() {
     <>
       <AppBar
         title="Perfil do Cliente"
-        backAction={() => router.back()}
+        backAction={() => router.push("/clientes")}
         options={
-          <button
-            onClick={() => router.push(`/clientes/novo?id=${client.id}`)}
-            style={{ background: "none", border: "none", color: "white" }}
-          >
-            <Pen size={24} weight="duotone" />
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                style={{ background: "none", border: "none", color: "white" }}
+              >
+                <DotsThreeOutlineVertical size={26} weight="bold" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-52 p-0 bg-white shadow-xl border-none z-[10000] overflow-hidden"
+              align="end"
+            >
+              <div className="flex flex-col">
+                {[
+                  {
+                    label: " Editar Perfil",
+                    icon: <Pen size={20} color="#29f" weight="duotone" />,
+                    option: () => router.push(`/clientes/novo?id=${client.id}`),
+                  },
+                  {
+                    option: () =>
+                      router.push(`/orcamentos/novo?clienteId=${client.id}`),
+                    icon: <FilePlus size={20} color="#29f" weight="duotone" />,
+                    label: "Novo Orçamento",
+                  },
+                  {
+                    option: () =>
+                      router.push(`/notas/novo?clienteId=${client.id}`),
+                    icon: <Notebook size={20} color="#29f" weight="duotone" />,
+                    label: "Nova Nota Técnica",
+                  },
+                  {
+                    className:
+                      "menu-item-pop w-full p-2 flex items-center cursor-pointer text-red-500 border-t border-slate-300 bg-red-100",
+                    option: () => {
+                      handleDelete();
+                    },
+                    icon: <Trash size={20} color="#932" weight="duotone" />,
+                    label: "Excluir Cliente",
+                  },
+                ].map((O, i) => (
+                  <View
+                    tag="appbar-btn"
+                    className={
+                      O?.className
+                        ? O.className
+                        : "menu-item-pop w-full p-2 flex items-center cursor-pointer"
+                    }
+                    key={i}
+                    onClick={() => {
+                      O.option();
+                    }}
+                  >
+                    <span className="w-full flex p-2 items-center gap-4">
+                      {O.icon} {O.label}
+                    </span>
+                  </View>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         }
       />
 

@@ -5,11 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
-import {
-  CircleNotch,
-  FloppyDisk,
-  MagnifyingGlass,
-} from "@phosphor-icons/react";
+import { CircleNotch, FloppyDisk, MapPinPlus } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 /* shadcn components */
@@ -105,7 +101,12 @@ export default function ClienteForm() {
 
     if (res.success) {
       toast.success(editId ? "Cliente atualizado" : "Cliente cadastrado");
-      router.push(editId ? `/clientes/${editId}` : "/clientes");
+      // REGRA: router.replace remove a página de formulário da pilha de voltar
+      if (editId) {
+        router.replace(`/clientes/${editId}`);
+      } else {
+        router.replace("/clientes");
+      }
     } else {
       toast.error("Erro ao salvar dados");
     }
@@ -211,7 +212,7 @@ export default function ClienteForm() {
                     onBlur={handleCepBlur}
                     placeholder="00000-000"
                   />
-                  <MagnifyingGlass
+                  <MapPinPlus
                     size={20}
                     className="absolute right-3 top-3 opacity-30"
                   />
