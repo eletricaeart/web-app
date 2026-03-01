@@ -3,6 +3,15 @@ import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { toast } from "sonner";
 
+/**
+ * Interface para a resposta padrão da API (GAS/Middleware)
+ */
+interface ApiResponse {
+  status: "success" | "created" | "updated" | "error";
+  message?: string;
+  id?: string | number;
+}
+
 export function useData<T>(entity: string) {
   const { mutate } = useSWRConfig();
   const { data, error, isLoading } = useSWR<T[]>(
@@ -12,9 +21,9 @@ export function useData<T>(entity: string) {
 
   // Função para salvar (Create ou Update)
   const saveData = async (
-    payload: any,
+    payload: Partial<T> & { id?: string | number },
     action: "create" | "update" = "create",
-  ) => {
+  ): Promise<{ success: boolean; id?: string | number }> => {
     try {
       // CORREÇÃO: Se não houver ID e for criação, enviamos o TEMP_ para o GAS disparar o gerador
       const dataWithId = {
@@ -29,7 +38,7 @@ export function useData<T>(entity: string) {
         body: JSON.stringify({ action, ...dataWithId }),
       });
 
-      const result = await res.json();
+      const result: ApiResponse = await res.json();
 
       // Verifique se o GAS retornou erro de ID duplicado
       if (result.status === "error") {
@@ -46,8 +55,11 @@ export function useData<T>(entity: string) {
       }
 
       throw new Error(result.message || "Erro desconhecido");
-    } catch (err: any) {
-      toast.error("Erro ao salvar", { description: err.message });
+    } catch (err) {
+      // Tratamento seguro de erro para TypeScript (substituindo any)
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error("Erro ao salvar", { description: errorMessage });
       return { success: false };
     }
   };

@@ -1,23 +1,31 @@
+// components/forms/ClauseManager.tsx
 "use client";
 
-import { BudgetService } from "@/lib/types/budget";
-import {
-  Plus,
-  Trash,
-  ListPlus,
-  CaretDown,
-  CaretUp,
-} from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
+import { Trash } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import View from "@/components/layout/View";
 import styles from "./ClauseManager.module.css";
 
+/**
+ * Interfaces para garantir a tipagem estrita do Gerenciador de Cláusulas
+ */
+interface ClauseItem {
+  id: number;
+  subtitulo: string;
+  content: string;
+}
+
+interface Clause {
+  id: number;
+  titulo: string;
+  items: ClauseItem[];
+}
+
 interface ClauseManagerProps {
-  clauses: any[];
-  onClausesChange: (newClauses: any[]) => void;
+  clauses: Clause[];
+  onClausesChange: (newClauses: Clause[]) => void;
 }
 
 export default function ClauseManager({
@@ -25,7 +33,7 @@ export default function ClauseManager({
   onClausesChange,
 }: ClauseManagerProps) {
   const addClause = () => {
-    const newClause = {
+    const newClause: Clause = {
       id: Date.now(),
       titulo: "",
       items: [{ id: Date.now() + 1, subtitulo: "", content: "" }],
@@ -60,7 +68,7 @@ export default function ClauseManager({
   const updateItem = (
     clauseId: number,
     itemId: number,
-    field: string,
+    field: keyof ClauseItem,
     value: string,
   ) => {
     onClausesChange(
@@ -115,19 +123,17 @@ export default function ClauseManager({
                 className={styles.clauseTitleInput}
                 placeholder="Ex: Descrição dos Serviços"
                 value={clause.titulo}
-                onChange={(e) => updateClauseTitle(clause.id, e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  updateClauseTitle(clause.id, e.target.value)
+                }
               />
             </View>
           </View>
 
           <View tag="subclause-field">
-            {clause.items.map((item: any, iIdx: number) => (
-              <>
-                <View
-                  tag="subclause"
-                  key={item.id}
-                  className={styles.subclause}
-                >
+            {clause.items.map((item, iIdx) => (
+              <React.Fragment key={item.id}>
+                <View tag="subclause" className={styles.subclause}>
                   <View
                     tag="subclause-content"
                     className={styles.subclauseContent}
@@ -138,7 +144,7 @@ export default function ClauseManager({
                         placeholder="Subtítulo (Ex: Cozinha)"
                         className="subclause-subtitle"
                         value={item.subtitulo}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           updateItem(
                             clause.id,
                             item.id,
@@ -149,10 +155,7 @@ export default function ClauseManager({
                       />
                     </label>
 
-                    <label
-                      // className="subclause-before-options"
-                      className={styles.subclauseHelpTips}
-                    >
+                    <label className={styles.subclauseHelpTips}>
                       <View
                         style={{
                           display: "flex",
@@ -162,18 +165,10 @@ export default function ClauseManager({
                         <span className="label-text">Conteúdo</span>
                         <span className={styles.btn_helpTips}>ajuda</span>
                       </View>
-                      {/*<BlockNoteTest
-                        bg="#f5f5f5"
-                        radius="9px"
-                        value={item.content}
-                        onChange={(val) =>
-                          updateItem(clause.id, item.id, "content", val)
-                        }
-                        placeholder="Use / para comandos..."
-                      />*/}
+
                       <TipTapEditor
                         value={item.content}
-                        onChange={(val) =>
+                        onChange={(val: string) =>
                           updateItem(clause.id, item.id, "content", val)
                         }
                         bg="#f5f5f5"
@@ -206,7 +201,7 @@ export default function ClauseManager({
                     </View>
                   </View>
                 </View>
-              </>
+              </React.Fragment>
             ))}
           </View>
 

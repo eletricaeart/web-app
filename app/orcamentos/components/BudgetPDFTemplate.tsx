@@ -8,10 +8,48 @@ import {
   Font,
 } from "@react-pdf/renderer";
 
+// --- Interfaces para Tipagem do PDF ---
+
+interface Detalhe {
+  tipo: "t6" | "tagc" | "ul" | "brk" | string;
+  conteudo: string | string[];
+}
+
+interface Item {
+  subtitulo: string;
+  detalhes: Detalhe[];
+}
+
+interface Servico {
+  titulo: string;
+  itens: Item[];
+}
+
+interface BudgetPDFProps {
+  data: {
+    id?: string | number;
+    docTitle: {
+      emissao: string;
+      validade: string;
+      subtitle: string;
+      text: string;
+    };
+    cliente: {
+      name: string;
+      rua: string;
+      num: string;
+      bairro: string;
+      cidade: string;
+      cep?: string;
+    };
+    servicos: Servico[];
+  };
+}
+
 // Registro da fonte Montserrat (que você usa nos títulos do app)
 Font.register({
   family: "Montserrat",
-  src: "https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm453RRn714toMthpzhjdw.ttf",
+  src: "https://fonts.gstatic.com",
 });
 
 const styles = StyleSheet.create({
@@ -163,11 +201,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export const BudgetPDFTemplate = ({ data }) => {
-  const getFormattedDate = (date) =>
-    date.includes("T")
+export const BudgetPDFTemplate = ({ data }: BudgetPDFProps) => {
+  const getFormattedDate = (date: string) => {
+    if (!date) return "";
+    return date.includes("T")
       ? date.split("T")[0].split("-").reverse().join("/")
       : date;
+  };
 
   return (
     <Document title={`Orçamento_${data?.cliente?.name}`}>
@@ -202,7 +242,7 @@ export const BudgetPDFTemplate = ({ data }) => {
               Endereço:{" "}
               {`${data?.cliente?.rua}, ${data?.cliente?.num} - ${data?.cliente?.bairro}`}
             </Text>
-            <Text>{`${data?.cliente?.cidade} - ${data?.cliente?.cep}`}</Text>
+            <Text>{`${data?.cliente?.cidade} - ${data?.cliente?.cep || ""}`}</Text>
           </View>
         </View>
 
@@ -234,8 +274,8 @@ export const BudgetPDFTemplate = ({ data }) => {
                           <Text>{d.conteudo}</Text>
                         </View>
                       );
-                    if (d.tipo === "ul")
-                      return d.conteudo.map((li, lIdx) => (
+                    if (d.tipo === "ul" && Array.isArray(d.conteudo))
+                      return d.conteudo.map((li: string, lIdx: number) => (
                         <Text key={lIdx} style={styles.textBullet}>
                           • {li}
                         </Text>

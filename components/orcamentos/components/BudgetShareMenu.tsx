@@ -2,12 +2,7 @@
 
 import React, { useState } from "react";
 import { domToBlob } from "modern-screenshot";
-import {
-  ShareNetwork,
-  Image as ImageIcon,
-  FilePdf,
-  SpinnerGap,
-} from "@phosphor-icons/react";
+import { ImageIcon, FilePdf, SpinnerGap } from "@phosphor-icons/react";
 import {
   Drawer,
   DrawerContent,
@@ -16,13 +11,28 @@ import {
 } from "@/components/ui/drawer";
 import { toast } from "sonner";
 
+// Interfaces para garantir a tipagem estrita
+interface BudgetShareData {
+  id: string | number;
+  [key: string]: any;
+}
+
+interface BudgetShareMenuProps {
+  budgetRef: React.RefObject<HTMLDivElement | null>;
+  clientName: string;
+  data: BudgetShareData;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  budgetTitle?: string; // Prop opcional baseada no uso anterior
+}
+
 export default function BudgetShareMenu({
   budgetRef,
   clientName,
   data,
   open,
   onOpenChange,
-}) {
+}: BudgetShareMenuProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   // 1. Compartilhar como Imagem (Rápido/Local)
@@ -31,15 +41,24 @@ export default function BudgetShareMenu({
     setIsGenerating(true);
     try {
       const blob = await domToBlob(budgetRef.current, { scale: 2 });
-      const file = new File([blob!], `Orcamento_${clientName}.png`, {
+      if (!blob) throw new Error("Falha ao gerar blob");
+
+      const file = new File([blob], `Orcamento_${clientName}.png`, {
         type: "image/png",
       });
 
-      if (navigator.share) {
+      if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: "Orçamento Elétrica & Art",
         });
+      } else {
+        // Fallback: Download se não houver suporte a share de arquivos
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Orcamento_${clientName}.png`;
+        a.click();
       }
     } catch (err) {
       toast.error("Erro ao gerar imagem");
@@ -61,7 +80,7 @@ export default function BudgetShareMenu({
         type: "application/pdf",
       });
 
-      if (navigator.share) {
+      if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Orçamento PDF" });
       } else {
         const url = window.URL.createObjectURL(blob);
@@ -69,6 +88,7 @@ export default function BudgetShareMenu({
         a.href = url;
         a.download = `Orcamento_${clientName}.pdf`;
         a.click();
+        window.URL.revokeObjectURL(url);
       }
     } catch (err) {
       toast.error("Erro ao gerar PDF no servidor");
@@ -89,6 +109,7 @@ export default function BudgetShareMenu({
 
         <div className="grid grid-cols-2 gap-4 p-4">
           <button
+            type="button"
             onClick={handleShareAsImg}
             disabled={isGenerating}
             className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-3xl active:scale-95 transition-all"
@@ -106,6 +127,7 @@ export default function BudgetShareMenu({
           </button>
 
           <button
+            type="button"
             onClick={handlePrintBackend}
             disabled={isGenerating}
             className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-3xl active:scale-95 transition-all"

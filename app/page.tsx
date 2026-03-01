@@ -3,7 +3,6 @@
 
 import React from "react";
 import { useEASync } from "@/hooks/useEASync";
-import { useAuth } from "@/hooks/useAuth"; // Vamos criar esse pequeno hook abaixo
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,14 +18,22 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
-export default function HomePage() {
-  const { data: users } = useEASync("usuarios");
-  // No futuro, pegaremos o ID do usuário logado do seu sistema de Auth
-  // Por enquanto, pegamos o primeiro da lista para simular a Home dinâmica
-  const currentUser = users[0] || { name: "Usuário", role: "Colaborador" };
+// Interface para tipar o usuário na Home
+interface UsuarioHome {
+  id?: string | number;
+  name: string;
+  role: string;
+  photo?: string;
+}
 
-  // Nota: No Next.js, você pode buscar o usuário via Server Component,
-  // mas para a UI da Home, vamos usar um hook simples.
+export default function HomePage() {
+  const { data: users } = useEASync<UsuarioHome>("usuarios");
+
+  // Fallback seguro para evitar erro de undefined no split do nome
+  const currentUser = users[0] || {
+    name: "Usuário Sistema",
+    role: "Colaborador",
+  };
 
   return (
     <main className="min-h-svh bg-slate-50 p-6 pb-24">
@@ -34,21 +41,17 @@ export default function HomePage() {
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Olá, {currentUser.name.split(" ")[0]}
+            Olá, {(currentUser.name || "Usuário").split(" ")[0]}
           </h1>
           <p className="text-slate-500 text-sm">Painel Elétrica & Art</p>
         </div>
-        <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg">
-          <Lightning size={24} weight="duotone" className="text-white" />
-        </div>
         <Link href="/perfil">
-          <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
+          <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
             {currentUser.photo ? (
               <Image
                 src={currentUser.photo}
                 alt="Perfil"
-                width={48}
-                height={48}
+                fill
                 className="object-cover"
               />
             ) : (
@@ -87,8 +90,6 @@ export default function HomePage() {
             icon={<Lightning size={28} weight="duotone" />}
             title="Equipe"
             count="2"
-            color="bg-amber-50"
-            textColor="text-amber-600"
           />
           {/* CARD DE PERFIL (Para o Rafael se ver) */}
           <MenuCard
@@ -130,8 +131,23 @@ export default function HomePage() {
   );
 }
 
-// Componentes Auxiliares (Poderiam estar em arquivos separados)
-function QuickAction({ href, icon, title, description, color }: any) {
+// --- Interfaces para os Componentes Auxiliares ---
+
+interface QuickActionProps {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: string;
+}
+
+function QuickAction({
+  href,
+  icon,
+  title,
+  description,
+  color,
+}: QuickActionProps) {
   return (
     <Link href={href}>
       <Card
@@ -152,19 +168,24 @@ function QuickAction({ href, icon, title, description, color }: any) {
   );
 }
 
-function MenuCard({ href, icon, title, count }: any) {
+interface MenuCardProps {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  count: string;
+}
+
+function MenuCard({ href, icon, title, count }: MenuCardProps) {
   return (
     <Link href={href}>
-      <Card className="border-none shadow-sm hover:shadow-md active:scale-[0.95] transition-all rounded-3xl">
+      <Card className="border-none shadow-sm hover:shadow-md active:scale-[0.95] transition-all rounded-3xl h-full">
         <CardContent className="p-6 flex flex-col gap-3">
           <div className="text-indigo-600 bg-indigo-50 w-fit p-3 rounded-2xl">
             {icon}
           </div>
           <div>
             <h3 className="font-bold text-slate-800">{title}</h3>
-            <p className="text-xs text-slate-400 font-medium">
-              {count} registros
-            </p>
+            <p className="text-xs text-slate-400 font-medium">{count}</p>
           </div>
         </CardContent>
       </Card>

@@ -20,18 +20,33 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
+// Interface reutilizada para manter a consistência com o módulo de equipe
+interface Usuario {
+  id: string | number;
+  name: string;
+  email: string;
+  role: string;
+  photo?: string;
+  specialty?: string;
+  about?: string;
+  whatsapp?: string;
+}
+
 export default function PerfilUsuario() {
   const router = useRouter();
-  const { data: users } = useEASync("usuarios");
-  const [user, setUser] = useState<any>(null);
+  const { data: users } = useEASync<Usuario>("usuarios");
+  const [user, setUser] = useState<Usuario | null>(null);
 
   useEffect(() => {
     if (users.length > 0) {
       // LOGICA DE OURO:
-      // Aqui, 'emailLogado' deve vir do seu hook de Auth ou localStorage
-      const emailLogado = localStorage.getItem("user_email");
+      // Proteção para SSR: localStorage só existe no cliente
+      const emailLogado =
+        typeof window !== "undefined"
+          ? localStorage.getItem("user_email")
+          : null;
 
-      const identity = users.find((u: any) => u.email === emailLogado);
+      const identity = users.find((u) => u.email === emailLogado);
 
       // Se achar o usuário logado, mostra ele.
       // Se não (para teste), mostra o primeiro da lista.
@@ -62,7 +77,7 @@ export default function PerfilUsuario() {
           <div className="w-28 h-28 rounded-full border-4 border-white shadow-2xl overflow-hidden relative">
             <Image
               src={user.photo || "/pix/avatar/default_avatar_masc.webp"}
-              alt={user.name}
+              alt={user.name || "Usuário"}
               fill
               className="object-cover"
             />
@@ -167,6 +182,10 @@ export default function PerfilUsuario() {
               className="w-full justify-center text-red-500 hover:text-red-600 hover:bg-red-50 gap-3 h-14 rounded-2xl border border-red-100"
               onClick={() => {
                 /* Lógica de Logout */
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("user_email");
+                  router.push("/login");
+                }
               }}
             >
               <SignOut size={24} weight="bold" />

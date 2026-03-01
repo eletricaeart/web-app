@@ -25,13 +25,6 @@ interface TextProps {
 
 /**
  * Componente Text com suporte a efeito de contorno (Stroke) via CSS Variables.
- *
- * @param {TextProps} props - Propriedades do componente.
- *
- * @description
- * Este componente utiliza o atributo `data-text` e variáveis CSS para criar um efeito de contorno
- * robusto que é fiel ao antigo web-component `<ea-text>`. É otimizado para o Next.js
- * utilizando CSS Modules para evitar conflitos de escopo.
  */
 export default function Text({
   children,
@@ -47,7 +40,8 @@ export default function Text({
    * Extensão do tipo CSSProperties para aceitar variáveis CSS personalizadas
    * sem erros de tipagem do TypeScript.
    */
-  const inlineStyles = {
+  const inlineStyles: React.CSSProperties = {
+    // @ts-ignore - Suporte para variáveis CSS customizadas
     "--shadow-color": shadow,
     "--shadow-stroke": shadowStroke,
     "--shadow-text-color": shadowTextColor,
@@ -55,13 +49,19 @@ export default function Text({
     fontSize: size,
     fontFamily: font,
     margin: margin,
-  } as React.CSSProperties & { [key: string]: string | undefined };
+  };
+
+  // Garante que o data-text seja uma string para o atributo HTML
+  const textContent =
+    typeof children === "string" || typeof children === "number"
+      ? String(children)
+      : "";
 
   return (
     <div className={styles.container}>
       <span
         className={styles.textShadow}
-        data-text={children}
+        data-text={textContent}
         style={inlineStyles}
       >
         {children}

@@ -17,16 +17,47 @@ import ClientForm from "@/components/forms/ClientForm"; // O componente com Draw
 
 import "../../clientes/Clientes.css"; // Reutilizando os estilos de cards e formulários
 
+// Interfaces para suportar o TypeScript sem 'any'
+interface Cliente {
+  id: string | number;
+  name: string;
+  cep?: string;
+  rua?: string;
+  num?: string;
+  bairro?: string;
+  cidade?: string;
+  complemento?: string;
+  obs?: string;
+  address?: {
+    cep?: string;
+    rua?: string;
+    num?: string;
+    bairro?: string;
+    cidade?: string;
+  };
+}
+
+interface NotaFormData {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  clienteId: string | number;
+  clienteNome: string;
+  important: boolean;
+  owner_id: string;
+}
+
 export default function NovaNota() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const clienteIdParam = searchParams.get("clienteId");
 
-  const { data: clients } = useEASync("clientes") as { data: any[] };
+  const { data: clients } = useEASync<Cliente>("clientes");
   const { save: saveNota } = useEASync("notas");
 
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<NotaFormData>({
     id: "",
     title: "",
     content: "",
@@ -34,8 +65,17 @@ export default function NovaNota() {
     clienteId: "",
     clienteNome: "",
     important: false,
-    owner_id: localStorage.getItem("user_email") || "",
+    owner_id: "", // Inicializado vazio para evitar erro de hidratação (SSR vs Client)
   });
+
+  // Hydration fix para o owner_id
+  useEffect(() => {
+    const userEmail =
+      typeof window !== "undefined"
+        ? localStorage.getItem("user_email") || ""
+        : "";
+    setFormData((prev) => ({ ...prev, owner_id: userEmail }));
+  }, []);
 
   // Se vier um clienteId via URL (ex: vindo do perfil do cliente)
   useEffect(() => {
@@ -64,7 +104,7 @@ export default function NovaNota() {
       id: `NT-${Date.now()}`,
     };
 
-    const res = await saveNota(payload, "create");
+    const res = (await saveNota(payload, "create")) as { success: boolean };
     if (res.success) {
       toast.success("Nota técnica salva!");
       router.replace("/notas");
@@ -85,15 +125,28 @@ export default function NovaNota() {
             <View tag="card-ea-header">VINCULAR CLIENTE</View>
             <View tag="card-ea-body">
               <ClientForm
-                clientData={{ name: formData.clienteNome }}
+                clientData={{
+                  name: formData.clienteNome,
+                  cep: "",
+                  rua: "",
+                  num: "",
+                  bairro: "",
+                  cidade: "",
+                  complemento: "",
+                  obs: "",
+                }}
                 clientsCache={clients}
-                onClientChange={(client) =>
+                onClientChange={(client: Partial<Cliente>) => {
+                  // Busca o ID no cache já que o ClientForm não retorna o ID no onClientChange
+                  const fullClient = clients.find(
+                    (c) => c.name === client.name,
+                  );
                   setFormData((prev) => ({
                     ...prev,
-                    clienteId: client.id || prev.clienteId,
-                    clienteNome: client.name,
-                  }))
-                }
+                    clienteId: fullClient?.id || prev.clienteId,
+                    clienteNome: client.name || "",
+                  }));
+                }}
                 onNewClientClick={() => router.push("/clientes/novo")}
               />
             </View>
@@ -109,7 +162,7 @@ export default function NovaNota() {
                   className="input"
                   placeholder="Ex: Manutenção Quadro Geral"
                   value={formData.title}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
                 />
@@ -121,7 +174,7 @@ export default function NovaNota() {
                   type="date"
                   className="input"
                   value={formData.date}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, date: e.target.value })
                   }
                 />
@@ -133,7 +186,7 @@ export default function NovaNota() {
                   className="input h-32 p-2"
                   placeholder="Descreva os serviços executados, materiais utilizados ou pendências..."
                   value={formData.content}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setFormData({ ...formData, content: e.target.value })
                   }
                 />
@@ -161,7 +214,7 @@ export default function NovaNota() {
                   type="checkbox"
                   className="w-6 h-6 rounded-md accent-indigo-600"
                   checked={formData.important}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, important: e.target.checked })
                   }
                 />

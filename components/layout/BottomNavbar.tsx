@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -9,8 +9,16 @@ import {
   FileText,
   Notebook,
   UserCircle,
+  Icon, // Importamos o tipo Icon para garantir a tipagem correta
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+
+// Interface para definir a estrutura dos itens de navegação
+interface NavItem {
+  label: string;
+  href: string;
+  icon: Icon; // Tipagem oficial do Phosphor Icons
+}
 
 export default function BottomNavbar() {
   const [mounted, setMounted] = useState(false);
@@ -22,7 +30,7 @@ export default function BottomNavbar() {
 
   if (!mounted) return null;
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { label: "Home", href: "/", icon: House },
     { label: "Clientes", href: "/clientes", icon: Users },
     { label: "Orçamentos", href: "/orcamentos", icon: FileText },
@@ -33,10 +41,12 @@ export default function BottomNavbar() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-slate-100 px-6 pb-6 pt-3 flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
       {navItems.map((item) => {
+        // Lógica de ativação ajustada para evitar falsos positivos
         const isActive =
           pathname === item.href ||
-          (item.href !== "/" && pathname.startsWith(item.href));
-        const Icon = item.icon;
+          (item.href !== "/" && pathname?.startsWith(item.href));
+
+        const NavIcon = item.icon;
 
         return (
           <Link
@@ -52,7 +62,7 @@ export default function BottomNavbar() {
                   : "text-slate-400 group-active:scale-90",
               )}
             >
-              <Icon size={24} weight={isActive ? "fill" : "regular"} />
+              <NavIcon size={24} weight={isActive ? "fill" : "regular"} />
             </div>
             <span
               className={cn(

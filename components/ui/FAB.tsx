@@ -1,3 +1,4 @@
+// components/ui/FAB.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -7,7 +8,8 @@ import "./FAB.css";
 /**
  * Interface que define a estrutura de uma ação individual do FAB.
  */
-interface FABAction {
+export interface FABAction {
+  // Exportada para ser usada em outros arquivos (como page.tsx)
   /** Ícone a ser exibido (String, Emoji ou Elemento React) */
   icon: React.ReactNode;
   /** Texto descritivo exibido ao lado do mini-botão */
@@ -28,27 +30,32 @@ interface FABProps {
 
 /**
  * Componente Floating Action Button (FAB) adaptado para Next.js.
- *
- * @param {FABAction[]} props.actions - Lista de objetos { icon, label, action }.
- * @param {boolean} props.hasBottomNav - Define se o FAB deve considerar o espaço da barra inferior (Default: true).
- *
- * @description
- * Este componente gerencia um menu flutuante expansível.
- * Se houver apenas uma ação, o ícone principal assume o ícone dessa ação.
- * Se houver múltiplas, ele exibe um alternador (+) que abre as opções com animação em cascata.
- * Inclui um overlay de desfoque (blur) quando aberto.
  */
 export default function FAB({ actions = [], hasBottomNav = true }: FABProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   /** Alterna o estado de abertura do menu */
-  const toggleFab = () => setIsOpen(!isOpen);
+  const toggleFab = () => {
+    // Se houver apenas uma ação, executa direto sem abrir o menu
+    if (actions.length === 1 && !isOpen) {
+      actions[0].action();
+      return;
+    }
+    setIsOpen(!isOpen);
+  };
+
+  // Se não houver ações, não renderiza nada para evitar botão vazio
+  if (actions.length === 0) return null;
 
   return (
     <>
       {/* Overlay de Desfoque: Fecha o menu ao clicar fora */}
       {isOpen && (
-        <div className="blurOverlay" onClick={toggleFab} aria-hidden="true" />
+        <div
+          className="blurOverlay"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
       )}
 
       <View
@@ -60,7 +67,9 @@ export default function FAB({ actions = [], hasBottomNav = true }: FABProps) {
           className={`fab ${isOpen ? "fabActive" : ""}`}
           onClick={toggleFab}
           type="button"
+          aria-expanded={isOpen}
         >
+          {/* Prioridade: "+" se aberto, "+" se lista > 1, ícone da ação se lista === 1 */}
           {isOpen ? "+" : actions.length > 1 ? "+" : actions[0]?.icon}
         </button>
 
@@ -69,16 +78,17 @@ export default function FAB({ actions = [], hasBottomNav = true }: FABProps) {
           <div className="fabOptions">
             {actions.map((opt, index) => (
               <div
-                key={index}
+                key={`${opt.label}-${index}`} // Key mais estável que apenas index
                 className="optionItem"
                 style={{ animationDelay: `${index * 50}ms` }}
-                onClick={() => {
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation(); // Evita conflito com o overlay
                   opt.action();
                   setIsOpen(false);
                 }}
               >
                 <span className="label">{opt.label}</span>
-                <button className="miniFab" type="button">
+                <button className="miniFab" type="button" tabIndex={-1}>
                   {opt.icon}
                 </button>
               </div>

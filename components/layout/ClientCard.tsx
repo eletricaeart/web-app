@@ -14,7 +14,7 @@ interface ClientData {
   id?: string | number;
   name: string;
   /** Gênero do cliente para seleção do avatar ('masc' ou 'fem') */
-  gender: "masc" | "fem" | string;
+  gender?: "masc" | "fem" | string; // Tornado opcional para evitar erro se não existir no objeto
   cidade?: string;
   doc?: boolean | string;
   photo?: string;
@@ -63,10 +63,12 @@ export default function ClientCard({
           <AvatarImage
             src={
               client.photo ||
-              defaultAvatars[client.gender as keyof typeof defaultAvatars] ||
+              defaultAvatars[
+                (client.gender || "masc") as keyof typeof defaultAvatars
+              ] ||
               defaultAvatars.masc
             }
-            alt={client.name}
+            alt={client.name || "Cliente"}
             className="object-cover"
           />
           <AvatarFallback>
@@ -81,7 +83,7 @@ export default function ClientCard({
 
       <View tag="client-info" onClick={onClick} className="cursor-pointer">
         <h4 className="text-[#333] capitalize font-bold">
-          {client.name.toLowerCase()}
+          {(client.name || "Sem Nome").toLowerCase()}
         </h4>
         <p className="text-xs text-slate-500">
           {client.cidade || "Cidade não informada"}

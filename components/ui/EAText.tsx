@@ -1,16 +1,23 @@
-// import React from "react";
+// components/ui/EAText.tsx
+import React from "react";
 import styles from "./EAText.module.css";
 
 /**
+ * Interface de Tipagem para o componente EAText
+ */
+interface EATextProps {
+  children: React.ReactNode;
+  shadow?: string;
+  shadowStroke?: string;
+  shadowTextColor?: string;
+  color?: string;
+  size?: string;
+  font?: string;
+  margin?: string;
+}
+
+/**
  * Componente EAText (antigo <ea-text>)
- * @param {string} children - Conteúdo do texto
- * @param {string} shadow - Cor do contorno (stroke)
- * @param {string} shadowStroke - Largura do contorno
- * @param {string} shadowTextColor - Cor do preenchimento da sombra (atrás)
- * @param {string} color - Cor principal do texto
- * @param {string} size - Tamanho da fonte (ex: 1.5rem)
- * @param {string} font - Família da fonte
- * @param {string} margin - Margem externa
  */
 export default function EAText({
   children,
@@ -21,22 +28,23 @@ export default function EAText({
   size,
   font,
   margin,
-}) {
+}: EATextProps) {
+  // Tipagem estendida para aceitar Variáveis CSS customizadas
   const inlineStyles = {
-    "--shadow-color": shadow,
+    "--shadow-color": shadow || "transparent",
     "--shadow-stroke": shadowStroke,
     "--shadow-text-color": shadowTextColor,
     "--text-color": color,
     fontSize: size,
     fontFamily: font,
     margin: margin,
-  };
+  } as React.CSSProperties;
 
   return (
     <div className={styles.container}>
       <span
         className={styles.textShadow}
-        data-text={children}
+        data-text={children?.toString()}
         style={inlineStyles}
       >
         {children}

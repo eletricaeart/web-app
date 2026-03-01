@@ -46,8 +46,11 @@ export default function LoginPage() {
 
       router.push("/");
       router.refresh(); // Força o Next a revalidar o middleware
-    } catch (err: any) {
-      toast.error("Erro de Login", { description: err.message });
+    } catch (err) {
+      // Correção de tipagem para o erro (evitando 'any')
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error("Erro de Login", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -87,7 +90,9 @@ export default function LoginPage() {
                   placeholder="rafael@eletrica.com"
                   className="pl-10 h-12 bg-slate-100 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-600"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEmail(e.target.value)
+                  }
                   required
                 />
               </div>
@@ -107,7 +112,9 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   className="pl-10 h-12 bg-slate-100 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-600"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
                   required
                 />
               </div>
