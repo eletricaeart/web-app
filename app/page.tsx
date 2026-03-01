@@ -1,5 +1,8 @@
+// app/page.tsx
 "use client";
 
+import React from "react";
+import { useEASync } from "@/hooks/useEASync";
 import { useAuth } from "@/hooks/useAuth"; // Vamos criar esse pequeno hook abaixo
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,10 +13,18 @@ import {
   SignOut,
   Lightning,
   CaretRight,
+  UserCircle,
+  ChatCircleDots,
 } from "@phosphor-icons/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function HomePage() {
+  const { data: users } = useEASync("usuarios");
+  // No futuro, pegaremos o ID do usuário logado do seu sistema de Auth
+  // Por enquanto, pegamos o primeiro da lista para simular a Home dinâmica
+  const currentUser = users[0] || { name: "Usuário", role: "Colaborador" };
+
   // Nota: No Next.js, você pode buscar o usuário via Server Component,
   // mas para a UI da Home, vamos usar um hook simples.
 
@@ -23,13 +34,28 @@ export default function HomePage() {
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Olá, Rafael
+            Olá, {currentUser.name.split(" ")[0]}
           </h1>
           <p className="text-slate-500 text-sm">Painel Elétrica & Art</p>
         </div>
         <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg">
           <Lightning size={24} weight="duotone" className="text-white" />
         </div>
+        <Link href="/perfil">
+          <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
+            {currentUser.photo ? (
+              <Image
+                src={currentUser.photo}
+                alt="Perfil"
+                width={48}
+                height={48}
+                className="object-cover"
+              />
+            ) : (
+              <Lightning size={24} weight="duotone" className="text-white" />
+            )}
+          </div>
+        </Link>
       </header>
 
       {/* Grid de Atalhos */}
@@ -63,6 +89,26 @@ export default function HomePage() {
             count="2"
             color="bg-amber-50"
             textColor="text-amber-600"
+          />
+          {/* CARD DE PERFIL (Para o Rafael se ver) */}
+          <MenuCard
+            href="/perfil"
+            icon={<UserCircle size={28} weight="duotone" />}
+            title="Meu Perfil"
+            count="Editar"
+          />
+          {/* TERRENO PREPARADO: Card de Chat (Futuro) */}
+          <MenuCard
+            href="/chat"
+            icon={
+              <ChatCircleDots
+                size={28}
+                weight="duotone"
+                className="text-emerald-500"
+              />
+            }
+            title="Mensagens"
+            count="Em breve"
           />
         </div>
       </div>
