@@ -1,0 +1,54 @@
+/* toolbar */
+/* Container principal da barra (Toolbar) */
+toolbar {
+  display: flex !important;
+  justify-content: center !important; /* iFood centraliza a barra */
+  align-items: center !important;
+  padding: 12px 1rem !important;
+  background: #f5f5f5 !important; /* Fundo branco como iFood */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+/* Wrapper que imita o input do iFood */
+.ifood-search-wrapper {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  border-radius: 55rem;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #f2f2f2;
+}
+
+/* Estilização do ícone Lucide */
+.ifood-search-icon {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #00559ccc;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* O input propriamente dito */
+.search-input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  width: 100%;
+  font-family: "Poppins", sans-serif !important;
+  font-size: 14px !important;
+  color: #3e3e3e !important;
+  padding: 4px 0 !important;
+  height: auto !important;
+}
+
+.search-input::placeholder {
+  color: #a6a6a6;
+  font-size: 14px;
+}
+/* -- end toolbar --- */

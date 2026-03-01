@@ -1,135 +1,279 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useData } from "@/hooks/useData";
-import { clienteSchema, ClienteFormData } from "@/lib/schemas/cliente";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  CaretLeft,
-  DeviceMobile,
-  User,
-  MapPin,
-  Check,
-} from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEASync } from "@/hooks/useEASync";
+import AppBar from "@/components/layout/AppBar";
+import View from "@/components/layout/View";
+import { CircleNotch, DeviceFloppy, MapPinSearch } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
-export default function NovoClientePage() {
-  const router = useRouter();
-  const { saveData } = useData("clientes");
-  const [loading, setLoading] = useState(false);
+/* shadcn components */
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ClienteFormData>({
-    resolver: zodResolver(clienteSchema),
+import "../Clientes.css";
+
+export default function ClienteForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
+
+  const { data: clients, save: saveClient } = useEASync("clientes");
+
+  const [loading, setLoading] = useState(false);
+  const [fetchingCep, setFetchingCep] = useState(false);
+
+  const [formData, setFormData] = useState({
+    id: "",
+    name: "",
+    gender: "masc",
+    doc: "",
+    whatsapp: "",
+    email: "",
+    cep: "",
+    rua: "",
+    num: "",
+    bairro: "",
+    cidade: "",
   });
 
-  const onSubmit = async (data: ClienteFormData) => {
-    setLoading(true);
-    const result = await saveData(data, "create");
+  // Carrega dados se for Edição
+  useEffect(() => {
+    if (editId && clients.length > 0) {
+      const clientToEdit = clients.find(
+        (c: any) => String(c.id) === String(editId),
+      );
+      if (clientToEdit) {
+        setFormData(clientToEdit);
+      }
+    }
+  }, [editId, clients]);
 
-    if (result.success) {
-      toast.success("Cliente cadastrado!");
-      router.push("/clientes");
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Lógica de busca de CEP original
+  const handleCepBlur = async () => {
+    const cep = formData.cep.replace(/\D/g, "");
+    if (cep.length !== 8) return;
+
+    setFetchingCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setFormData((prev) => ({
+          ...prev,
+          rua: data.logradouro,
+          bairro: data.bairro,
+          cidade: data.localidade,
+        }));
+        toast.success("Endereço preenchido via CEP");
+      }
+    } catch (err) {
+      toast.error("Erro ao buscar CEP");
+    } finally {
+      setFetchingCep(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData.name) return toast.error("Nome é obrigatório");
+
+    setLoading(true);
+    const action = editId ? "update" : "create";
+
+    // Se for novo, o GAS mestre cuidará do ID (TEMP_...),
+    // se for edição, mantemos o ID atual.
+    const payload = {
+      ...formData,
+      id: editId || `TEMP_${Date.now()}`,
+    };
+
+    const res = await saveClient(payload, action);
+
+    if (res.success) {
+      toast.success(editId ? "Cliente atualizado" : "Cliente cadastrado");
+      router.push(editId ? `/clientes/${editId}` : "/clientes");
+    } else {
+      toast.error("Erro ao salvar dados");
     }
     setLoading(false);
   };
 
   return (
-    <main className="min-h-svh bg-slate-50 p-6 pb-24">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => router.back()}
-          className="p-2 -ml-2 text-slate-600 bg-white rounded-full shadow-sm"
-        >
-          <CaretLeft size={20} weight="bold" />
-        </button>
-        <h1 className="text-xl font-bold text-slate-900">Novo Cliente</h1>
-      </div>
+    <>
+      <AppBar
+        title={editId ? "Editar Cliente" : "Novo Cliente"}
+        backAction={() => router.back()}
+      />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <section className="space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-            Identificação
-          </h2>
+      <View tag="page" className="add-client-page">
+        <View tag="page-content">
+          <View tag="card-ea-client" className="add-client-form">
+            <View tag="card-ea-header">IDENTIFICAÇÃO</View>
+            <View tag="card-ea-body">
+              <label>
+                Nome Completo
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Ex: Rafael Silva"
+                />
+              </label>
 
-          <div className="space-y-1">
-            <div className="relative">
-              <User
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={20}
-              />
-              <Input
-                {...register("name")}
-                placeholder="Nome completo do cliente"
-                className={`pl-12 h-14 bg-white border-none rounded-2xl shadow-sm ${errors.name ? "ring-2 ring-red-500" : ""}`}
-              />
-            </div>
-            {errors.name && (
-              <span className="text-red-500 text-xs ml-2">
-                {errors.name.message}
-              </span>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <label>
+                  Gênero
+                  <Select
+                    value={formData.gender}
+                    onValueChange={(val) =>
+                      setFormData({ ...formData, gender: val })
+                    }
+                  >
+                    <SelectTrigger className="h-[45px] mt-1">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="masc">Masculino</SelectItem>
+                      <SelectItem value="fem">Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </label>
+
+                <label>
+                  CPF / CNPJ
+                  <input
+                    name="doc"
+                    value={formData.doc}
+                    onChange={handleChange}
+                    placeholder="000.000.000-00"
+                  />
+                </label>
+              </div>
+            </View>
+          </View>
+
+          <View tag="card-ea-client">
+            <View tag="card-ea-header">CONTATO</View>
+            <View tag="card-ea-body">
+              <label>
+                WhatsApp
+                <input
+                  name="whatsapp"
+                  value={formData.whatsapp}
+                  onChange={handleChange}
+                  placeholder="(00) 00000-0000"
+                />
+              </label>
+              <label className="mt-4">
+                E-mail
+                <input
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="exemplo@email.com"
+                />
+              </label>
+            </View>
+          </View>
+
+          <View tag="card-ea-client">
+            <View
+              tag="card-ea-header"
+              className="flex justify-between items-center"
+            >
+              ENDEREÇO
+              {fetchingCep && (
+                <CircleNotch className="animate-spin text-amber-500" />
+              )}
+            </View>
+            <View tag="card-ea-body">
+              <label>
+                CEP
+                <div className="relative">
+                  <input
+                    name="cep"
+                    value={formData.cep}
+                    onChange={handleChange}
+                    onBlur={handleCepBlur}
+                    placeholder="00000-000"
+                  />
+                  <MapPinSearch
+                    size={20}
+                    className="absolute right-3 top-3 opacity-30"
+                  />
+                </div>
+              </label>
+
+              <div className="grid grid-cols-4 gap-4 mt-4">
+                <label className="col-span-3">
+                  Rua
+                  <input
+                    name="rua"
+                    value={formData.rua}
+                    onChange={handleChange}
+                  />
+                </label>
+                <label>
+                  Nº
+                  <input
+                    name="num"
+                    value={formData.num}
+                    onChange={handleChange}
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <label>
+                  Bairro
+                  <input
+                    name="bairro"
+                    value={formData.bairro}
+                    onChange={handleChange}
+                  />
+                </label>
+                <label>
+                  Cidade
+                  <input
+                    name="cidade"
+                    value={formData.cidade}
+                    onChange={handleChange}
+                  />
+                </label>
+              </div>
+            </View>
+          </View>
+        </View>
+
+        <footer className="footer-btn p-6">
+          <button
+            className="btn-save w-full flex justify-center items-center gap-2"
+            onClick={handleSave}
+            disabled={loading}
+          >
+            {loading ? (
+              <CircleNotch size={24} className="animate-spin" />
+            ) : (
+              <DeviceFloppy size={24} />
             )}
-          </div>
-
-          <div className="relative">
-            <DeviceMobile
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              size={20}
-            />
-            <Input
-              {...register("whatsapp")}
-              placeholder="WhatsApp (Ex: 13991223344)"
-              className="pl-12 h-14 bg-white border-none rounded-2xl shadow-sm"
-            />
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-            Endereço (Opcional)
-          </h2>
-          <div className="grid grid-cols-3 gap-3">
-            <Input
-              {...register("cep")}
-              placeholder="CEP"
-              className="col-span-1 h-14 bg-white border-none rounded-2xl shadow-sm"
-            />
-            <Input
-              {...register("cidade")}
-              placeholder="Cidade"
-              className="col-span-2 h-14 bg-white border-none rounded-2xl shadow-sm"
-            />
-          </div>
-          <Input
-            {...register("rua")}
-            placeholder="Logradouro"
-            className="h-14 bg-white border-none rounded-2xl shadow-sm"
-          />
-        </section>
-
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full h-14 bg-indigo-950 hover:bg-indigo-900 rounded-2xl font-bold text-lg shadow-xl shadow-indigo-100 transition-all active:scale-[0.98]"
-        >
-          {loading ? (
-            "SALVANDO..."
-          ) : (
-            <div className="flex items-center gap-2">
-              <Check size={24} weight="bold" />
-              <span>FINALIZAR CADASTRO</span>
-            </div>
-          )}
-        </Button>
-      </form>
-    </main>
+            {loading
+              ? "PROCESSANDO..."
+              : editId
+                ? "SALVAR ALTERAÇÕES"
+                : "SALVAR CLIENTE"}
+          </button>
+        </footer>
+      </View>
+    </>
   );
 }

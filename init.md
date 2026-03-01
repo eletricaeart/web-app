@@ -14,6 +14,13 @@ pn add tiptap/react @tiptap/starter-kit @tiptap/pm
 
 pnpm add react-hook-form @hookform/resolvers
 
+pnpm add modern-screenshot react-to-print
+pnpm add puppeteer-core sparticuz-chromium
+
+# Para o ambiente local, também instale o puppeteer completo
+
+pnpm add -D puppeteer
+
 pnpm add @tiptap/react @tiptap/starter-kit @tiptap/extension-color @tiptap/extension-text-style @tiptap/extension-highlight @tiptap/extension-placeholder @tiptap/extension-image @tiptap/extension-table @tiptap/extension-table-row @tiptap/extension-table-cell @tiptap/extension-table-header @react-pdf/renderer
 
 pnpm add -D @tailwindcss/typography
