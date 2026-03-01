@@ -1,4 +1,4 @@
-import React, { ElementType, ComponentPropsWithoutRef, ReactNode } from "react";
+import React, { ElementType, forwardRef, ReactNode } from "react";
 
 // Definimos as nossas props customizadas
 interface ViewCustomProps {
@@ -14,24 +14,30 @@ interface ViewCustomProps {
 }
 
 // Usamos um Generic <T> para herdar as props da tag HTML escolhida (ex: div, section)
-type ViewProps<T extends ElementType> = ViewCustomProps &
-  Omit<ComponentPropsWithoutRef<T>, keyof ViewCustomProps>;
+// type ViewProps<T extends ElementType> = ViewCustomProps &
+//   Omit<ComponentPropsWithoutRef<T>, keyof ViewCustomProps>;
 
-export default function View<T extends ElementType = "div">({
-  tag,
-  bg,
-  flex,
-  grid,
-  w,
-  h,
-  m,
-  pd,
-  children,
-  style: styleProp,
-  ...props
-}: ViewProps<T>) {
-  // Garantimos que a Tag comece com letra maiúscula para o JSX entender como componente
-  const Tag = (tag || "div") as ElementType; // Definimos explicitamente que Tag é um ElementType para o JSX ficar feliz
+/*const View = forwardRef<HTMLDivElement, ViewCustomProps & React.HTMLAttributes<HTMLDivElement>>(
+  ({ tag, bg, flex, grid, w, h, m, pd, children, style: styleProp, ...props }, ref) => {*/
+
+function ViewComponent(
+  {
+    tag,
+    bg,
+    flex,
+    grid,
+    w,
+    h,
+    m,
+    pd,
+    children,
+    style: styleProp,
+    ...props
+  }: ViewCustomProps & React.HTMLAttributes<HTMLDivElement>,
+  ref: React.ForwardedRef<HTMLDivElement>,
+) {
+  // Mantemos a sua lógica de Tag dinâmica
+  const Tag = (tag || "div") as any;
 
   const style: React.CSSProperties = {
     ...(bg && { background: bg }),
@@ -45,8 +51,14 @@ export default function View<T extends ElementType = "div">({
   };
 
   return (
-    <Tag style={style} {...props}>
+    <Tag ref={ref} style={style} {...props}>
       {children}
     </Tag>
   );
 }
+
+const View = forwardRef(ViewComponent);
+// Importante para o Next.js não reclamar no build
+View.displayName = "View";
+
+export default View;
