@@ -11,14 +11,31 @@ import { FloppyDisk, CircleNotch } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import "@/app/clientes/Clientes.css"; // Reaproveitando os estilos de card-ea
 
+// Interface para garantir a tipagem do Membro da Equipe
+interface MembroEquipe {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  specialty: string;
+  whatsapp: string;
+  about: string;
+  photo: string;
+  gender: string;
+  status: string;
+  password?: string;
+}
+
 export default function EditarUsuario() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
-  const { data: users, save: saveUser } = useEASync("usuarios");
+
+  // Tipagem do hook useEASync com a interface MembroEquipe
+  const { data: users, save: saveUser } = useEASync<MembroEquipe>("usuarios");
 
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<MembroEquipe>({
     id: "",
     name: "",
     email: "",
@@ -34,8 +51,10 @@ export default function EditarUsuario() {
 
   useEffect(() => {
     if (editId && users.length > 0) {
-      const found = users.find((u: any) => String(u.id) === String(editId));
-      if (found) setFormData(found);
+      const found = users.find((u) => String(u.id) === String(editId));
+      if (found) {
+        setFormData(found);
+      }
     }
   }, [editId, users]);
 
@@ -44,7 +63,7 @@ export default function EditarUsuario() {
     const action = editId ? "update" : "create";
     const payload = { ...formData, id: editId || `TEMP_${Date.now()}` };
 
-    const res = await saveUser(payload, action);
+    const res = (await saveUser(payload, action)) as { success: boolean };
     if (res.success) {
       toast.success("Dados da equipe atualizados!");
       router.replace("/equipe");
@@ -75,7 +94,7 @@ export default function EditarUsuario() {
                 <input
                   className="input"
                   value={formData.name}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
                 />
@@ -85,7 +104,7 @@ export default function EditarUsuario() {
                 <input
                   className="input"
                   value={formData.role}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, role: e.target.value })
                   }
                 />
@@ -101,7 +120,7 @@ export default function EditarUsuario() {
                 <input
                   className="input"
                   value={formData.specialty}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, specialty: e.target.value })
                   }
                 />
@@ -111,7 +130,7 @@ export default function EditarUsuario() {
                 <textarea
                   className="input h-24 p-2"
                   value={formData.about}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setFormData({ ...formData, about: e.target.value })
                   }
                 />

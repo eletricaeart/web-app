@@ -10,9 +10,21 @@ import ClientCard from "@/components/layout/ClientCard";
 import FAB from "@/components/ui/FAB";
 import { UserPlus } from "@phosphor-icons/react";
 
+// Interface para definir a estrutura do membro da equipe
+interface Usuario {
+  id: string | number;
+  name: string;
+  role: string;
+  photo?: string;
+  gender?: string;
+  [key: string]: any;
+}
+
 export default function EquipeLista() {
   const router = useRouter();
-  const { data: users } = useEASync("usuarios");
+
+  // Tipagem do hook para a entidade "usuarios"
+  const { data: users } = useEASync<Usuario>("usuarios");
 
   return (
     <>
@@ -20,7 +32,7 @@ export default function EquipeLista() {
 
       <View tag="page" className="p-4">
         <div className="flex flex-col gap-2">
-          {users.map((u: any) => (
+          {users.map((u) => (
             <ClientCard
               key={u.id}
               client={{
