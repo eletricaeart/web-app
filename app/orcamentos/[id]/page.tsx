@@ -10,36 +10,69 @@ import Text from "@/components/ui/Text";
 import { processTextToHtml } from "@/utils/TextPreProcessor";
 import View from "@/components/layout/View";
 import BudgetSkeleton from "../components/BudgetSkeleton";
-// import BudgetShareMenu from "../components/BudgetShareMenu";
 import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
 import { Pen, FilePdf, ShareNetwork } from "@phosphor-icons/react";
 import { CID } from "@/utils/helpers";
-// import { eaSyncClient } from "@/lib/EASyncClient";
 import { useEASync } from "@/hooks/useEASync";
 
-// import "@/styles/Budget.css";
-// import "@/styles/print.css";
+// --- Interfaces para Tipagem ---
+
+interface DetalheOrcamento {
+  tipo: "brk" | "tagc" | "t6" | "ul" | string;
+  conteudo: any; // Pode ser string ou string[] para 'ul'
+}
+
+interface ItemOrcamento {
+  subtitulo: string;
+  detalhes: DetalheOrcamento[];
+}
+
+interface ServicoOrcamento {
+  titulo: string;
+  itens: ItemOrcamento[];
+}
+
+interface OrcamentoData {
+  id: string | number;
+  docTitle: {
+    emissao: string;
+    validade: string;
+    subtitle: string;
+    text: string;
+  };
+  cliente: {
+    name: string;
+    rua?: string;
+    num?: string;
+    bairro?: string;
+    cidade?: string;
+  };
+  servicos: ServicoOrcamento[];
+}
 
 export default function Budget() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id;
   const router = useRouter();
-  const { data: orcamentos } = useEASync("orcamentos");
+  const { data: orcamentos } = useEASync<OrcamentoData>("orcamentos");
   const budgetRef = useRef<HTMLDivElement | null>(null);
 
   const searchParams = useSearchParams();
   const isPrintMode = searchParams.get("print") === "true";
 
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<OrcamentoData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getCleanDate = (date: string) =>
-    date.includes("T")
+    date?.includes("T")
       ? date.split("T")[0].split("-").reverse().join("/")
       : date;
 
   const handleEdit = () => {
-    router.push(`/orcamentos/novo?natabiruta=${CID()}&id=${data.id}`);
+    if (data) {
+      router.push(`/orcamentos/novo?natabiruta=${CID()}&id=${data.id}`);
+    }
   };
 
   const fabActions = [
@@ -67,7 +100,7 @@ export default function Budget() {
 
     const minimumTimer = setTimeout(() => {
       const found = orcamentos.find(
-        (o: any) =>
+        (o) =>
           String(o.id).replace(/\s/g, "") ===
           String(normalizedId).replace(/\s/g, ""),
       );
@@ -83,14 +116,14 @@ export default function Budget() {
     return () => clearTimeout(minimumTimer);
   }, [orcamentos, id]);
 
-  const renderMarkdown = (itens: any[]) => {
+  const renderMarkdown = (itens: ItemOrcamento[]) => {
     return itens.map((item, idx) => {
       const markdownText = item.detalhes
-        .map((d: any) => {
+        .map((d) => {
           if (d.tipo === "brk") return "---";
           if (d.tipo === "tagc") return `> ${d.conteudo}`;
           if (d.tipo === "t6") return `# ${d.conteudo}`;
-          if (d.tipo === "ul")
+          if (d.tipo === "ul" && Array.isArray(d.conteudo))
             return d.conteudo.map((li: string) => `- ${li}`).join("\n");
           return d.conteudo;
         })
@@ -198,7 +231,7 @@ export default function Budget() {
                         data.cliente.num ? data.cliente.num + " - " : ""
                       }${
                         data.cliente.bairro ? data.cliente.bairro + " - " : ""
-                      }${data.cliente?.cidade}`}
+                      }${data.cliente?.cidade || ""}`}
                     </View>
                   </View>
                 </View>
@@ -207,7 +240,7 @@ export default function Budget() {
           </View>
 
           <View tag="budget-body">
-            {data.servicos.map((servico: any, index: number) => (
+            {data.servicos.map((servico, index) => (
               <View key={index} tag="clause">
                 <View tag="ui">
                   <View tag="clause-header">
