@@ -29,21 +29,54 @@ import {
 
 import "../Clientes.css";
 
+// Interfaces para garantir tipagem estrita
+interface Cliente {
+  id: string | number;
+  name: string;
+  photo?: string;
+  gender?: string;
+  cidade?: string;
+  whatsapp?: string;
+  email?: string;
+  rua?: string;
+  num?: string;
+  bairro?: string;
+}
+
+interface Orcamento {
+  id: string | number;
+  cliente?: {
+    name: string;
+  };
+  docTitle: {
+    emissao: string | Date;
+    text: string;
+  };
+}
+
+interface Nota {
+  id: string | number;
+  clienteId: string | number;
+  date: string;
+  title: string;
+}
+
 export default function ClientePerfil() {
-  const { id: clientId } = useParams();
+  const params = useParams();
+  const clientId = params?.id;
   const router = useRouter();
 
-  // Hooks integrados com o nosso motor de sincronização
-  const { data: clients, save: saveClient } = useEASync("clientes");
-  const { data: orcamentos } = useEASync("orcamentos");
-  const { data: notes } = useEASync("notas");
+  // Hooks integrados com o nosso motor de sincronização com Generics
+  const { data: clients, save: saveClient } = useEASync<Cliente>("clientes");
+  const { data: orcamentos } = useEASync<Orcamento>("orcamentos");
+  const { data: notes } = useEASync<Nota>("notas");
 
-  const [client, setClient] = useState<any>(null);
+  const [client, setClient] = useState<Cliente | null>(null);
 
   // Busca o cliente específico no cache local/remoto
   useEffect(() => {
     if (clientId && clients.length > 0) {
-      const found = clients.find((c: any) => String(c.id) === String(clientId));
+      const found = clients.find((c) => String(c.id) === String(clientId));
       if (found) setClient(found);
     }
   }, [clientId, clients]);
@@ -52,18 +85,20 @@ export default function ClientePerfil() {
 
   // Filtra orçamentos e notas vinculados a este cliente
   const historicoOrcamentos = orcamentos.filter(
-    (o: any) =>
+    (o) =>
       String(o.cliente?.name).toLowerCase() ===
       String(client.name).toLowerCase(),
   );
   const historicoNotas = notes.filter(
-    (n: any) => String(n.clienteId) === String(client.id),
+    (n) => String(n.clienteId) === String(client.id),
   );
 
   // handler para deletar o cliente
   const handleDelete = async () => {
     if (confirm("Excluir este cliente permanentemente?")) {
-      await saveClient({ id: client.id }, "delete");
+      const res = (await saveClient({ id: client.id }, "delete")) as {
+        success?: boolean;
+      };
       router.replace("/clientes"); // Substitui a pilha para não voltar pro perfil deletado
     }
   };
