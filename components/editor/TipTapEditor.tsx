@@ -26,8 +26,8 @@ import { Highlight } from "@tiptap/extension-highlight";
 // import { Placeholder } from "@tiptap/extension-placeholder";
 import { Placeholder } from "@tiptap/extensions";
 
-// import { BubbleMenu } from "@tiptap/extension-bubble-menu";
-import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
+// import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
+import { BubbleMenu, FloatingMenu } from "@tiptap/react";
 
 // import Suggestion from "@tiptap/suggestion";
 import tippy from "tippy.js";
@@ -97,7 +97,8 @@ export default function TipTapEditor({
       style={{ background: bg, borderRadius: radius }}
     >
       {editor && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+        {/* <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}> */}
+          <BubbleMenu editor={editor} {...({ tippyOptions: { duration: 100 } } as any)}>
           <div className="flex items-center gap-1 bg-slate-900 px-2 py-1.5 rounded-xl shadow-2xl border border-white/10">
             <MenuButton
               onClick={() => editor.chain().focus().toggleBold().run()}
