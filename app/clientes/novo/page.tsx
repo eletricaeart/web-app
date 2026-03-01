@@ -5,7 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
-import { CircleNotch, DeviceFloppy, MapPinSearch } from "@phosphor-icons/react";
+import {
+  CircleNotch,
+  FloppyDisk,
+  MagnifyingGlass,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 /* shadcn components */
@@ -207,7 +211,7 @@ export default function ClienteForm() {
                     onBlur={handleCepBlur}
                     placeholder="00000-000"
                   />
-                  <MapPinSearch
+                  <MagnifyingGlass
                     size={20}
                     className="absolute right-3 top-3 opacity-30"
                   />
@@ -264,7 +268,7 @@ export default function ClienteForm() {
             {loading ? (
               <CircleNotch size={24} className="animate-spin" />
             ) : (
-              <DeviceFloppy size={24} />
+              <FloppyDisk size={24} />
             )}
             {loading
               ? "PROCESSANDO..."
