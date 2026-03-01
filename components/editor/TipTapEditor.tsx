@@ -1,45 +1,19 @@
 "use client";
 
-// import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
-// import StarterKit from "@tiptap/starter-kit";
-// import Color from "@tiptap/extension-color";
-// import TextStyle from "@tiptap/extension-text-style";
-// import Highlight from "@tiptap/extension-highlight";
-// import Placeholder from "@tiptap/extension-placeholder";
-// import Image from "@tiptap/extension-image";
-// import Table from "@tiptap/extension-table";
-// import TableRow from "@tiptap/extension-table-row";
-// import TableCell from "@tiptap/extension-table-cell";
-// import TableHeader from "@tiptap/extension-table-header";
-// import { useEffect } from "react";
-
-/* */
 import React, { useEffect } from "react";
-
-import { useEditor, EditorContent, ReactRenderer } from "@tiptap/react";
-import { Extension } from "@tiptap/core";
-
+import { useEditor, EditorContent } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import { Highlight } from "@tiptap/extension-highlight";
-// import { Placeholder } from "@tiptap/extension-placeholder";
-import { Placeholder } from "@tiptap/extensions";
-
-// import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
-import { BubbleMenu, FloatingMenu } from "@tiptap/react";
-
-// import Suggestion from "@tiptap/suggestion";
-import tippy from "tippy.js";
-
-// import CommandList from "./CommandList";
-import "./TipTapEditor.css";
-
+import { Placeholder } from "@tiptap/extension-placeholder";
 import { Image } from "@tiptap/extension-image";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
+
+import "./TipTapEditor.css";
 
 interface TipTapEditorProps {
   value: string;
@@ -96,42 +70,14 @@ export default function TipTapEditor({
       className="tiptap-container relative border border-slate-100 shadow-inner overflow-hidden"
       style={{ background: bg, borderRadius: radius }}
     >
-      {editor && (
-        {/* <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}> */}
-          <BubbleMenu editor={editor} {...({ tippyOptions: { duration: 100 } } as any)}>
-          <div className="flex items-center gap-1 bg-slate-900 px-2 py-1.5 rounded-xl shadow-2xl border border-white/10">
-            <MenuButton
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              active={editor.isActive("bold")}
-            >
-              B
-            </MenuButton>
-            <MenuButton
-              onClick={() =>
-                editor
-                  .chain()
-                  .focus()
-                  .toggleHighlight({ color: "#ffab00" })
-                  .run()
-              }
-              active={editor.isActive("highlight")}
-            >
-              H
-            </MenuButton>
-            <div className="w-[1px] h-4 bg-white/20 mx-1" />
-            <button
-              onClick={() => editor.chain().focus().setColor("#ef4444").run()}
-              className="w-4 h-4 bg-red-500 rounded-full ml-1"
-            />
-          </div>
-        </BubbleMenu>
-      )}
-
+      {/* BubbleMenu removido conforme solicitado para evitar erros de build e simplificar o editor */}
       <EditorContent editor={editor} />
     </div>
   );
 }
 
+// Mantive a função MenuButton caso você queira usar em uma Toolbar fixa no futuro,
+// mas ela não está mais sendo renderizada no componente principal.
 function MenuButton({ onClick, active, children }: any) {
   return (
     <button
