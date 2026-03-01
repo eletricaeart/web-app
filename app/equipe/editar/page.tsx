@@ -64,7 +64,7 @@ export default function EditarUsuario() {
           <AvatarUpload
             value={formData.photo}
             gender={formData.gender}
-            onChange={(url) => setFormData({ ...formData, photo: url })}
+            onChange={(url: string) => setFormData({ ...formData, photo: url })}
           />
 
           <View tag="card-ea-client">
