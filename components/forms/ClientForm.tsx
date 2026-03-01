@@ -10,17 +10,38 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-  DrawerClose,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { UserPlus, MagnifyingGlass } from "@phosphor-icons/react";
+
+/**
+ * Interfaces para garantir a tipagem estrita e evitar erros de build
+ */
+interface ClientData {
+  name: string;
+  cep?: string;
+  rua?: string;
+  num?: string;
+  bairro?: string;
+  cidade?: string;
+  complemento?: string;
+  obs?: string;
+  [key: string]: any; // Flexibilidade para campos adicionais do motor de busca
+}
+
+interface ClientFormProps {
+  clientData: ClientData;
+  onClientChange: (data: ClientData) => void;
+  clientsCache?: any[];
+  onNewClientClick: () => void;
+}
 
 export default function ClientForm({
   clientData,
   onClientChange,
   clientsCache = [],
   onNewClientClick,
-}) {
+}: ClientFormProps) {
   const [loadingCep, setLoadingCep] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -28,11 +49,11 @@ export default function ClientForm({
   // Filtro de busca para o Drawer
   const filteredClients = useMemo(() => {
     return clientsCache.filter((c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [searchTerm, clientsCache]);
 
-  const handleSelectClient = (client) => {
+  const handleSelectClient = (client: any) => {
     onClientChange({
       name: client.name,
       cep: client.cep || client.address?.cep || "",
@@ -45,12 +66,12 @@ export default function ClientForm({
   };
 
   // Busca automática de CEP
-  const handleCepBlur = async (e) => {
+  const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, "");
     if (cep.length === 8) {
       setLoadingCep(true);
       try {
-        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const res = await fetch(`https://viacep.com.br{cep}/json/`);
         const data = await res.json();
         if (!data.erro) {
           onClientChange({
@@ -62,7 +83,7 @@ export default function ClientForm({
           });
         }
       } catch (err) {
-        console.error(err);
+        console.error("Erro ao buscar CEP:", err);
       } finally {
         setLoadingCep(false);
       }
@@ -70,10 +91,12 @@ export default function ClientForm({
   };
 
   /* manter */
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { id, value } = e.target;
     // Mapeia o ID do input para a chave do objeto cliente
-    const fieldMap = {
+    const fieldMap: Record<string, keyof ClientData> = {
       c_name: "name",
       c_cep: "cep",
       c_rua: "rua",
@@ -83,11 +106,15 @@ export default function ClientForm({
       c_cidade: "cidade",
       c_obs: "obs",
     };
-    onClientChange({ ...clientData, [fieldMap[id]]: value });
+
+    const fieldName = fieldMap[id];
+    if (fieldName) {
+      onClientChange({ ...clientData, [fieldName]: value });
+    }
   };
 
   // Preenchimento automático ao selecionar da lista
-  const handleNameChange = (e) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = clientsCache.find((c) => c.name === e.target.value);
     if (selected) {
       onClientChange({
@@ -108,16 +135,12 @@ export default function ClientForm({
     <View tag="cliente-fieldset">
       {/* Nome do Cliente */}
       <View tag="client-name_input">
-        {/* Drawer de Seleção de Cliente */}
-
         <View tag="client-name_label">
-          <Drawer
-            open={isDrawerOpen}
-            onOpenChange={setIsDrawerOpen}
-            className="bg-amber-400"
-          >
+          <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <DrawerTrigger asChild>
-              <View tag="btn_select-cliente">+ SELECIONAR da lista</View>
+              <View tag="btn_select-cliente" className="cursor-pointer">
+                + SELECIONAR da lista
+              </View>
             </DrawerTrigger>
             <DrawerContent className="drawer h-[80vh] bg-[rgb(21,25,35)] items-center p-4">
               <div className="mx-auto w-full max-w-md p-4">
@@ -127,7 +150,7 @@ export default function ClientForm({
                   </DrawerTitle>
                 </DrawerHeader>
 
-                <div className="drawer-searchbar flex items-center gap-2 mb-4 ">
+                <div className="drawer-searchbar flex items-center gap-2 mb-4">
                   <div className="searchbar relative flex-1">
                     <MagnifyingGlass
                       className="MagnifyingGlass absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -137,13 +160,14 @@ export default function ClientForm({
                       placeholder="Nome do cliente..."
                       className="client-name_input pl-10"
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSearchTerm(e.target.value)
+                      }
                     />
                   </div>
                   <button
-                    onClick={() => {
-                      onNewClientClick();
-                    }}
+                    type="button"
+                    onClick={() => onNewClientClick()}
                     className="btn_add-newClient p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
                     <UserPlus size={24} weight="duotone" />
@@ -155,10 +179,9 @@ export default function ClientForm({
                   className="overflow-y-auto max-h-[50vh] space-y-2"
                 >
                   {filteredClients.map((c, i) => (
-                    <>
+                    <React.Fragment key={c.id || i}>
                       <View
                         tag="client-name_card"
-                        key={c.id}
                         className="p-3 border rounded-lg active:bg-slate-100 cursor-pointer"
                         onClick={() => handleSelectClient(c)}
                       >
@@ -169,12 +192,12 @@ export default function ClientForm({
                             "Cidade não informada"}
                         </div>
                       </View>
-                      {i != filteredClients.length - 1 && (
+                      {i !== filteredClients.length - 1 && (
                         <View tag="divisor">
                           <section></section>
                         </View>
                       )}
-                    </>
+                    </React.Fragment>
                   ))}
                   {filteredClients.length === 0 && (
                     <div className="text-center py-8 text-slate-400">
@@ -194,10 +217,8 @@ export default function ClientForm({
           type="text"
           className="input"
           placeholder="Selecione acima ou digite..."
-          value={clientData.name}
-          onChange={(e) =>
-            onClientChange({ ...clientData, name: e.target.value })
-          }
+          value={clientData.name || ""}
+          onChange={handleNameChange}
         />
       </View>
 
@@ -207,16 +228,16 @@ export default function ClientForm({
           <View tag="t">
             CEP{" "}
             {loadingCep && (
-              <span className={"styles.cepLoading"}>Buscando...</span>
+              <span className="text-amber-500 ml-2">Buscando...</span>
             )}
           </View>
           <input
             type="text"
             id="c_cep"
-            className={"styles.input"}
+            className="input"
             placeholder="00000-000"
-            maxLength="9"
-            value={clientData.cep}
+            maxLength={9}
+            value={clientData.cep || ""}
             onChange={handleChange}
             onBlur={handleCepBlur}
           />
@@ -226,39 +247,46 @@ export default function ClientForm({
       {/* Endereço */}
       <View
         tag="logradouro_numero-inputs"
-        style={{ gridTemplateColumns: "2fr 1fr 1fr" }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 1fr 1fr",
+          gap: "10px",
+        }}
       >
         <View tag="logradouro-input">
-          <label className={"styles.label"}>
+          <label>
             <View tag="t">Logradouro (Rua/Av)</View>
             <input
               type="text"
               id="c_rua"
+              className="input"
               placeholder="Av. President Kennedy ..."
-              value={clientData.rua}
+              value={clientData.rua || ""}
               onChange={handleChange}
             />
           </label>
         </View>
         <View tag="numero-input">
-          <label className={"styles.label"}>
+          <label>
             <View tag="t">Número</View>
             <input
               type="text"
               id="c_num"
-              className={"styles.input"}
+              className="input"
               placeholder="Ex: 50"
-              value={clientData.num}
+              value={clientData.num || ""}
               onChange={handleChange}
             />
           </label>
         </View>
         <View tag="complemento-input">
-          <label className="styles.label">
+          <label>
             <View tag="t">Comp.</View>
             <input
+              type="text"
               id="c_complemento"
-              value={clientData.complemento}
+              className="input"
+              value={clientData.complemento || ""}
               onChange={handleChange}
               placeholder="Apto..."
             />
@@ -267,27 +295,28 @@ export default function ClientForm({
       </View>
 
       <View tag="bairro-input">
-        <label className={"styles.label"}>
+        <label>
           <View tag="t">Bairro</View>
           <input
             type="text"
             id="c_bairro"
-            className={"styles.input"}
+            className="input"
             placeholder="Ex: Aviação"
-            value={clientData.bairro}
+            value={clientData.bairro || ""}
             onChange={handleChange}
           />
         </label>
       </View>
+
       <View tag="cidade-input">
-        <label className={"styles.label"}>
+        <label>
           <View tag="t">Cidade/UF</View>
           <input
             type="text"
             id="c_cidade"
-            className={"styles.input"}
+            className="input"
             placeholder="Ex: Praia Grande - SP"
-            value={clientData.cidade}
+            value={clientData.cidade || ""}
             onChange={handleChange}
           />
         </label>
@@ -295,13 +324,13 @@ export default function ClientForm({
 
       {/* seção de observações sobre o cliente */}
       <View tag="obs-input" className="mt-4">
-        <label className="styles.label">
+        <label>
           <View tag="t">Observações Internas</View>
           <textarea
             id="c_obs"
             className="input w-full p-2 rounded-md border h-20"
-            value={clientData.obs}
-            onChange={(e) =>
+            value={clientData.obs || ""}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
               onClientChange({ ...clientData, obs: e.target.value })
             }
           />
