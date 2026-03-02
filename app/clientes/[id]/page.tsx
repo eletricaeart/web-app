@@ -249,7 +249,7 @@ export default function ClientePerfil() {
                       onClick={() => router.push(`/orcamentos/${orc.id}`)}
                     >
                       <span className="date">
-                        {getCleanDate(orc.docTitle.emissao)}
+                        {getCleanDate(String(orc.docTitle.emissao))}
                       </span>
                       <p className="title">{orc.docTitle.text}</p>
                     </div>
