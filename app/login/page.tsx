@@ -79,50 +79,44 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase ml-1">
                 E-mail
+                <div className="flex items-center bg-[#f5f5f5] rounded-xl px-4">
+                  <EnvelopeSimple className=" text-slate-500" size={20} />
+                  <Input
+                    type="email"
+                    placeholder="rafael@eletrica.com"
+                    className="pl-10 h-12 bg-[#ffab0000_!important] border-none rounded-xl focus-visible:ring-[#0000]"
+                    value={email}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setEmail(e.target.value)
+                    }
+                    required
+                  />
+                </div>
               </label>
-              <div className="relative">
-                <EnvelopeSimple
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={20}
-                />
-                <Input
-                  type="email"
-                  placeholder="rafael@eletrica.com"
-                  className="pl-10 h-12 bg-slate-100 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-600"
-                  value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setEmail(e.target.value)
-                  }
-                  required
-                />
-              </div>
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase ml-1">
                 Senha
+                <div className="flex items-center bg-[#f5f5f5] rounded-xl px-4">
+                  <Lock className=" text-slate-400" size={20} />
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10 h-12 bg-[#ffab0000_!important] border-none rounded-xl focus-visible:ring-[#0000]"
+                    value={password}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setPassword(e.target.value)
+                    }
+                    required
+                  />
+                </div>
               </label>
-              <div className="relative">
-                <Lock
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={20}
-                />
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  className="pl-10 h-12 bg-slate-100 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-600"
-                  value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setPassword(e.target.value)
-                  }
-                  required
-                />
-              </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-12 bg-indigo-950 hover:bg-indigo-900 text-white rounded-xl font-bold shadow-lg transition-all active:scale-[0.98]"
+              className="w-full h-12 bg-[#00559c_!important] hover:bg-indigo-900 text-[#fff_!important] rounded-xl font-bold shadow-lg transition-all active:scale-[0.98]"
               disabled={loading}
             >
               {loading ? (

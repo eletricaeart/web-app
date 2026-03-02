@@ -196,6 +196,7 @@ export default function PerfilUsuario() {
           </div>
         </View>
       </View>
+      {/* <BottomNavbar /> */}
     </>
   );
 }

@@ -655,6 +655,20 @@ h6 {
   break-after: avoid;
 }
 
+subclause-body h1 {
+  font-weight: bold;
+  margin: 1rem 0 0;
+}
+subclause-body p {
+  margin: 1rem 0;
+}
+subclause-body ul {
+  padding-left: 1rem;
+}
+subclause-body blockquote {
+  margin: 0.5rem 0;
+}
+
 footer-content_top {
   break-before: auto;
   margin: 4px 0 4px 0;
@@ -801,6 +815,10 @@ menu {
     overflow: visible !important;
     display: block !important; /* Remove flexbox que pode bugar quebras */
     /* background: white !important; */
+  }
+
+  body > nav {
+    display: none;
   }
   html {
     background: #f5f5f5 !important;

@@ -7,6 +7,8 @@ import { useEASync } from "@/hooks/useEASync";
 import FAB from "@/components/ui/FAB";
 import AppBar from "@/components/layout/AppBar";
 import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
+import BudgetCard from "@/components/layout/BudgetCard";
+import SearchBar from "@/components/SearchBar";
 import {
   FilePlus,
   ArrowsCounterClockwise,
@@ -126,6 +128,13 @@ export default function Budgets() {
     <>
       <AppBar title="Orçamentos" />
 
+      {/* Adicionando a SearchBar logo abaixo da AppBar */}
+      <SearchBar
+        placeholder="Buscar por cliente ou título..."
+        onSearch={(val: string) => setSearchTerm(val)}
+        value={searchTerm}
+      />
+
       {shareData.orc && (
         <BudgetShareMenu
           open={shareData.open}
@@ -144,149 +153,105 @@ export default function Budgets() {
       />
 
       <View tag="budgets" className="dash-page">
-        <main className="orcamento-list">
+        <main className="orcamento-list px-0 py-4">
           {filteredOrcamentos.length > 0 ? (
             filteredOrcamentos.map((orc) => {
               const isTemp = String(orc.id).startsWith("TEMP_");
 
+              // Buscamos os dados completos do cliente no cache de clientes
               const clientData = clientes.find(
-                (c) => c.name === orc.cliente.name,
+                (c) =>
+                  String(c.name).toLowerCase() ===
+                  String(orc.cliente.name).toLowerCase(),
               );
 
-              const avatarSrc = clientData
-                ? AVATARS[clientData.gender as keyof typeof AVATARS] ||
-                  AVATARS.masc
-                : AVATARS.masc;
-
               return (
-                <div key={orc.id} className="orcamento-card">
-                  <div className="client-avatar-dash">
-                    <img src={avatarSrc} alt="Avatar" />
-                  </div>
-
-                  <div
-                    className="info-content"
+                <div
+                  key={orc.id}
+                  className="client-card-wrapper mb-3"
+                  style={{ position: "relative" }}
+                >
+                  {/* Aplicando a mesma classe de círculo e estilo de imagem */}
+                  <BudgetCard
+                    orc={orc}
+                    clientData={clientData}
                     onClick={() => router.push(`/orcamentos/${orc.id}`)}
-                  >
-                    <small className="text-[#999] flex items-center justify-end gap-3">
-                      <span className="sync-status">
-                        {isTemp ? (
-                          <ArrowsClockwise
-                            size={16}
-                            weight="bold"
-                            color="#ffab00"
-                          />
-                        ) : (
-                          <CloudCheck
-                            size={16}
-                            weight="duotone"
-                            color="#4caf50"
-                          />
-                        )}
-                      </span>
-                      {getCleanDate(orc.docTitle.emissao)}
-                    </small>
-
-                    <h3 className="capitalize">{orc.cliente.name}</h3>
-
-                    <p className="text-blue-400">{orc.docTitle.text}</p>
-                  </div>
-
-                  <div className="options-container">
-                    {!isTemp && (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <View
-                            tag="vmenu-btn"
-                            className="btn-options"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              outline: "none",
-                              cursor: "pointer",
-                              color: "#777",
-                            }}
+                    options={
+                      !isTemp && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <View
+                              tag="vmenu"
+                              className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                            >
+                              <DotsThreeOutlineVertical
+                                size={24}
+                                weight="duotone"
+                              />
+                            </View>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-48 p-0 bg-white shadow-xl border-none"
+                            align="end"
                           >
-                            <DotsThreeOutlineVertical
-                              size={24}
-                              weight="duotone"
-                            />
-                          </View>
-                        </PopoverTrigger>
-
-                        <PopoverContent
-                          className="w-48 p-0 bg-white"
-                          style={{
-                            border: "none",
-                            boxShadow: "#e5e5e5 0 0 10px 2px",
-                          }}
-                          align="end"
-                        >
-                          <div className="flex flex-col">
-                            <button
-                              className="menu-item"
-                              onClick={() => handleOpenShare(orc)}
-                              style={menuItemStyle}
-                            >
-                              <ShareNetwork size={18} weight="duotone" />
-                              Compartilhar
-                            </button>
-
-                            <button
-                              className="menu-item"
-                              onClick={() => handleEdit(orc)}
-                              style={menuItemStyle}
-                            >
-                              <PencilSimple size={18} weight="duotone" />
-                              Editar
-                            </button>
-
-                            <button
-                              className="menu-item"
-                              onClick={() => handleDuplicate(orc)}
-                              style={menuItemStyle}
-                            >
-                              <Copy size={18} weight="duotone" />
-                              Duplicar
-                            </button>
-
-                            <button
-                              className="menu-item delete"
-                              onClick={() =>
-                                handleDelete(orc.id, orc.cliente.name)
-                              }
-                              style={{
-                                ...menuItemStyle,
-                                color: "#ff4444",
-                                borderTop: "1px solid #f5f5f5",
-                              }}
-                            >
-                              <Trash size={18} weight="duotone" />
-                              Excluir
-                            </button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </div>
+                            <View tag="budget-vmenu" className="flex flex-col">
+                              <View
+                                tag="budget-vmenu-btn"
+                                onClick={() => handleOpenShare(orc)}
+                                style={menuItemStyle}
+                              >
+                                <ShareNetwork
+                                  size={18}
+                                  color="#29f"
+                                  weight="duotone"
+                                />{" "}
+                                Compartilhar
+                              </View>
+                              <View
+                                onClick={() => handleEdit(orc)}
+                                style={menuItemStyle}
+                              >
+                                <PencilSimple size={18} weight="duotone" />{" "}
+                                Editar
+                              </View>
+                              <View
+                                onClick={() => handleDuplicate(orc)}
+                                style={menuItemStyle}
+                              >
+                                <Copy size={18} weight="duotone" /> Duplicar
+                              </View>
+                              <View
+                                onClick={() =>
+                                  handleDelete(orc.id, orc.cliente.name)
+                                }
+                                style={{
+                                  ...menuItemStyle,
+                                  color: "#ef4444",
+                                  borderTop: "1px solid #f1f5f9",
+                                }}
+                              >
+                                <Trash size={18} weight="duotone" /> Excluir
+                              </View>
+                            </View>
+                          </PopoverContent>
+                        </Popover>
+                      )
+                    }
+                  />
                 </div>
               );
             })
           ) : (
-            <p
-              style={{
-                textAlign: "center",
-                padding: "2rem",
-                color: "#999",
-              }}
-            >
-              Nenhum orçamento encontrado.
-            </p>
+            <div className="text-center py-20 opacity-40">
+              <ShareNetwork size={64} weight="thin" className="mx-auto mb-2" />
+              <p>Nenhum orçamento encontrado.</p>
+            </div>
           )}
         </main>
       </View>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
+      {/* <BottomNavbar /> */}
     </>
   );
 }
