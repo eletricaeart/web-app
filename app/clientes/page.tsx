@@ -8,7 +8,6 @@ import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
 import SearchBar from "@/components/SearchBar";
 import ClientCard from "@/components/layout/ClientCard";
-// import BottomNavBar from "@/components/layout/BottomNavBar";
 import {
   ArrowsClockwise,
   DotsThreeOutlineVertical,
@@ -167,7 +166,7 @@ export default function ClientesLista() {
       </View>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
-      {/* <BottomNavBar /> */}
+      {/* <BottomNavbar /> */}
     </>
   );
 }

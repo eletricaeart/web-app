@@ -145,6 +145,7 @@ export default function NotasLista() {
           },
         ]}
       />
+      {/* <BottomNavbar /> */}
     </>
   );
 }

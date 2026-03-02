@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
+import BottomNavbar from "@/components/layout/BottomNavbar";
 
 // Interface para tipar o usuário na Home
 interface UsuarioHome {
@@ -36,98 +37,101 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-svh bg-slate-50 p-6 pb-24">
-      {/* Header */}
-      <header className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Olá, {(currentUser.name || "Usuário").split(" ")[0]}
-          </h1>
-          <p className="text-slate-500 text-sm">Painel Elétrica & Art</p>
-        </div>
-        <Link href="/perfil">
-          <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
-            {currentUser.photo ? (
-              <Image
-                src={currentUser.photo}
-                alt="Perfil"
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <Lightning size={24} weight="duotone" className="text-white" />
-            )}
+    <>
+      <main className="min-h-svh bg-slate-50 p-6 pb-24">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Olá, {(currentUser.name || "Usuário").split(" ")[0]}
+            </h1>
+            <p className="text-slate-500 text-sm">Painel Elétrica & Art</p>
           </div>
-        </Link>
-      </header>
+          <Link href="/perfil">
+            <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
+              {currentUser.photo ? (
+                <Image
+                  src={currentUser.photo}
+                  alt="Perfil"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <Lightning size={24} weight="duotone" className="text-white" />
+              )}
+            </div>
+          </Link>
+        </header>
 
-      {/* Grid de Atalhos */}
-      <div className="grid grid-cols-1 gap-4">
-        <QuickAction
-          href="/orcamentos/novo"
-          icon={<FilePlus size={32} weight="duotone" />}
-          title="Novo Orçamento"
-          description="Criar proposta rápida"
-          color="bg-indigo-600"
-        />
+        {/* Grid de Atalhos */}
+        <div className="grid grid-cols-1 gap-4">
+          <QuickAction
+            href="/orcamentos/novo"
+            icon={<FilePlus size={32} weight="duotone" />}
+            title="Novo Orçamento"
+            description="Criar proposta rápida"
+            color="bg-indigo-600"
+          />
 
-        <div className="grid grid-cols-2 gap-4">
-          <MenuCard
-            href="/clientes"
-            icon={<Users size={28} weight="duotone" />}
-            title="Clientes"
-            count="12"
-          />
-          <MenuCard
-            href="/notas"
-            icon={<Notebook size={28} weight="duotone" />}
-            title="Notas"
-            count="5"
-          />
-          {/* CARD DA EQUIPE (USUÁRIOS) */}
-          <MenuCard
-            href="/equipe"
-            icon={<Lightning size={28} weight="duotone" />}
-            title="Equipe"
-            count="2"
-          />
-          {/* CARD DE PERFIL (Para o Rafael se ver) */}
-          <MenuCard
-            href="/perfil"
-            icon={<UserCircle size={28} weight="duotone" />}
-            title="Meu Perfil"
-            count="Editar"
-          />
-          {/* TERRENO PREPARADO: Card de Chat (Futuro) */}
-          <MenuCard
-            href="/chat"
-            icon={
-              <ChatCircleDots
-                size={28}
-                weight="duotone"
-                className="text-emerald-500"
-              />
-            }
-            title="Mensagens"
-            count="Em breve"
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <MenuCard
+              href="/clientes"
+              icon={<Users size={28} weight="duotone" />}
+              title="Clientes"
+              count="12"
+            />
+            <MenuCard
+              href="/notas"
+              icon={<Notebook size={28} weight="duotone" />}
+              title="Notas"
+              count="5"
+            />
+            {/* CARD DA EQUIPE (USUÁRIOS) */}
+            <MenuCard
+              href="/equipe"
+              icon={<Lightning size={28} weight="duotone" />}
+              title="Equipe"
+              count="2"
+            />
+            {/* CARD DE PERFIL (Para o Rafael se ver) */}
+            <MenuCard
+              href="/perfil"
+              icon={<UserCircle size={28} weight="duotone" />}
+              title="Meu Perfil"
+              count="Editar"
+            />
+            {/* TERRENO PREPARADO: Card de Chat (Futuro) */}
+            <MenuCard
+              href="/chat"
+              icon={
+                <ChatCircleDots
+                  size={28}
+                  weight="duotone"
+                  className="text-emerald-500"
+                />
+              }
+              title="Mensagens"
+              count="Em breve"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Botão de Sair elegante */}
-      <div className="mt-8">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 gap-3 h-14 rounded-2xl"
-          onClick={() => {
-            /* Criaremos a lógica de logout */
-          }}
-        >
-          <SignOut size={24} />
-          <span className="font-bold">Sair do Sistema</span>
-        </Button>
-      </div>
-    </main>
+        {/* Botão de Sair elegante */}
+        <div className="mt-8">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 gap-3 h-14 rounded-2xl"
+            onClick={() => {
+              /* Criaremos a lógica de logout */
+            }}
+          >
+            <SignOut size={24} />
+            <span className="font-bold">Sair do Sistema</span>
+          </Button>
+        </div>
+      </main>
+      <BottomNavbar />
+    </>
   );
 }
 

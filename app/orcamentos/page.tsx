@@ -287,6 +287,7 @@ export default function Budgets() {
       </View>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
+      {/* <BottomNavbar /> */}
     </>
   );
 }

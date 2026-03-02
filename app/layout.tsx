@@ -7,6 +7,7 @@ import BottomNavbar from "@/components/layout/BottomNavbar";
 import { Toaster } from "@/components/ui/sonner";
 // import { usePathname } from "next/navigation";
 import { cookies } from "next/headers";
+import NavWrapper from "./NavWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,7 +46,9 @@ export default async function RootLayout({
       >
         {children}
         <Toaster richColors position="top-center" />
-        {hasSession && <BottomNavbar />}
+        {/* {hasSession && showBottomNavBar && <BottomNavbar />} */}
+        {/* O Wrapper decide se renderiza ou não a barra no cliente */}
+        <NavWrapper hasSession={hasSession} />
       </body>
     </html>
   );
