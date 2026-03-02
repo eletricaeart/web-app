@@ -26,7 +26,7 @@ const godOfThunder = localFont({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#00559c", // Cor da barra de notificação do Android (mesma da AppBar)
+  themeColor: "#00559c", 
 };
 
 export const metadata: Metadata = {
