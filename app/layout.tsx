@@ -46,7 +46,7 @@ export default async function RootLayout({
       >
         {children}
         <Toaster richColors position="top-center" />
-        {/* {hasSession && showBottomNavBar && <BottomNavbar />} */}
+
         {/* O Wrapper decide se renderiza ou não a barra no cliente */}
         <NavWrapper hasSession={hasSession} />
       </body>
