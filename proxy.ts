@@ -27,5 +27,7 @@ export default async function middleware(req: NextRequest) {
 
 // Configura em quais caminhos o middleware deve rodar
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+// Certifique-se de que manifest.json NÃO está sendo interceptado
+  matcher: ["/((?!api|_next/static|_next/image|manifest.json|favicon.ico).*)"],
 };
