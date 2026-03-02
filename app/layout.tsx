@@ -8,6 +8,34 @@ import { Toaster } from "@/components/ui/sonner";
 // import { usePathname } from "next/navigation";
 import { cookies } from "next/headers";
 import NavWrapper from "./NavWrapper";
+import { Metadata, Viewport } from "next";
+
+export const viewport: Viewport = {
+  themeColor: "#00559c", // Cor da barra de notificação do Android (mesma da AppBar)
+};
+
+export const metadata: Metadata = {
+  title: "Elétrica & Art",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Elétrica & Art",
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="pt-br">
+      <head>
+        <link rel="icon" href="/pix/ea/EA-logo.png" />
+        {/* Apple Touch Icon para iPhones */}
+        <link rel="apple-touch-icon" href="/pix/ea/EA-logo.png" />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
