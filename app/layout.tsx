@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -8,7 +8,6 @@ import { Toaster } from "@/components/ui/sonner";
 // import { usePathname } from "next/navigation";
 import { cookies } from "next/headers";
 import NavWrapper from "./NavWrapper";
-import { Metadata, Viewport } from "next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
