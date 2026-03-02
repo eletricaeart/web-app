@@ -1,9 +1,9 @@
-export function processTextToHtml(text) {
+export function processTextToHtml(text: string) {
   if (!text) return "";
   let lines = text.split("\n");
   let inTagC = false;
   let inUl = false;
-  let htmlResult = [];
+  let htmlResult: string[] = [];
 
   lines.forEach((line) => {
     const tl = line.trim();
