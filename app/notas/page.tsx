@@ -73,7 +73,7 @@ export default function NotasLista() {
         {/* <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}> */}
         <div
           className={
-            viewMode === "grid" ? "grid grid-cols-2 gap-4" : "notes-list"
+            viewMode === "grid" ? "grid grid-cols-2 gap-4" : "notes-list gap-2"
           }
         >
           {filtered.map((nota) => {

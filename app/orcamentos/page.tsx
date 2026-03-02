@@ -149,19 +149,37 @@ export default function Budgets() {
             filteredOrcamentos.map((orc) => {
               const isTemp = String(orc.id).startsWith("TEMP_");
 
+              // Buscamos os dados completos do cliente no cache de clientes
               const clientData = clientes.find(
-                (c) => c.name === orc.cliente.name,
+                (c) =>
+                  String(c.name).toLowerCase() ===
+                  String(orc.cliente.name).toLowerCase(),
               );
 
-              const avatarSrc = clientData
-                ? AVATARS[clientData.gender as keyof typeof AVATARS] ||
-                  AVATARS.masc
-                : AVATARS.masc;
+              //  Definimos a lógica da imagem (Igual ao ClientCard)
+              const avatarSrc = clientData?.photo
+                ? clientData.photo // Foto real do Cloudinary
+                : clientData?.gender
+                  ? AVATARS[clientData.gender as keyof typeof AVATARS] ||
+                    AVATARS.masc // Avatar por gênero
+                  : AVATARS.masc; // Fallback final
 
               return (
                 <div key={orc.id} className="orcamento-card">
-                  <div className="client-avatar-dash">
-                    <img src={avatarSrc} alt="Avatar" />
+                  {/* Aplicando a mesma classe de círculo e estilo de imagem */}
+                  <div
+                    className="client-avatar-dash"
+                    style={{ overflow: "hidden", borderRadius: "50%" }}
+                  >
+                    <img
+                      src={avatarSrc}
+                      alt={orc.cliente.name}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
                   </div>
 
                   <div
