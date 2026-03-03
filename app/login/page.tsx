@@ -83,8 +83,10 @@ export default function LoginPage() {
             {/* Elétrica & Art */}
             <Image
               src={titleEA}
+              alt="Title EA"
               width={250}
               height={250}
+              priority
               style={{ filter: "drop-shadow(#0005 0 5px 0px 5px)" }}
             />
           </CardTitle>
