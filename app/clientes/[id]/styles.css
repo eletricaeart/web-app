@@ -55,8 +55,14 @@ client-page client-desc {
   flex-direction: row;
 }
 client-desc descs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 client-desc contact-shortcuts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 client-perfil-page client-perfil-form,
