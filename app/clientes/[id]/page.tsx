@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Viewport } from "next";
 import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
@@ -17,6 +16,7 @@ import {
   MapPin,
   DotsThreeOutlineVertical,
   Notebook,
+  PhoneTransferIcon,
 } from "@phosphor-icons/react";
 import { getCleanDate } from "@/utils/helpers";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 
 import "./styles.css";
+import Image from "next/image";
 
 // Interfaces para garantir tipagem estrita
 interface Cliente {
@@ -61,16 +62,6 @@ interface Nota {
   date: string;
   title: string;
 }
-
-// export const viewport: Viewport = { themeColor: "#566c9b" };
-const color = "#566c9b";
-const changeStatusColor = (color: string) => {
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) {
-    meta.setAttribute("content", color);
-  }
-};
-changeStatusColor(color);
 
 export default function ClientePerfil() {
   const params = useParams();
@@ -118,6 +109,11 @@ export default function ClientePerfil() {
     masc: "/pix/avatar/default_avatar_masc.webp",
     fem: "/pix/avatar/default_avatar_fem.webp",
   };
+
+  const clientAvatar =
+    client.photo ||
+    AVATARS[client.gender as keyof typeof AVATARS] ||
+    AVATARS.masc;
 
   return (
     <>
@@ -191,24 +187,85 @@ export default function ClientePerfil() {
 
       <View tag="client-page" className="client-perfil-page">
         {/* SEÇÃO HEADER: AVATAR E NOME */}
-        <View className="avatar-section">
-          <View className="avatar-circle">
-            <img
-              src={
-                client.photo || // Prioridade para a foto do Cloudinary
-                AVATARS[client.gender as keyof typeof AVATARS] ||
-                AVATARS.masc
-              }
+        <View
+          tag="avatar-section"
+          className="relative min-h-[300px] text-center bg-[var(--sv-sodalita)] text-white rounded-[0_0_50px_50px] overflow-hidden"
+        >
+          {/* <View className="avatar-circle relative w-24 h-24 z-30"> */}
+          {/*   <Image */}
+          {/*     src={clientAvatar} */}
+          {/*     alt={client.name} */}
+          {/*     fill */}
+          {/*     className="object-cover" */}
+          {/*   /> */}
+          {/* </View> */}
+          <View
+            tag="perfil-pic"
+            className="absolute top-0 left-0 w-full h-full z-10"
+          >
+            <Image
+              src={clientAvatar}
               alt={client.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }} // Garante que a foto preencha o círculo
+              fill
+              className="object-cover"
+              priority
             />
           </View>
-          <View tag="client-desc">
-            <View tag="descs">
-              <h2 className="font-thunder text-2xl uppercase">{client.name}</h2>
+          <View
+            tag="client-desc"
+            className="absolute bottom-0 left-0 z-20 w-full py-4 px-6 bg-gray-800/30"
+          >
+            <View tag="descs" className="flex-1">
+              <h3 className="font-thunder text-2xl capitalize">
+                {client.name}
+              </h3>
               <p className="opacity-80 text-sm">{client.cidade}</p>
             </View>
-            <View tag="contact-shortcuts"></View>
+            <View
+              tag="contact-shortcuts"
+              className="flex items-center justify-center flex-[.8] gap-3"
+            >
+              {[
+                {
+                  icon: (
+                    <WhatsappLogo
+                      size={20}
+                      weight="duotone"
+                      className="text-green-500"
+                    />
+                  ),
+                  color: "",
+                },
+                {
+                  icon: (
+                    <PhoneTransferIcon
+                      size={20}
+                      weight="duotone"
+                      className="text-gray-800"
+                    />
+                  ),
+                  color: "",
+                },
+                {
+                  icon: (
+                    <EnvelopeSimple
+                      size={20}
+                      weight="duotone"
+                      className="text-blue-500"
+                    />
+                  ),
+                  color: "",
+                },
+              ].map((o, i) => (
+                <View
+                  tag="contact-btn"
+                  key={i}
+                  className="bg-white text-gray-800 p-3 w-11 h-11 rounded-full aspect-square"
+                >
+                  {o.icon}
+                </View>
+              ))}
+            </View>
           </View>
         </View>
 
