@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Viewport } from "next";
 import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
@@ -60,6 +61,11 @@ interface Nota {
   date: string;
   title: string;
 }
+
+// export const viewport: Viewport = { themeColor: "#566c9b" };
+document
+  .querySelector('meta[name="theme-color"]')
+  .setAttribute("content", "#566c9b");
 
 export default function ClientePerfil() {
   const params = useParams();
