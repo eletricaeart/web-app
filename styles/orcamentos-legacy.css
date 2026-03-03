@@ -644,15 +644,33 @@ footer-content_bottom {
   break-inside: avoid !important;
 }
 
-clause-header,
-subclause-header,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  break-after: avoid;
+/* clause-header, */
+/* subclause-header, */
+/* h1, */
+/* h2, */
+/* h3, */
+/* h4, */
+/* h5, */
+/* h6 { */
+/*   break-after: avoid; */
+/* } */
+
+subclause-body div,
+subclause-body ul,
+subclause-body ol {
+  break-inside: auto !important;
+  page-break-inside: auto !important;
+  /* orphans: 3; */
+}
+
+subclause-body div > *,
+subclause-body ul > *,
+subclause-body ol > * {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  display: block; /* Garante que a regra de quebra funcione melhor */
+  position: relative; /* Evita bugs de renderização em alguns motores de PDF */
+  /* orphans: 3; */
 }
 
 subclause-body h1 {
@@ -667,6 +685,10 @@ subclause-body ul {
 }
 subclause-body blockquote {
   margin: 0.5rem 0;
+}
+
+footer-content {
+  break-before: page;
 }
 
 footer-content_top {
