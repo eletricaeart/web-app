@@ -63,9 +63,14 @@ interface Nota {
 }
 
 // export const viewport: Viewport = { themeColor: "#566c9b" };
-document
-  .querySelector('meta[name="theme-color"]')
-  .setAttribute("content", "#566c9b");
+const color = "#566c9b";
+const changeStatusColor = (color: string) => {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    meta.setAttribute("content", color);
+  }
+};
+changeStatusColor(color);
 
 export default function ClientePerfil() {
   const params = useParams();
