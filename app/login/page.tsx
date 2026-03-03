@@ -18,6 +18,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import EAText from "@/components/EAText";
+import Image from "next/image";
+import logoEA from "@/public/pix/ea/EA-logo.png";
+import titleEA from "@/public/pix/ea/ea-Name.png";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -59,16 +63,30 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-svh items-center justify-center p-6 bg-slate-50 overflow-hidden">
       {/* Blobs de fundo para manter o estilo que você gostou */}
-      <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-indigo-900/10 blur-[80px] rounded-full" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-indigo-600/10 blur-[80px] rounded-full" />
+      <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-indigo-900 blur-[80px] rounded-full" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-indigo-600 blur-[80px] rounded-full" />
 
       <Card className="w-full max-w-md border-none shadow-2xl rounded-3xl z-10 bg-white/90 backdrop-blur-md">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-14 h-14 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg mb-2">
-            <Lightning size={28} weight="duotone" className="text-white" />
+          {/* <div className="mx-auto w-14 h-14 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg mb-2"> */}
+          <div className="mx-auto w-[120px] h-[120px] bg-transparent rounded-full flex items-center justify-center shadow-lg mb-2">
+            {/* <Lightning size={28} weight="duotone" className="text-white" /> */}
+            <Image
+              src={logoEA}
+              alt="Logo Elétrica & Art"
+              width={150} // Defina a largura desejada
+              height={150} // Defina a altura desejada
+              priority // Adicione isso se a logo aparecer no topo da página (LCP)
+            />
           </div>
-          <CardTitle className="text-2xl font-extrabold tracking-tight text-slate-800">
-            Elétrica & Art
+          <CardTitle className="flex flex-row gap-2 items-center justify-center text-2xl font-extrabold tracking-tight text-slate-800">
+            {/* Elétrica & Art */}
+            <Image
+              src={titleEA}
+              width={250}
+              height={250}
+              style={{ filter: "drop-shadow(#0005 0 5px 0px 5px)" }}
+            />
           </CardTitle>
           <CardDescription className="text-slate-500">
             Gestão de Orçamentos e Clientes
@@ -84,7 +102,9 @@ export default function LoginPage() {
                   <Input
                     type="email"
                     placeholder="rafael@eletrica.com"
-                    className="pl-10 h-12 bg-[#ffab0000_!important] border-none rounded-xl focus-visible:ring-[#0000]"
+                    // className="pl-10 h-12 bg-[#ffab0000_!important] border-none rounded-xl focus-visible:ring-[#0000]"
+                    className="pl-10 h-12 bg-[#ffab00] text-amber-300 focus-visible:bg-transparent border-none rounded-xl"
+                    style={style.input}
                     value={email}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setEmail(e.target.value)
@@ -103,7 +123,7 @@ export default function LoginPage() {
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    className="pl-10 h-12 bg-[#ffab0000_!important] border-none rounded-xl focus-visible:ring-[#0000]"
+                    className="pl-10 h-12 bg-amber-400 border-none rounded-xl focus-visible:ring-[#0000]"
                     value={password}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setPassword(e.target.value)
@@ -129,9 +149,19 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
-      <footer className="absolute bottom-6 text-slate-400 text-xs">
+      <footer className="absolute bottom-6 text-blue-950 text-xs">
         &copy; 2026 Elétrica & Art &bull; Praia Grande/SP
       </footer>
     </div>
   );
 }
+
+const style = {
+  input: {
+    boxShadow: "#0000 0 0 0 0 !important",
+    Background: "#0000 !important",
+    border: "#0000 0px solid !important",
+    color: "#27f !important",
+    outline: "none",
+  },
+};
