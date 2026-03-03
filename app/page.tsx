@@ -48,7 +48,8 @@ export default function HomePage() {
             <p className="text-slate-500 text-sm">Painel Elétrica & Art</p>
           </div>
           <Link href="/perfil">
-            <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
+            {/* <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative"> */}
+            <div className="w-12 h-12 bg-indigo-950 rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
               {currentUser.photo ? (
                 <Image
                   src={currentUser.photo}

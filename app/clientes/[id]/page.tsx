@@ -27,7 +27,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import "../Clientes.css";
+import "./styles.css";
 
 // Interfaces para garantir tipagem estrita
 interface Cliente {
@@ -126,7 +126,7 @@ export default function ClientePerfil() {
               className="w-52 p-0 bg-white shadow-xl border-none z-[10000] overflow-hidden"
               align="end"
             >
-              <div className="flex flex-col">
+              <View className="flex flex-col">
                 {[
                   {
                     label: " Editar Perfil",
@@ -172,16 +172,16 @@ export default function ClientePerfil() {
                     </span>
                   </View>
                 ))}
-              </div>
+              </View>
             </PopoverContent>
           </Popover>
         }
       />
 
-      <View tag="page" className="client-perfil-page">
+      <View tag="client-page" className="client-perfil-page">
         {/* SEÇÃO HEADER: AVATAR E NOME */}
-        <div className="avatar-section">
-          <div className="avatar-circle">
+        <View className="avatar-section">
+          <View className="avatar-circle">
             <img
               src={
                 client.photo || // Prioridade para a foto do Cloudinary
@@ -191,40 +191,45 @@ export default function ClientePerfil() {
               alt={client.name}
               style={{ width: "100%", height: "100%", objectFit: "cover" }} // Garante que a foto preencha o círculo
             />
-          </div>
-          <h2 className="font-thunder text-2xl uppercase">{client.name}</h2>
-          <p className="opacity-80 text-sm">{client.cidade}</p>
-        </div>
+          </View>
+          <View tag="client-desc">
+            <View tag="descs">
+              <h2 className="font-thunder text-2xl uppercase">{client.name}</h2>
+              <p className="opacity-80 text-sm">{client.cidade}</p>
+            </View>
+            <View tag="contact-shortcuts"></View>
+          </View>
+        </View>
 
         <View tag="page-content" style={{ marginTop: "-20px" }}>
           {/* CARD: INFORMAÇÕES DE CONTATO */}
           <View tag="card-ea-client">
             <View tag="card-ea-header">DADOS DE CONTATO</View>
             <View tag="card-ea-body">
-              <div className="info-row">
+              <View className="info-row">
                 <WhatsappLogo
                   size={20}
                   weight="duotone"
                   className="text-green-500"
                 />
                 <span>{client.whatsapp || "Não informado"}</span>
-              </div>
+              </View>
               <Divider spacing="1.5rem" color="#f0f0f0" />
-              <div className="info-row">
+              <View className="info-row">
                 <EnvelopeSimple
                   size={20}
                   weight="duotone"
                   className="text-blue-500"
                 />
                 <span>{client.email || "Não informado"}</span>
-              </div>
+              </View>
               <Divider spacing="1.5rem" color="#f0f0f0" />
-              <div className="info-row">
+              <View className="info-row">
                 <MapPin size={20} weight="duotone" className="text-red-500" />
                 <span className="text-xs">
                   {client.rua}, {client.num} - {client.bairro}
                 </span>
-              </div>
+              </View>
             </View>
           </View>
 
@@ -244,7 +249,7 @@ export default function ClientePerfil() {
               {historicoOrcamentos.length > 0 ? (
                 historicoOrcamentos.map((orc, i) => (
                   <React.Fragment key={orc.id}>
-                    <div
+                    <View
                       className="history-item"
                       onClick={() => router.push(`/orcamentos/${orc.id}`)}
                     >
@@ -252,7 +257,7 @@ export default function ClientePerfil() {
                         {getCleanDate(String(orc.docTitle.emissao))}
                       </span>
                       <p className="title">{orc.docTitle.text}</p>
-                    </div>
+                    </View>
                     {i < historicoOrcamentos.length - 1 && (
                       <Divider spacing="1rem" />
                     )}
@@ -273,7 +278,7 @@ export default function ClientePerfil() {
               {historicoNotas.length > 0 ? (
                 historicoNotas.map((n, i) => (
                   <React.Fragment key={n.id}>
-                    <div
+                    <View
                       className="history-item"
                       onClick={() => router.push(`/notas/${n.id}`)}
                     >
@@ -281,7 +286,7 @@ export default function ClientePerfil() {
                         {new Date(n.date).toLocaleDateString("pt-BR")}
                       </span>
                       <p className="title">{n.title}</p>
-                    </div>
+                    </View>
                     {i < historicoNotas.length - 1 && (
                       <Divider spacing="1rem" />
                     )}

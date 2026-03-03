@@ -673,6 +673,15 @@ subclause-body ol > * {
   /* orphans: 3; */
 }
 
+subclause-body ul > li,
+subclause-body ol > li {
+  display: list-item !important;
+}
+
+/* subclause-body li { */
+/*list-style-position: inside; /* Garante que o marcador viaje junto com o texto */
+/* } */
+
 subclause-body h1 {
   font-weight: bold;
   margin: 1rem 0 0;
@@ -781,9 +790,11 @@ footer-content_bottom {
 }
 
 ol,
-ul,
-menu {
+ul {
   list-style: initial;
+}
+menu {
+  list-style: none;
 }
 
 /* Esconde elementos da interface na impressão */
