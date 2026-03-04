@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { domToBlob } from "modern-screenshot";
-import { ImageIcon, FilePdf, SpinnerGap } from "@phosphor-icons/react";
+import { ImageIcon, FilePdf, SpinnerGap, Printer } from "@phosphor-icons/react"; // Added Printer icon
 import {
   Drawer,
   DrawerContent,
@@ -10,8 +10,8 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { toast } from "sonner";
+import html2pdf from "html2pdf.js"; // Import the power!
 
-// Interfaces para garantir a tipagem estrita
 interface BudgetShareData {
   id: string | number;
   [key: string]: any;
@@ -23,7 +23,7 @@ interface BudgetShareMenuProps {
   data: BudgetShareData;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  budgetTitle?: string; // Prop opcional baseada no uso anterior
+  budgetTitle?: string;
 }
 
 export default function BudgetShareMenu({
@@ -35,7 +35,7 @@ export default function BudgetShareMenu({
 }: BudgetShareMenuProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // 1. Compartilhar como Imagem (Rápido/Local)
+  // 1. Share as Image (Existing)
   const handleShareAsImg = async () => {
     if (!budgetRef.current) return;
     setIsGenerating(true);
@@ -53,7 +53,6 @@ export default function BudgetShareMenu({
           title: "Orçamento Elétrica & Art",
         });
       } else {
-        // Fallback: Download se não houver suporte a share de arquivos
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -68,7 +67,51 @@ export default function BudgetShareMenu({
     }
   };
 
-  // 2. Gerar PDF de Elite (Backend / Navegador Invisível)
+  // 2. NEW: Local PDF (Captures the current view)
+  const handleShareAsPdfLocal = async () => {
+    if (!budgetRef.current) return;
+    setIsGenerating(true);
+
+    const element = budgetRef.current;
+    const opt = {
+      margin: [10, 5],
+      filename: `Orcamento_${clientName}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      backgroundColor: "#ffffff",
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    };
+
+    try {
+      // Generate the PDF as a blob
+      const pdfBlob = await html2pdf().from(element).set(opt).output("blob");
+      const file = new File([pdfBlob], opt.filename, {
+        type: "application/pdf",
+      });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Orçamento Elétrica & Art",
+          text: `Olá! Segue o orçamento de ${clientName}.`,
+        });
+      } else {
+        // Fallback to download
+        html2pdf().from(element).set(opt).save();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar PDF local");
+    } finally {
+      setIsGenerating(false);
+      onOpenChange(false);
+    }
+  };
+
+  // 3. Print Backend (Existing)
   const handlePrintBackend = async () => {
     setIsGenerating(true);
     try {
@@ -100,47 +143,69 @@ export default function BudgetShareMenu({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="pb-10">
+      <DrawerContent className="pb-10 bg-white">
         <DrawerHeader>
           <DrawerTitle className="text-center text-slate-500 uppercase text-xs tracking-widest font-thunder">
             Opções de Compartilhamento
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="grid grid-cols-2 gap-4 p-4">
+        {/* Changed grid-cols-2 to grid-cols-3 to fit all options */}
+        <div className="grid grid-cols-3 gap-2 p-4">
+          {/* Option: Image */}
           <button
             type="button"
             onClick={handleShareAsImg}
             disabled={isGenerating}
-            className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <div className="bg-amber-100 p-3 rounded-2xl text-amber-600">
               {isGenerating ? (
-                <SpinnerGap className="animate-spin" size={32} />
+                <SpinnerGap className="animate-spin" size={24} />
               ) : (
-                <ImageIcon size={32} weight="duotone" />
+                <ImageIcon size={24} weight="duotone" />
               )}
             </div>
-            <span className="text-sm font-bold text-slate-700">
-              Como Imagem
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              Imagem
             </span>
           </button>
 
+          {/* Option: Local PDF (The new one!) */}
+          <button
+            type="button"
+            onClick={handleShareAsPdfLocal}
+            disabled={isGenerating}
+            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+          >
+            <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+              {isGenerating ? (
+                <SpinnerGap className="animate-spin" size={24} />
+              ) : (
+                <Printer size={24} weight="duotone" />
+              )}
+            </div>
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              PDF Rápido
+            </span>
+          </button>
+
+          {/* Option: Backend PDF */}
           <button
             type="button"
             onClick={handlePrintBackend}
             disabled={isGenerating}
-            className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <div className="bg-indigo-100 p-3 rounded-2xl text-indigo-600">
               {isGenerating ? (
-                <SpinnerGap className="animate-spin" size={32} />
+                <SpinnerGap className="animate-spin" size={24} />
               ) : (
-                <FilePdf size={32} weight="duotone" />
+                <FilePdf size={24} weight="duotone" />
               )}
             </div>
-            <span className="text-sm font-bold text-slate-700">
-              PDF de Elite
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              PDF Elite
             </span>
           </button>
         </div>
