@@ -96,7 +96,7 @@ export default function ClientesLista() {
       />
 
       <View tag="clients-list">
-        <div className="clients-container">
+        <View tag="clients-container">
           {filtered.map((c) => (
             <div
               key={c.id}
@@ -162,7 +162,7 @@ export default function ClientesLista() {
               />
             </div>
           ))}
-        </div>
+        </View>
       </View>
 
       <FAB actions={fabConfig} hasBottomNav={true} />

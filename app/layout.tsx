@@ -26,7 +26,7 @@ const godOfThunder = localFont({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#00559c", 
+  themeColor: "#00559c",
 };
 
 export const metadata: Metadata = {
@@ -57,7 +57,8 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href="/pix/ea/EA-logo.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} antialiased pb-24`}
+        // className={`${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} antialiased pb-24`}
+        className={`${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} antialiased`}
       >
         {children}
         <Toaster richColors position="top-center" />
@@ -68,6 +69,3 @@ export default async function RootLayout({
     </html>
   );
 }
-
-
-

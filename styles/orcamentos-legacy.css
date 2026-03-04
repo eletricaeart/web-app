@@ -735,10 +735,10 @@ footer-content_bottom {
 }
 
 .orcamento-list {
-  padding: 1rem;
+  /* padding: 1rem; */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.7rem;
 }
 
 /*.orcamento-card {
