@@ -1,6 +1,6 @@
 // app/api/print/[id]/route.ts
 import { NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 
 export async function GET(
   request: Request,
