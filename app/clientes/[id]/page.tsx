@@ -185,11 +185,14 @@ export default function ClientePerfil() {
         }
       />
 
-      <View tag="client-page" className="client-perfil-page">
+      <View
+        tag="client-page"
+        className="client-perfil-page bg-[#e5e5e5_!important] min-h-[95dvh]"
+      >
         {/* SEÇÃO HEADER: AVATAR E NOME */}
         <View
           tag="avatar-section"
-          className="relative min-h-[300px] text-center bg-[var(--sv-sodalita)] text-white rounded-[0_0_50px_50px] overflow-hidden"
+          className="relative min-h-[300px] text-center bg-[var(--sv-sodalita)] text-white overflow-hidden"
         >
           {/* <View className="avatar-circle relative w-24 h-24 z-30"> */}
           {/*   <Image */}
@@ -201,19 +204,20 @@ export default function ClientePerfil() {
           {/* </View> */}
           <View
             tag="perfil-pic"
-            className="absolute top-0 left-0 w-full h-full z-10"
+            className="absolute mt-[-2px] top-0 left-0 w-full h-full z-10 overflow-hidden border-none outline-none ring-0 bg-transparent"
           >
             <Image
               src={clientAvatar}
               alt={client.name}
               fill
-              className="object-cover"
+              className="object-cover border-none"
+              style={{ border: "none", outline: "none" }}
               priority
             />
           </View>
           <View
             tag="client-desc"
-            className="absolute bottom-0 left-0 z-20 w-full py-4 px-6 bg-gray-800/30"
+            className="absolute bottom-0 left-0 z-20 w-full py-4 pt-6 px-6 bg-linear-to-b from-transparent to-[#e5e5e5]"
           >
             <View tag="descs" className="flex-1">
               <h3 className="font-thunder text-2xl capitalize">
