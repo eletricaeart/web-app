@@ -268,6 +268,52 @@ export default function BudgetShareMenu({
     }
   };
 
+  /** --- [ share srverPDF ]
+   * */
+  const handleShareServerPDF = async () => {
+    if (!budgetRef.current) return;
+
+    // Clona o HTML do orçamento
+    const htmlContent = `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          ${document.querySelector("style")?.innerHTML || ""}
+        </style>
+      </head>
+      <body>
+        ${budgetRef.current.outerHTML}
+      </body>
+    </html>
+  `;
+
+    const response = await fetch("/api/generate-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ html: htmlContent }),
+    });
+
+    const blob = await response.blob();
+
+    const file = new File([blob], `Orcamento_${clientName}.pdf`, {
+      type: "application/pdf",
+    });
+
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "Orçamento",
+        text: `Olá! Segue o orçamento.`,
+      });
+    } else {
+      const url = URL.createObjectURL(blob);
+      window.open(url);
+    }
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="pb-10 bg-white">
@@ -333,6 +379,25 @@ export default function BudgetShareMenu({
             </div>
             <span className="text-[10px] font-bold text-slate-700 text-center">
               PDF Rápido Teste
+            </span>
+          </button>
+
+          {/* Option: Local PDF (The new one!) */}
+          <button
+            type="button"
+            onClick={handleShareServerPDF}
+            disabled={isGenerating}
+            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+          >
+            <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+              {isGenerating ? (
+                <SpinnerGap className="animate-spin" size={24} />
+              ) : (
+                <Printer size={24} weight="duotone" />
+              )}
+            </div>
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              serverPDF
             </span>
           </button>
 
