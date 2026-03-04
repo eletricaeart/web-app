@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   try {
     const { html } = await req.json();
@@ -15,9 +17,8 @@ export async function POST(req: Request) {
 
     const browser = await puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      headless: true,
     });
 
     const page = await browser.newPage();
