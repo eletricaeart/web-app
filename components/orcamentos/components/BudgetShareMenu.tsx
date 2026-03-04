@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/drawer";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js"; // Import the power!
+import html2canvas from "html2canvas-pro"; // Import the PRO version!
+
 
 interface BudgetShareData {
   id: string | number;
@@ -69,46 +71,64 @@ export default function BudgetShareMenu({
 
   // 2. NEW: Local PDF (Captures the current view)
   const handleShareAsPdfLocal = async () => {
-    if (!budgetRef.current) return;
-    setIsGenerating(true);
+  if (!budgetRef.current) return;
+  setIsGenerating(true);
 
-    const element = budgetRef.current;
-    const opt = {
-      margin: [10, 5],
-      filename: `Orcamento_${clientName}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+  const element = budgetRef.current;
+
+  // Configuration using the Pro engine
+  const opt = {
+    margin: [10, 5],
+    filename: `Orcamento_${clientName}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true, 
+      letterRendering: true,
+      // We pass the PRO instance here
+      canvas: await html2canvas(element, { useCORS: true, scale: 2 })
+    },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+  };
+
+  try {
+    // 💡 The "Pro" way: We generate the canvas first, then the PDF
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
       backgroundColor: "#ffffff",
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    };
+    });
 
-    try {
-      // Generate the PDF as a blob
-      const pdfBlob = await html2pdf().from(element).set(opt).output("blob");
-      const file = new File([pdfBlob], opt.filename, {
-        type: "application/pdf",
+    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF("p", "mm", "a4");
+    
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    
+    pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+    const pdfBlob = pdf.output("blob");
+
+    const file = new File([pdfBlob], `Orcamento_${clientName}.pdf`, { type: "application/pdf" });
+
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "Orçamento Elétrica & Art",
       });
-
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "Orçamento Elétrica & Art",
-          text: `Olá! Segue o orçamento de ${clientName}.`,
-        });
-      } else {
-        // Fallback to download
-        html2pdf().from(element).set(opt).save();
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao gerar PDF local");
-    } finally {
-      setIsGenerating(false);
-      onOpenChange(false);
+    } else {
+      pdf.save(`Orcamento_${clientName}.pdf`);
     }
+  } catch (err) {
+    console.error("PDF Pro Error:", err);
+    toast.error("Erro ao gerar PDF com motor Pro.");
+  } finally {
+    setIsGenerating(false);
+    onOpenChange(false);
+  }
   };
 
   // 3. Print Backend (Existing)
