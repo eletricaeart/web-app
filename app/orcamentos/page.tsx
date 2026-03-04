@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
 import FAB from "@/components/ui/FAB";
 import AppBar from "@/components/layout/AppBar";
-import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
+import BudgetShareMenu from "@/components/orcamentos/BudgetShareMenu";
 import BudgetCard from "@/components/layout/BudgetCard";
 import SearchBar from "@/components/SearchBar";
 import {

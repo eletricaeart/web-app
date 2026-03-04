@@ -10,7 +10,7 @@ import Text from "@/components/ui/Text";
 import { processTextToHtml } from "@/utils/TextPreProcessor";
 import View from "@/components/layout/View";
 import BudgetSkeleton from "../components/BudgetSkeleton";
-import BudgetShareMenu from "@/components/orcamentos/components/BudgetShareMenu";
+import BudgetShareMenu from "@/components/orcamentos/BudgetShareMenu";
 import { Pen, FilePdf, ShareNetwork } from "@phosphor-icons/react";
 import { CID } from "@/utils/helpers";
 import { useEASync } from "@/hooks/useEASync";
