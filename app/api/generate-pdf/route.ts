@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     await browser.close();
 
-    return new NextResponse(pdf, {
+    return new NextResponse(Buffer.from(pdf), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": "inline; filename=orcamento.pdf",
