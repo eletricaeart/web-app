@@ -484,7 +484,6 @@ export default function BudgetShareMenu({
         <View className="grid grid-cols-3 gap-2 p-4">
           {/* Option: Image */}
           <View
-            type="button"
             onClick={handleShareAsImg}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
@@ -503,7 +502,6 @@ export default function BudgetShareMenu({
 
           {/* Option: Local PDF (The new one!) */}
           <View
-            type="button"
             onClick={handleShareAsPdfLocal}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
@@ -522,7 +520,6 @@ export default function BudgetShareMenu({
 
           {/* Option: Local PDF (The new one!) */}
           <View
-            type="button"
             onClick={handleShareAsPdfLocalTest}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
@@ -541,7 +538,6 @@ export default function BudgetShareMenu({
 
           {/* Option: Local PDF (The new one!) */}
           <View
-            type="button"
             onClick={handleShareServerPDF}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
@@ -560,7 +556,6 @@ export default function BudgetShareMenu({
 
           {/* Option: Local PDF (The new one!) */}
           <View
-            type="button"
             onClick={handleShareServerPDF2}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
@@ -579,7 +574,6 @@ export default function BudgetShareMenu({
 
           {/* Option: Local PDF (The new one!) */}
           <View
-            type="button"
             onClick={handleShareServerPDFB}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
@@ -598,7 +592,6 @@ export default function BudgetShareMenu({
 
           {/* Option: Backend PDF */}
           <View
-            type="button"
             onClick={handlePrintBackend}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
