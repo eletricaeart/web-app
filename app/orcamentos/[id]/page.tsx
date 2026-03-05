@@ -86,11 +86,11 @@ export default function Budget() {
       label: "Compartilhar",
       action: () => setIsShareOpen(true),
     },
-    {
-      icon: <FilePdf size={28} weight="duotone" />,
-      label: "Imprimir PDF",
-      action: () => window.print(),
-    },
+    // {
+    //   icon: <FilePdf size={28} weight="duotone" />,
+    //   label: "Imprimir PDF",
+    //   action: () => window.print(),
+    // },
   ];
 
   useEffect(() => {
