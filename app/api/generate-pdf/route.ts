@@ -18,7 +18,6 @@ export async function POST(req: Request) {
 
     const browser = await puppeteer.launch({
       args: chromium.args,
-      // defaultViewport: chromium.defaultViewport,
       defaultViewport: {
         width: 794, // Largura aproximada de um A4 em pixels (96 DPI)
         height: 1123, // Altura aproximada de um A4
@@ -27,7 +26,6 @@ export async function POST(req: Request) {
       executablePath: await chromium.executablePath(
         "https://github.com/sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar",
       ), // Link para o pack oficial
-      // executablePath: await chromium.executablePath(),
       headless: true,
     });
 
