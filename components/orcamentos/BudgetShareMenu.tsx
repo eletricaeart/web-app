@@ -587,7 +587,6 @@ export default function BudgetShareMenu({
           {/* Option: Backend PDF */}
           <View
             onClick={handlePrintBackend}
-            disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <View className="bg-indigo-100 p-3 rounded-2xl text-indigo-600">
