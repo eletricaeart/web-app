@@ -111,7 +111,7 @@ export default function Budget() {
       }
 
       setLoading(false);
-    }, 1000); // 🔥 seu delay de 1 segundo
+    }, 500); // 🔥 seu delay de .5 segundo
 
     return () => clearTimeout(minimumTimer);
   }, [orcamentos, id]);

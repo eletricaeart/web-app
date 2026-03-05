@@ -37,7 +37,88 @@ export default function BudgetShareMenu({
   open,
   onOpenChange,
 }: BudgetShareMenuProps) {
+  const [generatedFile, setGeneratedFile] = useState<File | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
   const [isGenerating, setIsGenerating] = useState(false);
+
+  /**
+   * --- [ generate pdf on server and return it to front ]
+   *  */
+  const generatePdfOnServerAndReturnIt = async () => {
+    if (!budgetRef.current) return;
+    setIsGenerating(true);
+    setGeneratedFile(null); // Limpa anterior
+
+    try {
+      const budgetHtml = budgetRef.current.innerHTML;
+      const styles = Array.from(document.querySelectorAll("style"))
+        .map((s) => s.innerHTML)
+        .join("\n");
+
+      const htmlFull = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>${styles}\n${prestyle}\n${styles4send}</style>
+        </head>
+        <body class="p-10">${budgetHtml}</body>
+      </html>
+    `;
+
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: htmlFull }),
+      });
+
+      if (!response.ok) throw new Error("Erro no servidor");
+
+      const blob = await response.blob();
+      const file = new File([blob], `Orcamento_${clientName}.pdf`, {
+        type: "application/pdf",
+      });
+
+      // GUARDAMOS O ARQUIVO NO ESTADO
+      setGeneratedFile(file);
+      setPdfUrl(window.URL.createObjectURL(blob));
+
+      toast.success("PDF gerado com sucesso! Clique em compartilhar.");
+    } catch (err: any) {
+      toast.error("Erro ao gerar PDF");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  /* --- */
+
+  /**
+   * --- [ handle the pdf file after the front get it from the server ]
+   * */
+  const handleShareFileAfterServerGenerateTheFile = async () => {
+    if (!generatedFile) return;
+
+    try {
+      if (navigator.share && navigator.canShare({ files: [generatedFile] })) {
+        await navigator.share({
+          files: [generatedFile],
+          title: "Orçamento Elétrica & Art",
+          text: `Olá! Segue o orçamento de ${clientName}.`,
+        });
+      } else {
+        // Fallback: Download
+        const a = document.createElement("a");
+        a.href = pdfUrl!;
+        a.download = generatedFile.name;
+        a.click();
+      }
+    } catch (err) {
+      console.error("Erro ao compartilhar:", err);
+    }
+  };
+  /* --- */
 
   // 1. Share as Image (Existing)
   const handleShareAsImg = async () => {
@@ -696,6 +777,46 @@ export default function BudgetShareMenu({
               teste 3
             </span>
           </View>
+
+          {/**/}
+          {!generatedFile ? (
+            <View
+              onClick={generatePdfOnServerAndReturnIt}
+              className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+            >
+              <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+                {isGenerating ? (
+                  <SpinnerGap className="animate-spin" size={24} />
+                ) : (
+                  <Printer size={24} weight="duotone" />
+                )}
+              </View>
+              <span className="text-[10px] font-bold text-slate-700 text-center">
+                Gerar PDF
+              </span>
+            </View>
+          ) : (
+            <View
+              onClick={() => {
+                handleShareFileAfterServerGenerateTheFile();
+                setTimeout(() => {
+                  setGeneratedFile(null);
+                }, 2000);
+              }}
+              className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+            >
+              <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+                {isGenerating ? (
+                  <SpinnerGap className="animate-spin" size={24} />
+                ) : (
+                  <Printer size={24} weight="duotone" />
+                )}
+              </View>
+              <span className="text-[10px] font-bold text-slate-700 text-center">
+                Compartilhar o PDF
+              </span>
+            </View>
+          )}
         </View>
       </DrawerContent>
     </Drawer>
