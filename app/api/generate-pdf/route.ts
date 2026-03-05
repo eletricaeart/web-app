@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       executablePath: await chromium.executablePath(
         "https://github.com/sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar",
       ), // Link para o pack oficial
-      executablePath: await chromium.executablePath(),
+      // executablePath: await chromium.executablePath(),
       headless: true,
     });
 
