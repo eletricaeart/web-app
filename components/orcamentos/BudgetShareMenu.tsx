@@ -124,13 +124,15 @@ export default function BudgetShareMenu({
    * --- [ handle native browser print ]
    * */
   const handleNativePrint = () => {
-    // 1. Primeiro fechamos o menu para não atrapalhar o layout de impressão
-    onOpenChange(false);
-
-    // 2. Aguardamos o Drawer terminar a animação de fechar (aprox. 300ms)
-    setTimeout(() => {
-      window.print();
-    }, 400);
+    async function load() {
+      onOpenChange(false);
+    }
+    load().then(() => {
+      onOpenChange(false);
+      setTimeout(() => {
+        window.print();
+      }, 1000);
+    });
   };
 
   /**
