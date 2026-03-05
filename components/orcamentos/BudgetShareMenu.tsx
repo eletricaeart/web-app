@@ -13,6 +13,7 @@ import View from "../layout/View";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js"; // Import the power!
 import html2canvas from "html2canvas-pro"; // Import the PRO version!
+import { styles4send } from "./styles4send";
 
 interface BudgetShareData {
   id: string | number;
@@ -471,6 +472,82 @@ export default function BudgetShareMenu({
     }
   };
 
+  /**
+   * */
+  const teste3 = async () => {
+    if (!budgetRef.current) return;
+    setIsGenerating(true);
+
+    try {
+      // 1. Capturamos o HTML exato que está na tela
+      const budgetHtml = budgetRef.current.innerHTML;
+
+      // 1. Captura os estilos da página atual
+      const styles = Array.from(document.querySelectorAll("style"))
+        .map((s) => s.innerHTML)
+        .join("\n");
+
+      // 2. Monta o HTML com o Tailwind injetado via CDN para garantir
+      const htmlFull = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>${styles}</style>
+          <style>${styles4send}</style>
+          <style>
+            body { background: white !important; font-family: sans-serif; }
+            * { -webkit-print-color-adjust: exact !important; }
+          </style>
+        </head>
+        <body class="p-10">
+          ${budgetRef.current.innerHTML}
+        </body>
+      </html>
+    `;
+
+      console.log(`\n\n\n${budgetRef.current.innerHTML}`);
+
+      const response = await fetch("/api/generate-pdf", {
+        // Ajuste para a sua rota
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: htmlFull }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro na geração do PDF");
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], `Orcamento_${clientName}.pdf`, {
+        type: "application/pdf",
+      });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Orçamento Elétrica & Art",
+          text: `Olá! Segue o orçamento de ${clientName}.`,
+        });
+      } else {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Orcamento_${clientName}.pdf`;
+        a.click();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao processar PDF no servidor");
+      console.error("Erro PDF:", err);
+    } finally {
+      setIsGenerating(false);
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="pb-10 bg-white">
@@ -598,6 +675,23 @@ export default function BudgetShareMenu({
             </View>
             <span className="text-[10px] font-bold text-slate-700 text-center">
               PDF Elite
+            </span>
+          </View>
+
+          {/**/}
+          <View
+            onClick={teste3}
+            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+          >
+            <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+              {isGenerating ? (
+                <SpinnerGap className="animate-spin" size={24} />
+              ) : (
+                <Printer size={24} weight="duotone" />
+              )}
+            </View>
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              teste 3
             </span>
           </View>
         </View>

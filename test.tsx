@@ -1,57 +1,68 @@
-const handleShareServerPDF = async () => {
+const test3 = async () => {
   if (!budgetRef.current) return;
   setIsGenerating(true);
 
   try {
-    // Captura os estilos atuais para enviar junto
+    // 1. Capturamos o HTML exato que está na tela
+    const budgetHtml = budgetRef.current.innerHTML;
+
+    // 1. Captura os estilos da página atual
     const styles = Array.from(document.querySelectorAll("style"))
       .map((s) => s.innerHTML)
       .join("\n");
 
-    const htmlContent = `
+    // 2. Monta o HTML com o Tailwind injetado via CDN para garantir
+    const htmlFull = `
       <!DOCTYPE html>
       <html>
         <head>
-          <meta charset="UTF-8" />
+          <meta charset="UTF-8">
           <script src="https://cdn.tailwindcss.com"></script>
           <style>${styles}</style>
+          <style>
+            body { background: white !important; font-family: sans-serif; }
+            * { -webkit-print-color-adjust: exact !important; }
+          </style>
         </head>
-        <body style="background: white;">
-          ${budgetRef.current.outerHTML}
+        <body class="p-10">
+          ${budgetRef.current.innerHTML}
         </body>
       </html>
     `;
 
     const response = await fetch("/api/generate-pdf", {
+      // Ajuste para a sua rota
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ html: htmlContent }),
+      body: JSON.stringify({ html: htmlFull }),
     });
 
-    if (!response.ok) throw new Error("Erro na API");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Erro na geração do PDF");
+    }
 
     const blob = await response.blob();
     const file = new File([blob], `Orcamento_${clientName}.pdf`, {
       type: "application/pdf",
     });
 
-    // Compartilhamento Nativo (Perfeito para o WhatsApp do Rafael)
     if (navigator.share && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
-        title: "Orçamento E&A",
-        text: "Segue o orçamento solicitado.",
+        title: "Orçamento Elétrica & Art",
+        text: `Olá! Segue o orçamento de ${clientName}.`,
       });
     } else {
-      const url = URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `Orcamento_${clientName}.pdf`;
       a.click();
     }
-  } catch (err) {
-    toast.error("Erro no servidor de PDF");
-    console.error(err);
+  } catch (err: any) {
+    toast.error(err.message || "Erro ao processar PDF no servidor");
+    console.error("Erro PDF:", err);
   } finally {
     setIsGenerating(false);
     onOpenChange(false);
