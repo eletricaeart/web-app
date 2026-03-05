@@ -485,7 +485,6 @@ export default function BudgetShareMenu({
           {/* Option: Image */}
           <View
             onClick={handleShareAsImg}
-            disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <View className="bg-amber-100 p-3 rounded-2xl text-amber-600">
@@ -503,7 +502,6 @@ export default function BudgetShareMenu({
           {/* Option: Local PDF (The new one!) */}
           <View
             onClick={handleShareAsPdfLocal}
-            disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
@@ -521,7 +519,6 @@ export default function BudgetShareMenu({
           {/* Option: Local PDF (The new one!) */}
           <View
             onClick={handleShareAsPdfLocalTest}
-            disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
@@ -539,7 +536,6 @@ export default function BudgetShareMenu({
           {/* Option: Local PDF (The new one!) */}
           <View
             onClick={handleShareServerPDF}
-            disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
@@ -557,7 +553,6 @@ export default function BudgetShareMenu({
           {/* Option: Local PDF (The new one!) */}
           <View
             onClick={handleShareServerPDF2}
-            disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
@@ -575,7 +570,6 @@ export default function BudgetShareMenu({
           {/* Option: Local PDF (The new one!) */}
           <View
             onClick={handleShareServerPDFB}
-            disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
             <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
