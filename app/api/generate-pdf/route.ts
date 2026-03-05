@@ -1,8 +1,8 @@
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
@@ -15,14 +15,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const executablePath =
-      process.env.NODE_ENV === "production"
-        ? await chromium.executablePath()
-        : undefined;
-
     const browser = await puppeteer.launch({
       args: chromium.args,
-      executablePath,
+      executablePath: await chromium.executablePath(),
       headless: true,
     });
 
@@ -45,11 +40,9 @@ export async function POST(req: Request) {
         "Content-Disposition": "inline; filename=orcamento.pdf",
       },
     });
-  } catch (error: any) {
-    console.error("ERRO PDF:", error);
-    return NextResponse.json(
-      { error: error?.message || "Erro ao gerar PDF" },
-      { status: 500 },
-    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Erro ao gerar PDF" }, { status: 500 });
   }
 }
+// 1

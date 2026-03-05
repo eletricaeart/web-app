@@ -9,6 +9,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import View from "../layout/View";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js"; // Import the power!
 import html2canvas from "html2canvas-pro"; // Import the PRO version!
@@ -272,45 +273,201 @@ export default function BudgetShareMenu({
    * */
   const handleShareServerPDF = async () => {
     if (!budgetRef.current) return;
+    setIsGenerating(true);
 
-    // Clona o HTML do orçamento
-    const htmlContent = `
-    <html>
-      <head>
-        <meta charset="UTF-8" />
-        <style>
-          ${document.querySelector("style")?.innerHTML || ""}
-        </style>
-      </head>
-      <body>
-        ${budgetRef.current.outerHTML}
-      </body>
-    </html>
-  `;
+    try {
+      // Captura os estilos atuais para enviar junto
+      const styles = Array.from(document.querySelectorAll("style"))
+        .map((s) => s.innerHTML)
+        .join("\n");
 
-    const response = await fetch("/api/generate-pdf", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ html: htmlContent }),
-    });
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>${styles}</style>
+        </head>
+        <body style="background: white;">
+          ${budgetRef.current.outerHTML}
+        </body>
+      </html>
+    `;
 
-    const blob = await response.blob();
-
-    const file = new File([blob], `Orcamento_${clientName}.pdf`, {
-      type: "application/pdf",
-    });
-
-    if (navigator.share && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: "Orçamento",
-        text: `Olá! Segue o orçamento.`,
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: htmlContent }),
       });
-    } else {
-      const url = URL.createObjectURL(blob);
-      window.open(url);
+
+      if (!response.ok) throw new Error("Erro na API");
+
+      const blob = await response.blob();
+      const file = new File([blob], `Orcamento_${clientName}.pdf`, {
+        type: "application/pdf",
+      });
+
+      // Compartilhamento Nativo (Perfeito para o WhatsApp do Rafael)
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Orçamento E&A",
+          text: "Segue o orçamento solicitado.",
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Orcamento_${clientName}.pdf`;
+        a.click();
+      }
+    } catch (err) {
+      toast.error("Erro no servidor de PDF");
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+      onOpenChange(false);
+    }
+  };
+
+  /**
+   * --- server test 2
+   *  */
+  const handleShareServerPDF2 = async () => {
+    if (!budgetRef.current) return;
+    setIsGenerating(true);
+
+    try {
+      // Captura os estilos atuais para enviar junto
+      const styles = Array.from(document.querySelectorAll("style"))
+        .map((s) => s.innerHTML)
+        .join("\n");
+
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>${styles}</style>
+        </head>
+        <body style="background: white;">
+          ${budgetRef.current.outerHTML}
+        </body>
+      </html>
+    `;
+
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: htmlContent }),
+      });
+
+      if (!response.ok) throw new Error("Erro na API");
+
+      const blob = await response.blob();
+      const file = new File([blob], `Orcamento_${clientName}.pdf`, {
+        type: "application/pdf",
+      });
+
+      // Compartilhamento Nativo (Perfeito para o WhatsApp do Rafael)
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Orçamento E&A",
+          text: "Segue o orçamento solicitado.",
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Orcamento_${clientName}.pdf`;
+        a.click();
+      }
+    } catch (err) {
+      toast.error("Erro no servidor de PDF");
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+      onOpenChange(false);
+    }
+  };
+  /**
+   * --- server teste A
+   *  */
+  /**
+   * --- server teste B
+   *  */
+  const handleShareServerPDFB = async () => {
+    if (!budgetRef.current) return;
+    setIsGenerating(true);
+
+    try {
+      // 1. Capturamos o HTML exato que está na tela
+      const budgetHtml = budgetRef.current.innerHTML;
+
+      // 2. Capturamos todos os estilos (Tailwind e globais) para o PDF não virar "texto puro"
+      const styles = Array.from(document.querySelectorAll("style"))
+        .map((s) => s.innerHTML)
+        .join("\n");
+
+      // 3. Montamos o "pacote" completo
+      const fullHtml = `
+      <!DOCTYPE html>
+      <html lang="pt-br">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            ${styles}
+            body { background: white !important; padding: 40px !important; }
+            /* Garante que cores de fundo apareçam no PDF */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          </style>
+        </head>
+        <body>
+          ${budgetHtml}
+        </body>
+      </html>
+    `;
+
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: fullHtml }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro na geração do PDF");
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], `Orcamento_${clientName}.pdf`, {
+        type: "application/pdf",
+      });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Orçamento Elétrica & Art",
+          text: `Olá! Segue o orçamento de ${clientName}.`,
+        });
+      } else {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Orcamento_${clientName}.pdf`;
+        a.click();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao processar PDF no servidor");
+      console.error("Erro PDF:", err);
+    } finally {
+      setIsGenerating(false);
+      onOpenChange(false);
     }
   };
 
@@ -324,102 +481,140 @@ export default function BudgetShareMenu({
         </DrawerHeader>
 
         {/* Changed grid-cols-2 to grid-cols-3 to fit all options */}
-        <div className="grid grid-cols-3 gap-2 p-4">
+        <View className="grid grid-cols-3 gap-2 p-4">
           {/* Option: Image */}
-          <button
+          <View
             type="button"
             onClick={handleShareAsImg}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
-            <div className="bg-amber-100 p-3 rounded-2xl text-amber-600">
+            <View className="bg-amber-100 p-3 rounded-2xl text-amber-600">
               {isGenerating ? (
                 <SpinnerGap className="animate-spin" size={24} />
               ) : (
                 <ImageIcon size={24} weight="duotone" />
               )}
-            </div>
+            </View>
             <span className="text-[10px] font-bold text-slate-700 text-center">
               Imagem
             </span>
-          </button>
+          </View>
 
           {/* Option: Local PDF (The new one!) */}
-          <button
+          <View
             type="button"
             onClick={handleShareAsPdfLocal}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
-            <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+            <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
               {isGenerating ? (
                 <SpinnerGap className="animate-spin" size={24} />
               ) : (
                 <Printer size={24} weight="duotone" />
               )}
-            </div>
+            </View>
             <span className="text-[10px] font-bold text-slate-700 text-center">
               PDF Rápido
             </span>
-          </button>
+          </View>
 
           {/* Option: Local PDF (The new one!) */}
-          <button
+          <View
             type="button"
             onClick={handleShareAsPdfLocalTest}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
-            <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+            <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
               {isGenerating ? (
                 <SpinnerGap className="animate-spin" size={24} />
               ) : (
                 <Printer size={24} weight="duotone" />
               )}
-            </div>
+            </View>
             <span className="text-[10px] font-bold text-slate-700 text-center">
               PDF Rápido Teste
             </span>
-          </button>
+          </View>
 
           {/* Option: Local PDF (The new one!) */}
-          <button
+          <View
             type="button"
             onClick={handleShareServerPDF}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
-            <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+            <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
               {isGenerating ? (
                 <SpinnerGap className="animate-spin" size={24} />
               ) : (
                 <Printer size={24} weight="duotone" />
               )}
-            </div>
+            </View>
             <span className="text-[10px] font-bold text-slate-700 text-center">
               serverPDF
             </span>
-          </button>
+          </View>
+
+          {/* Option: Local PDF (The new one!) */}
+          <View
+            type="button"
+            onClick={handleShareServerPDF2}
+            disabled={isGenerating}
+            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+          >
+            <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+              {isGenerating ? (
+                <SpinnerGap className="animate-spin" size={24} />
+              ) : (
+                <Printer size={24} weight="duotone" />
+              )}
+            </View>
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              serverPDF2
+            </span>
+          </View>
+
+          {/* Option: Local PDF (The new one!) */}
+          <View
+            type="button"
+            onClick={handleShareServerPDFB}
+            disabled={isGenerating}
+            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+          >
+            <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+              {isGenerating ? (
+                <SpinnerGap className="animate-spin" size={24} />
+              ) : (
+                <Printer size={24} weight="duotone" />
+              )}
+            </View>
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              serverTesteB
+            </span>
+          </View>
 
           {/* Option: Backend PDF */}
-          <button
+          <View
             type="button"
             onClick={handlePrintBackend}
             disabled={isGenerating}
             className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
           >
-            <div className="bg-indigo-100 p-3 rounded-2xl text-indigo-600">
+            <View className="bg-indigo-100 p-3 rounded-2xl text-indigo-600">
               {isGenerating ? (
                 <SpinnerGap className="animate-spin" size={24} />
               ) : (
                 <FilePdf size={24} weight="duotone" />
               )}
-            </div>
+            </View>
             <span className="text-[10px] font-bold text-slate-700 text-center">
               PDF Elite
             </span>
-          </button>
-        </div>
+          </View>
+        </View>
       </DrawerContent>
     </Drawer>
   );
