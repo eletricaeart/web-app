@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import html2pdf from "html2pdf.js"; // Import the power!
 import html2canvas from "html2canvas-pro"; // Import the PRO version!
 import { styles4send } from "./styles4send";
+import { prestyle } from "./prestyle";
 
 interface BudgetShareData {
   id: string | number;
@@ -495,6 +496,7 @@ export default function BudgetShareMenu({
           <meta charset="UTF-8">
           <script src="https://cdn.tailwindcss.com"></script>
           <style>${styles}</style>
+          <style>${prestyle}</style>
           <style>${styles4send}</style>
           <style>
             body { background: white !important; font-family: sans-serif; }

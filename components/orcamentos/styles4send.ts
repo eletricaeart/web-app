@@ -1,4 +1,39 @@
 export const styles4send = `
+:root {
+  --appbar-shadow: rgba(0 0 0 0.25) 0 4px 8px;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* --- [ ceo cores ] --- */
+  --ceo-golden: #daa520;
+  --ceo-amber: #ffab00;
+  --ceo-blu: #27f;
+  --ceo-blue: #29f;
+  /* --- [ lyh cores ] --- */
+  --lyh-rose: #905;
+  --lyh-pink: #fc0fc0;
+
+  /* --- [ suvinil cores ] --- */
+  /* cinza */
+  --sv-calopsita: rgb(219 218 215);
+  --sv-cromio: rgb(209 208 202);
+  /* azul */
+  --sv-azul-bebe: rgb(183 213 229);
+  --sv-marine: rgb(125 136 187);
+  --sv-beija-flor: rgb(61 88 132);
+  --sv-sodalita: rgb(86 108 155);
+  --sv-sombra-azul: rgb(21 74 143);
+
+  /* --- [ elements ] --- */
+  --scrollbar-thumb: var(--ceo-golden);
+}
+
+
+
+/** --- eof */
 /* --- [ Budget.css ] --- */
 budget-page {
   flex-direction: column;
