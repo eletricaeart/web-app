@@ -8,16 +8,20 @@
   "theme_color": "#212329",
   "icons": [
     {
-      "src": "/pix/ea/EA-splash.png",
-      "sizes": "192x192",
+      "src": "/pix/ea/EA-logo-196.png",
+      "sizes": "196x196",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pix/ea/ea-Name.png",
+      "src": "/pix/ea/EA-logo-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+    },
+    {
+      "src": "/pix/ea/EA-logo.png",
+      "sizes": "600x600",
+      "type": "image/png"
     }
   ]
 }
