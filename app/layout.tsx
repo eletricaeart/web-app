@@ -52,9 +52,23 @@ export default async function RootLayout({
   return (
     <html lang="pt-br">
       <head>
-        <link rel="icon" href="/pix/ea/EA-logo.png" />
+        {/* <link rel="icon" href="/pix/ea/EA-logo.png" /> */}
         {/* Apple Touch Icon para iPhones */}
-        <link rel="apple-touch-icon" href="/pix/ea/EA-logo.png" />
+        {/* <link rel="apple-touch-icon" href="/pix/ea/EA-logo.png" /> */}
+        <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href="#pix/ea/EA-logo.png" />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/pix/ea/EA-logo-512.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/pix/ea/EA-logo-512.png"
+        />
       </head>
       <body
         // className={`${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} antialiased pb-24`}
