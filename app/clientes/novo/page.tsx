@@ -61,11 +61,11 @@ export default function ClienteForm() {
     cep: "",
     rua: "",
     num: "",
-    complemento: "", // Novo campo
+    complemento: "",
     bairro: "",
     cidade: "",
-    obs: "", // Novo campo
-    photo: "", // Novo campo (URL Cloudinary)
+    obs: "",
+    photo: "",
   });
 
   // Carrega dados se for Edição

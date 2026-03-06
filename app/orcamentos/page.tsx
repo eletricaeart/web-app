@@ -191,22 +191,22 @@ export default function Budgets() {
                             </View>
                           </PopoverTrigger>
                           <PopoverContent
-                            className="w-48 p-0 bg-white shadow-xl border-none"
+                            className="w-48 p-0 bg-[#f5f5f5] shadow-xl border-none"
                             align="end"
                           >
                             <View tag="budget-vmenu" className="flex flex-col">
-                              <View
-                                tag="budget-vmenu-btn"
-                                onClick={() => handleOpenShare(orc)}
-                                style={menuItemStyle}
-                              >
-                                <ShareNetwork
-                                  size={18}
-                                  color="#29f"
-                                  weight="duotone"
-                                />{" "}
-                                Compartilhar
-                              </View>
+                              {/* <View */}
+                              {/*   tag="budget-vmenu-btn" */}
+                              {/*   onClick={() => handleOpenShare(orc)} */}
+                              {/*   style={menuItemStyle} */}
+                              {/* > */}
+                              {/*   <ShareNetwork */}
+                              {/*     size={18} */}
+                              {/*     color="#29f" */}
+                              {/*     weight="duotone" */}
+                              {/*   />{" "} */}
+                              {/*   Compartilhar */}
+                              {/* </View> */}
                               <View
                                 onClick={() => handleEdit(orc)}
                                 style={menuItemStyle}
@@ -214,12 +214,12 @@ export default function Budgets() {
                                 <PencilSimple size={18} weight="duotone" />{" "}
                                 Editar
                               </View>
-                              <View
-                                onClick={() => handleDuplicate(orc)}
-                                style={menuItemStyle}
-                              >
-                                <Copy size={18} weight="duotone" /> Duplicar
-                              </View>
+                              {/* <View */}
+                              {/*   onClick={() => handleDuplicate(orc)} */}
+                              {/*   style={menuItemStyle} */}
+                              {/* > */}
+                              {/*   <Copy size={18} weight="duotone" /> Duplicar */}
+                              {/* </View> */}
                               <View
                                 onClick={() =>
                                   handleDelete(orc.id, orc.cliente.name)
