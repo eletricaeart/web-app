@@ -15,6 +15,8 @@ import html2pdf from "html2pdf.js"; // Import the power!
 import html2canvas from "html2canvas-pro"; // Import the PRO version!
 import { styles4send } from "./styles4send";
 import { prestyle } from "./prestyle";
+import { EACardStyles } from "./EACardStylesheet";
+import { TextStylesheet } from "./TextStylesheet";
 
 interface BudgetShareData {
   id: string | number;
@@ -51,6 +53,9 @@ export default function BudgetShareMenu({
     setGeneratedFile(null); // Limpa anterior
 
     try {
+      // Pegamos a origem do site (ex: https://eletrica-e-art.vercel.app)
+      const baseUrl = window.location.origin;
+
       const budgetHtml = budgetRef.current.innerHTML;
       const styles = Array.from(document.querySelectorAll("style"))
         .map((s) => s.innerHTML)
@@ -62,7 +67,7 @@ export default function BudgetShareMenu({
         <head>
           <meta charset="UTF-8">
           <script src="https://cdn.tailwindcss.com"></script>
-          <style>${styles}\n${prestyle}\n${styles4send}</style>
+          <style>${styles}\n${prestyle}\n${styles4send}\n${EACardStyles}\n${TextStylesheet}</style>
         </head>
         <body class="p-10">${budgetHtml}</body>
       </html>

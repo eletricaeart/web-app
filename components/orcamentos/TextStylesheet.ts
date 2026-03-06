@@ -1,3 +1,7 @@
+export const TextStylesheet = `
+/**
+* --- [ Text.css ]
+* */
 .container {
   display: inline-flex;
   flex-direction: column;
@@ -16,8 +20,7 @@
 .textShadow::before {
   content: attr(data-text);
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   color: var(--shadow-text-color, #00f);
   /* Fallback para navegadores que não suportam stroke */
   -webkit-text-stroke-width: var(--shadow-stroke, 10px);
@@ -25,3 +28,4 @@
   filter: drop-shadow(0px 4px rgba(0, 0, 0, 0.3));
   z-index: -1;
 }
+`;

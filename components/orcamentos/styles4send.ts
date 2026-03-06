@@ -854,12 +854,7 @@ menu {
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    /* Force colors to stay within standard RGB/HEX during print */
-    color-interpolation-filters: sRGB;
-    /* Force all OKLCH/LAB colors to fallback to simple RGB */
-    color: inherit;
-    background-color: inherit;
-    border-color: inherit;
+    
   }
 
   @page {

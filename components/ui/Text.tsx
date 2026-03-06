@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./Text.module.css";
+import "./Text.css";
 
 /**
  * Interface que define as propriedades do componente Text.
@@ -58,12 +58,8 @@ export default function Text({
       : "";
 
   return (
-    <div className={styles.container}>
-      <span
-        className={styles.textShadow}
-        data-text={textContent}
-        style={inlineStyles}
-      >
+    <div className="container">
+      <span className="textShadow" data-text={textContent} style={inlineStyles}>
         {children}
       </span>
     </div>

@@ -1,4 +1,5 @@
-.ea-card,
+export const EACardStyles = `
+ea-card,
 .ea_card {
   font-size: 2.5vw;
   display: grid !important;
@@ -13,7 +14,7 @@
 
   margin: 0;
 
-  background-image: url("/pix/bgs/bg3.png");
+  background-image: url("https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png");
   background-color: #0009;
   background-size: cover;
   border-radius: 1rem;
@@ -30,8 +31,6 @@
   box-sizing: border-box;
   font-family: "Poppins", sans-serif !important;
   border-radius: 1rem;
-  background-image: url("/public/pix/bgs/bg4.png");
-  background-image: url("/public/pix/bgs/bg3.png");
   background-size: cover;
   background-blend-mode: overlay;
 }
@@ -84,3 +83,4 @@
     print-color-adjust: exact;
   }
 }
+`;
