@@ -23,7 +23,7 @@
       "src": "/pix/ea/EA-logo.png",
       "sizes": "600x600",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     }
   ]
 }
