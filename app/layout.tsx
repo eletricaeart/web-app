@@ -61,13 +61,13 @@ export default async function RootLayout({
           rel="icon"
           type="image/png"
           sizes="32x32"
-          href="/pix/ea/EA-logo-512.png"
+          href="/pix/ea/ea-Name.png"
         />
         <link
           rel="icon"
           type="image/png"
           sizes="16x16"
-          href="/pix/ea/EA-logo-512.png"
+          href="/pix/ea/EA-splash.png"
         />
       </head>
       <body
