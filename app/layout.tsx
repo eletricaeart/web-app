@@ -55,7 +55,7 @@ export default async function RootLayout({
         {/* <link rel="icon" href="/pix/ea/EA-logo.png" /> */}
         {/* Apple Touch Icon para iPhones */}
         {/* <link rel="apple-touch-icon" href="/pix/ea/EA-logo.png" /> */}
-        <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/public/pix/ea/EA-logo-512.png" />
         <link rel="icon" type="image/png" href="/pix/ea/ea-Name.png" />
         <link
           rel="icon"
