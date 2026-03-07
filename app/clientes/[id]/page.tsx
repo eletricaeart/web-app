@@ -314,7 +314,7 @@ export default function ClientePerfil() {
 
         <View tag="main-content" className="flex flex-col gap-4">
           {/* CARD: INFORMAÇÕES DE CONTATO */}
-          <InfoSection title="DADOS DE CONTATO">
+          <InfoSection title="Dados do contato">
             <InfoItem
               icon={
                 <WhatsappLogo
@@ -348,7 +348,7 @@ export default function ClientePerfil() {
 
           {/* SEÇÃO: HISTÓRICO DE ORÇAMENTOS */}
           <InfoSection
-            title="ORÇAMENTOS"
+            title="Orçamentos"
             actionIcon={
               <FilePlus
                 size={25}
@@ -381,7 +381,7 @@ export default function ClientePerfil() {
           </InfoSection>
 
           {/* SEÇÃO: HISTÓRICO DE NOTAS TÉCNICAS */}
-          <InfoSection title="NOTAS TÉCNICAS">
+          <InfoSection title="Notas técnicas">
             {historicoNotas.length > 0 ? (
               historicoNotas.map((n, i) => (
                 <React.Fragment key={n.id}>
@@ -440,7 +440,7 @@ function InfoSection({
         {title && (
           <View
             tag="card-header"
-            className="flex items-center justify-between font-bold text-gray-800"
+            className="flex items-center justify-between capitalize font-bold text-gray-800"
           >
             {title}
             {actionIcon && (
