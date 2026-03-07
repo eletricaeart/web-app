@@ -19,6 +19,7 @@ import {
   PhoneTransferIcon,
 } from "@phosphor-icons/react";
 import { getCleanDate } from "@/utils/helpers";
+import { Mask } from "@/utils/mask";
 import { toast } from "sonner";
 
 /* shadcn components */
@@ -303,7 +304,7 @@ export default function ClientePerfil() {
                   className="text-green-500"
                 />
               }
-              txt={client.whatsapp}
+              txt={Mask.phone(client.whatsapp)}
               fallTxt="Não informado"
             />
             <InfoItem
