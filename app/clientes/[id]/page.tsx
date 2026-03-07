@@ -441,7 +441,7 @@ interface InfoItemProps {
   icon?: React.ReactElement;
 
   // Padrão para qualquer conteúdo interno do componente
-  children: React.ReactNode;
+  children?: React.ReactNode;
 
   // Exemplo de uma prop opcional (caso precise no futuro)
   className?: string;
