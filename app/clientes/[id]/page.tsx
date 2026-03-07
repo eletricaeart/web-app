@@ -31,6 +31,7 @@ import {
 import "./styles.css";
 import Image from "next/image";
 import EAAvatar from "@/components/ui/EA-Avatar";
+import { ReactNodeView } from "@tiptap/react";
 
 // Interfaces para garantir tipagem estrita
 interface Cliente {
@@ -293,105 +294,170 @@ export default function ClientePerfil() {
 
         <View tag="page-content">
           {/* CARD: INFORMAÇÕES DE CONTATO */}
-          <View tag="section-title">DADOS DE CONTATO</View>
-          <View tag="card-ea-client">
-            <View tag="card-ea-body">
-              <View tag="info-item">
+          <InfoSection title="DADOS DE CONTATO">
+            <InfoItem
+              icon={
                 <WhatsappLogo
                   size={30}
                   weight="duotone"
                   className="text-green-500"
                 />
-                <View tag="t">{client.whatsapp || "Não informado"}</View>
-              </View>
-              <View tag="info-item">
+              }
+              txt={client.whatsapp}
+              fallTxt="Não informado"
+            />
+            <InfoItem
+              icon={
                 <EnvelopeSimple
                   size={30}
                   weight="duotone"
                   className="text-blue-500"
                 />
-                <View tag="t">{client.email || "Não informado"}</View>
-              </View>
-              <View tag="info-item">
+              }
+              txt={client.email}
+              fallTxt=""
+            />
+            <InfoItem
+              icon={
                 <MapPin size={30} weight="duotone" className="text-red-500" />
-                <View tag="t">
-                  {client.rua}, {client.num} - {client.bairro}
-                </View>
-              </View>
-            </View>
-          </View>
+              }
+              txt={`${client.rua}, ${client.num} - ${client.bairro}`}
+              fallTxt=""
+            />
+          </InfoSection>
 
           {/* SEÇÃO: HISTÓRICO DE ORÇAMENTOS */}
-          <View tag="card-ea-client">
-            <View
-              tag="section-title"
-              className="flex items-center justify-between"
-            >
-              ORÇAMENTOS
-              <View className="flex items-center justify-center p-2 bg-white text-blue-600 rounded-xl">
-                <FilePlus
-                  size={25}
-                  onClick={() => router.push("/orcamentos/novo")}
-                />
-              </View>
-            </View>
-            <View tag="card-ea-body">
-              {historicoOrcamentos.length > 0 ? (
-                historicoOrcamentos.map((orc, i) => (
-                  <React.Fragment key={orc.id}>
-                    <View
-                      className="history-item"
-                      onClick={() => router.push(`/orcamentos/${orc.id}`)}
-                    >
-                      <View tag="t" className="date">
-                        {getCleanDate(String(orc.docTitle.emissao))}
-                      </View>
-                      <p className="title">{orc.docTitle.text}</p>
+          <InfoSection
+            title="ORÇAMENTOS"
+            actionIcon={
+              <FilePlus
+                size={25}
+                onClick={() => router.push("/orcamentos/novo")}
+              />
+            }
+          >
+            {historicoOrcamentos.length > 0 ? (
+              historicoOrcamentos.map((orc, i) => (
+                <React.Fragment key={orc.id}>
+                  <View
+                    className="history-item"
+                    onClick={() => router.push(`/orcamentos/${orc.id}`)}
+                  >
+                    <View tag="t" className="date">
+                      {getCleanDate(String(orc.docTitle.emissao))}
                     </View>
-                    {i < historicoOrcamentos.length - 1 && (
-                      <Divider spacing="1rem" />
-                    )}
-                  </React.Fragment>
-                ))
-              ) : (
-                <View tag="t" className="empty-text">
-                  Nenhum orçamento para este cliente.
-                </View>
-              )}
-            </View>
-          </View>
+                    <p className="title">{orc.docTitle.text}</p>
+                  </View>
+                  {i < historicoOrcamentos.length - 1 && (
+                    <Divider spacing="1rem" />
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
+              <View tag="t" className="empty-text">
+                Nenhum orçamento para este cliente.
+              </View>
+            )}
+          </InfoSection>
 
           {/* SEÇÃO: HISTÓRICO DE NOTAS TÉCNICAS */}
-          <View tag="section-title">NOTAS TÉCNICAS</View>
-          <View tag="card-ea-client">
-            <View tag="card-ea-body">
-              {historicoNotas.length > 0 ? (
-                historicoNotas.map((n, i) => (
-                  <React.Fragment key={n.id}>
-                    <View
-                      className="history-item"
-                      onClick={() => router.push(`/notas/${n.id}`)}
-                    >
-                      <View tag="t" className="date">
-                        {new Date(n.date).toLocaleDateString("pt-BR")}
-                      </View>
-                      <View tag="t" className="title">
-                        {n.title}
-                      </View>
+          <InfoSection title="NOTAS TÉCNICAS">
+            {historicoNotas.length > 0 ? (
+              historicoNotas.map((n, i) => (
+                <React.Fragment key={n.id}>
+                  <View
+                    className="history-item"
+                    onClick={() => router.push(`/notas/${n.id}`)}
+                  >
+                    <View tag="t" className="date">
+                      {new Date(n.date).toLocaleDateString("pt-BR")}
                     </View>
-                    {i < historicoNotas.length - 1 && (
-                      <Divider spacing="1rem" />
-                    )}
-                  </React.Fragment>
-                ))
-              ) : (
-                <View tag="t" className="empty-text">
-                  Nenhuma nota vinculada.
-                </View>
-              )}
-            </View>
-          </View>
+                    <View tag="t" className="title">
+                      {n.title}
+                    </View>
+                  </View>
+                  {i < historicoNotas.length - 1 && <Divider spacing="1rem" />}
+                </React.Fragment>
+              ))
+            ) : (
+              <View tag="t" className="empty-text">
+                Nenhuma nota vinculada.
+              </View>
+            )}
+          </InfoSection>
         </View>
+      </View>
+    </>
+  );
+}
+
+interface InfoSectionProps {
+  // Aceita string ("Título") ou JSX (<span>Título</span>)
+  title?: React.ReactNode;
+
+  // Aceita especificamente um elemento (Ex: <UserIcon onClick/>)
+  actionIcon?: React.ReactElement;
+
+  // Padrão para qualquer conteúdo interno do componente
+  children: React.ReactNode;
+
+  // Exemplo de uma prop opcional (caso precise no futuro)
+  className?: string;
+}
+
+function InfoSection({
+  title,
+  actionIcon,
+  children,
+  className,
+}: InfoSectionProps) {
+  return (
+    <>
+      {title && (
+        <View tag="section-title" className="flex items-center justify-between">
+          {title}
+          {actionIcon && (
+            <View className="flex items-center justify-center p-2 bg-white text-blue-600 rounded-xl">
+              {actionIcon}
+            </View>
+          )}
+        </View>
+      )}
+      <View tag="card-ea-client">
+        <View tag="card-ea-body" className="shadow-sm">
+          {children}
+        </View>
+      </View>
+    </>
+  );
+}
+
+interface InfoItemProps {
+  // Aceita string ("texto") ou JSX (<span>texto</span>)
+  txt: React.ReactNode;
+  fallTxt?: React.ReactNode;
+
+  // Aceita especificamente um elemento (Ex: <UserIcon />)
+  icon?: React.ReactElement;
+
+  // Padrão para qualquer conteúdo interno do componente
+  children: React.ReactNode;
+
+  // Exemplo de uma prop opcional (caso precise no futuro)
+  className?: string;
+}
+
+function InfoItem({ icon, txt, fallTxt, children, className }) {
+  return (
+    <>
+      <View tag="info-item">
+        {children}
+        {!children && (
+          <>
+            {icon}
+            <View tag="t">{txt || fallTxt || ""}</View>
+          </>
+        )}
       </View>
     </>
   );
