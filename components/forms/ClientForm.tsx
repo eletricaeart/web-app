@@ -34,6 +34,7 @@ interface ClientFormProps {
   onClientChange: (data: ClientData) => void;
   clientsCache?: any[];
   onNewClientClick: () => void;
+  isOnNewBudget?: boolean;
 }
 
 export default function ClientForm({
@@ -41,6 +42,7 @@ export default function ClientForm({
   onClientChange,
   clientsCache = [],
   onNewClientClick,
+  isOnNewBudget = false,
 }: ClientFormProps) {
   const [loadingCep, setLoadingCep] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -323,19 +325,21 @@ export default function ClientForm({
       </View>
 
       {/* seção de observações sobre o cliente */}
-      <View tag="obs-input" className="mt-4">
-        <label>
-          <View tag="t">Observações Internas</View>
-          <textarea
-            id="c_obs"
-            className="input w-full p-2 rounded-md border h-20"
-            value={clientData.obs || ""}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-              onClientChange({ ...clientData, obs: e.target.value })
-            }
-          />
-        </label>
-      </View>
+      {!isOnNewBudget && (
+        <View tag="obs-input" className="mt-4">
+          <label>
+            <View tag="t">Observações Internas</View>
+            <textarea
+              id="c_obs"
+              className="input w-full p-2 rounded-md border h-20"
+              value={clientData.obs || ""}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                onClientChange({ ...clientData, obs: e.target.value })
+              }
+            />
+          </label>
+        </View>
+      )}
     </View>
   );
 }

@@ -359,6 +359,7 @@ export default function NewBudgetPage() {
               setBudget({ ...budget, cliente: data })
             }
             onNewClientClick={goToCreateClient}
+            isOnNewBudget={true}
           />
         </View>
 

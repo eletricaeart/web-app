@@ -43,7 +43,6 @@ client-page .avatar-section {
   margin: 0 auto 10px;
   overflow: hidden;
   background: #eee;
-  position: relative;
 }
 .avatar-circle img {
   width: 100%;
@@ -96,4 +95,32 @@ add-client-page card-ea-body button {
   font-size: 1rem !important;
   font-weight: normal;
   text-transform: capitalize;
+}
+
+client-page section-title {
+  font-weight: bold;
+  margin: 1rem 0;
+  color: #333;
+  /* background: #ffab00; */
+}
+
+client-page card-ea-body {
+  display: flex;
+  flex-flow: column;
+  gap: 1rem;
+  margin: 0 0 1rem 0;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 1rem;
+}
+client-page info-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1rem;
+}
+
+client-page card-ea-body t {
+  font-size: 1rem;
+  color: #666;
 }

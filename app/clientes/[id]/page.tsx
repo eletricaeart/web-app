@@ -30,6 +30,7 @@ import {
 
 import "./styles.css";
 import Image from "next/image";
+import EAAvatar from "@/components/ui/EA-Avatar";
 
 // Interfaces para garantir tipagem estrita
 interface Cliente {
@@ -192,19 +193,11 @@ export default function ClientePerfil() {
         {/* SEÇÃO HEADER: AVATAR E NOME */}
         <View
           tag="avatar-section"
-          className="relative min-h-[300px] text-center bg-[var(--sv-sodalita)] text-white overflow-hidden"
+          className="relative min-h-[200px] text-center bg-[var(--sv-sodalita)] text-white "
         >
-          {/* <View className="avatar-circle relative w-24 h-24 z-30"> */}
-          {/*   <Image */}
-          {/*     src={clientAvatar} */}
-          {/*     alt={client.name} */}
-          {/*     fill */}
-          {/*     className="object-cover" */}
-          {/*   /> */}
-          {/* </View> */}
           <View
             tag="perfil-pic"
-            className="absolute mt-[-2px] top-0 left-0 w-full h-full z-10 overflow-hidden border-none outline-none ring-0 bg-transparent"
+            className="mt-[-2px] top-0 left-0 w-full h-full z-10 overflow-hidden border-none outline-none ring-0 bg-transparent"
           >
             <Image
               src={clientAvatar}
@@ -214,93 +207,116 @@ export default function ClientePerfil() {
               style={{ border: "none", outline: "none" }}
               priority
             />
+            <View
+              tag="client-links"
+              className="absolute bottom-0 left-0 z-20 w-full py-4 pt-6 px-6 bg-linear-to-b from-transparent to-[#0003]"
+            >
+              <View
+                tag="contact-shortcuts"
+                className="flex items-center justify-end w-full flex-[.8] gap-3"
+              >
+                {[
+                  {
+                    icon: (
+                      <WhatsappLogo
+                        size={20}
+                        weight="duotone"
+                        className="text-green-500"
+                      />
+                    ),
+                    color: "",
+                  },
+                  {
+                    icon: (
+                      <PhoneTransferIcon
+                        size={20}
+                        weight="duotone"
+                        className="text-gray-800"
+                      />
+                    ),
+                    color: "",
+                  },
+                  {
+                    icon: (
+                      <EnvelopeSimple
+                        size={20}
+                        weight="duotone"
+                        className="text-blue-500"
+                      />
+                    ),
+                    color: "",
+                  },
+                ].map((o, i) => (
+                  <View
+                    tag="contact-btn"
+                    key={i}
+                    className="bg-white text-gray-800 p-3 w-11 h-11 rounded-full aspect-square"
+                  >
+                    {o.icon}
+                  </View>
+                ))}
+              </View>
+            </View>
           </View>
+        </View>
+
+        <View
+          tag="avatar-section-bottom"
+          className=" flex relative w-full h-24"
+        >
           <View
-            tag="client-desc"
-            className="absolute bottom-0 left-0 z-20 w-full py-4 pt-6 px-6 bg-linear-to-b from-transparent to-[#e5e5e5]"
+            tag="avatar-section-bottom-overlay"
+            className="flex w-full px-4 py-0 absolute top-[-40%] gap-4 items-center justify-start"
           >
-            <View tag="descs" className="flex-1">
+            <View className="avatar-circle w-24 h-24 z-30">
+              {/*   <Image */}
+              {/*     src={clientAvatar} */}
+              {/*     alt={client.name} */}
+              {/*     fill */}
+              {/*     className="object-cover" */}
+              {/*   /> */}
+              <EAAvatar
+                name={client.name}
+                url={clientAvatar}
+                w="full"
+                h="full"
+              />
+            </View>
+            <View tag="descs" className="flex-1 mt-4">
               <h3 className="font-thunder text-2xl capitalize">
                 {client.name}
               </h3>
               <p className="opacity-80 text-sm">{client.cidade}</p>
             </View>
-            <View
-              tag="contact-shortcuts"
-              className="flex items-center justify-center flex-[.8] gap-3"
-            >
-              {[
-                {
-                  icon: (
-                    <WhatsappLogo
-                      size={20}
-                      weight="duotone"
-                      className="text-green-500"
-                    />
-                  ),
-                  color: "",
-                },
-                {
-                  icon: (
-                    <PhoneTransferIcon
-                      size={20}
-                      weight="duotone"
-                      className="text-gray-800"
-                    />
-                  ),
-                  color: "",
-                },
-                {
-                  icon: (
-                    <EnvelopeSimple
-                      size={20}
-                      weight="duotone"
-                      className="text-blue-500"
-                    />
-                  ),
-                  color: "",
-                },
-              ].map((o, i) => (
-                <View
-                  tag="contact-btn"
-                  key={i}
-                  className="bg-white text-gray-800 p-3 w-11 h-11 rounded-full aspect-square"
-                >
-                  {o.icon}
-                </View>
-              ))}
-            </View>
           </View>
         </View>
 
-        <View tag="page-content" style={{ marginTop: "-20px" }}>
+        <View tag="page-content">
           {/* CARD: INFORMAÇÕES DE CONTATO */}
+          <View tag="section-title">DADOS DE CONTATO</View>
           <View tag="card-ea-client">
-            <View tag="card-ea-header">DADOS DE CONTATO</View>
             <View tag="card-ea-body">
-              <View className="info-row">
+              <View tag="info-item">
                 <WhatsappLogo
-                  size={20}
+                  size={30}
                   weight="duotone"
                   className="text-green-500"
                 />
-                <span>{client.whatsapp || "Não informado"}</span>
+                <View tag="t">{client.whatsapp || "Não informado"}</View>
               </View>
-              <Divider spacing="1.5rem" color="#f0f0f0" />
-              <View className="info-row">
+              <View tag="info-item">
                 <EnvelopeSimple
-                  size={20}
+                  size={30}
                   weight="duotone"
                   className="text-blue-500"
                 />
-                <span>{client.email || "Não informado"}</span>
+                <View tag="t">{client.email || "Não informado"}</View>
               </View>
-              <Divider spacing="1.5rem" color="#f0f0f0" />
-              <View className="info-row">
-                <MapPin size={20} weight="duotone" className="text-red-500" />
-                <span className="text-xs">
+              <View tag="info-item">
+                <MapPin size={30} weight="duotone" className="text-red-500" />
+                <View tag="t">
                   {client.rua}, {client.num} - {client.bairro}
-                </span>
+                </View>
               </View>
             </View>
           </View>
@@ -308,14 +324,16 @@ export default function ClientePerfil() {
           {/* SEÇÃO: HISTÓRICO DE ORÇAMENTOS */}
           <View tag="card-ea-client">
             <View
-              tag="card-ea-header"
-              style={{ display: "flex", justifyContent: "space-between" }}
+              tag="section-title"
+              className="flex items-center justify-between"
             >
               ORÇAMENTOS
-              <FilePlus
-                size={20}
-                onClick={() => router.push("/orcamentos/novo")}
-              />
+              <View className="flex items-center justify-center p-2 bg-white text-blue-600 rounded-xl">
+                <FilePlus
+                  size={25}
+                  onClick={() => router.push("/orcamentos/novo")}
+                />
+              </View>
             </View>
             <View tag="card-ea-body">
               {historicoOrcamentos.length > 0 ? (
@@ -325,9 +343,9 @@ export default function ClientePerfil() {
                       className="history-item"
                       onClick={() => router.push(`/orcamentos/${orc.id}`)}
                     >
-                      <span className="date">
+                      <View tag="t" className="date">
                         {getCleanDate(String(orc.docTitle.emissao))}
-                      </span>
+                      </View>
                       <p className="title">{orc.docTitle.text}</p>
                     </View>
                     {i < historicoOrcamentos.length - 1 && (
@@ -336,16 +354,16 @@ export default function ClientePerfil() {
                   </React.Fragment>
                 ))
               ) : (
-                <p className="empty-text">
+                <View tag="t" className="empty-text">
                   Nenhum orçamento para este cliente.
-                </p>
+                </View>
               )}
             </View>
           </View>
 
           {/* SEÇÃO: HISTÓRICO DE NOTAS TÉCNICAS */}
+          <View tag="section-title">NOTAS TÉCNICAS</View>
           <View tag="card-ea-client">
-            <View tag="card-ea-header">NOTAS TÉCNICAS</View>
             <View tag="card-ea-body">
               {historicoNotas.length > 0 ? (
                 historicoNotas.map((n, i) => (
@@ -354,10 +372,12 @@ export default function ClientePerfil() {
                       className="history-item"
                       onClick={() => router.push(`/notas/${n.id}`)}
                     >
-                      <span className="date">
+                      <View tag="t" className="date">
                         {new Date(n.date).toLocaleDateString("pt-BR")}
-                      </span>
-                      <p className="title">{n.title}</p>
+                      </View>
+                      <View tag="t" className="title">
+                        {n.title}
+                      </View>
                     </View>
                     {i < historicoNotas.length - 1 && (
                       <Divider spacing="1rem" />
@@ -365,26 +385,12 @@ export default function ClientePerfil() {
                   </React.Fragment>
                 ))
               ) : (
-                <p className="empty-text">Nenhuma nota vinculada.</p>
+                <View tag="t" className="empty-text">
+                  Nenhuma nota vinculada.
+                </View>
               )}
             </View>
           </View>
-
-          <button
-            className="btn-delete-full w-full p-4 mt-4 text-red-500 text-sm font-bold flex items-center justify-center gap-2"
-            onClick={async () => {
-              if (
-                confirm(
-                  "Deseja realmente excluir este cliente permanentemente?",
-                )
-              ) {
-                await saveClient({ id: client.id }, "delete");
-                router.push("/clientes");
-              }
-            }}
-          >
-            <Trash size={20} /> EXCLUIR CLIENTE
-          </button>
         </View>
       </View>
     </>
