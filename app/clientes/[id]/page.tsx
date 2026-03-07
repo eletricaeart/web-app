@@ -191,7 +191,7 @@ export default function ClientePerfil() {
 
       <View
         tag="client-page"
-        className="client-perfil-page bg-[#fff_!important] min-h-[95dvh]"
+        className="client-perfil-page bg-[#fff_!important] min-h-[95dvh] pb-40"
       >
         {/* SEÇÃO HEADER: AVATAR E NOME */}
         <View
@@ -363,10 +363,12 @@ export default function ClientePerfil() {
                     className="history-item"
                     onClick={() => router.push(`/orcamentos/${orc.id}`)}
                   >
-                    <View tag="t" className="date">
+                    <View tag="t" className="date text-gray-400">
                       {getCleanDate(String(orc.docTitle.emissao))}
                     </View>
-                    <p className="title">{orc.docTitle.text}</p>
+                    <p className="title text-gray-600 font-medium">
+                      {orc.docTitle.text}
+                    </p>
                   </View>
                   {i < historicoOrcamentos.length - 1 && (
                     <Divider spacing="1rem" />
@@ -374,7 +376,7 @@ export default function ClientePerfil() {
                 </React.Fragment>
               ))
             ) : (
-              <View tag="t" className="empty-text">
+              <View tag="t" className="empty-text text-gray-600">
                 Nenhum orçamento para este cliente.
               </View>
             )}
@@ -400,7 +402,7 @@ export default function ClientePerfil() {
                 </React.Fragment>
               ))
             ) : (
-              <View tag="t" className="empty-text">
+              <View tag="t" className="empty-text text-gray-600">
                 Nenhuma nota vinculada.
               </View>
             )}
@@ -440,7 +442,7 @@ function InfoSection({
         {title && (
           <View
             tag="card-header"
-            className="flex items-center justify-between capitalize font-bold text-gray-800"
+            className="flex items-center justify-between capitalize text-[1.2rem] font-bold text-gray-800"
           >
             {title}
             {actionIcon && (
