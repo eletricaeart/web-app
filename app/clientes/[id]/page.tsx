@@ -33,6 +33,7 @@ import "./styles.css";
 import Image from "next/image";
 import EAAvatar from "@/components/ui/EA-Avatar";
 import { ReactNodeView } from "@tiptap/react";
+import Link from "next/link";
 
 // Interfaces para garantir tipagem estrita
 interface Cliente {
@@ -190,7 +191,7 @@ export default function ClientePerfil() {
 
       <View
         tag="client-page"
-        className="client-perfil-page bg-[#e5e5e5_!important] min-h-[95dvh]"
+        className="client-perfil-page bg-[#fff_!important] min-h-[95dvh]"
       >
         {/* SEÇÃO HEADER: AVATAR E NOME */}
         <View
@@ -220,31 +221,49 @@ export default function ClientePerfil() {
                 {[
                   {
                     icon: (
-                      <WhatsappLogo
-                        size={20}
-                        weight="duotone"
-                        className="text-green-500"
-                      />
+                      <Link
+                        href={`https://wa.me/${client.whatsapp}?text=${"Olá!"}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <WhatsappLogo
+                          size={20}
+                          weight="duotone"
+                          className="text-green-500"
+                        />
+                      </Link>
                     ),
                     color: "",
                   },
                   {
                     icon: (
-                      <PhoneTransferIcon
-                        size={20}
-                        weight="duotone"
-                        className="text-gray-800"
-                      />
+                      <Link
+                        href={`tel:+${client.whatsapp}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <PhoneTransferIcon
+                          size={20}
+                          weight="duotone"
+                          className="text-gray-800"
+                        />
+                      </Link>
                     ),
                     color: "",
                   },
                   {
                     icon: (
-                      <EnvelopeSimple
-                        size={20}
-                        weight="duotone"
-                        className="text-blue-500"
-                      />
+                      <Link
+                        href={`mailto:${client.email}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <EnvelopeSimple
+                          size={20}
+                          weight="duotone"
+                          className="text-blue-500"
+                        />
+                      </Link>
                     ),
                     color: "",
                   },
@@ -293,7 +312,7 @@ export default function ClientePerfil() {
           </View>
         </View>
 
-        <View tag="page-content">
+        <View tag="main-content" className="flex flex-col gap-4">
           {/* CARD: INFORMAÇÕES DE CONTATO */}
           <InfoSection title="DADOS DE CONTATO">
             <InfoItem
@@ -414,19 +433,27 @@ function InfoSection({
 }: InfoSectionProps) {
   return (
     <>
-      {title && (
-        <View tag="section-title" className="flex items-center justify-between">
-          {title}
-          {actionIcon && (
-            <View className="flex items-center justify-center p-2 bg-white text-blue-600 rounded-xl">
-              {actionIcon}
-            </View>
-          )}
-        </View>
-      )}
-      <View tag="card-ea-client">
-        <View tag="card-ea-body" className="shadow-sm">
-          {children}
+      <View
+        tag="profile-card"
+        className="flex flex-col gap-3 p-4 bg-mauve-50 shadow-sm"
+      >
+        {title && (
+          <View
+            tag="card-header"
+            className="flex items-center justify-between font-bold text-gray-800"
+          >
+            {title}
+            {actionIcon && (
+              <View className="flex items-center justify-center p-2 bg-mauve-200 text-blue-500 rounded-xl">
+                {actionIcon}
+              </View>
+            )}
+          </View>
+        )}
+        <View tag="card-body" className="flex">
+          <View tag="card-body-content" className="flex flex-col w-full">
+            {children}
+          </View>
         </View>
       </View>
     </>
@@ -456,7 +483,9 @@ function InfoItem({ icon, txt, fallTxt, children, className }: InfoItemProps) {
         {!children && (
           <>
             {icon}
-            <View tag="t">{txt || fallTxt || ""}</View>
+            <View tag="t" className="text-gray-600 py-3">
+              {txt || fallTxt || ""}
+            </View>
           </>
         )}
       </View>
