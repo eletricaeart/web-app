@@ -447,7 +447,7 @@ interface InfoItemProps {
   className?: string;
 }
 
-function InfoItem({ icon, txt, fallTxt, children, className }) {
+function InfoItem({ icon, txt, fallTxt, children, className }: InfoItemProps) {
   return (
     <>
       <View tag="info-item">
