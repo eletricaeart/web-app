@@ -304,7 +304,7 @@ export default function ClientePerfil() {
                   className="text-green-500"
                 />
               }
-              txt={Mask.phone(client.whatsapp)}
+              txt={Mask.phone(client?.whatsapp)}
               fallTxt="Não informado"
             />
             <InfoItem
