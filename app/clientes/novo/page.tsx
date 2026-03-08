@@ -29,6 +29,7 @@ import {
 
 import "../Clientes.css";
 import "./styles.css";
+import Pressable from "@/components/Pressable";
 
 // Interface para definir a estrutura do Cliente e evitar 'any'
 interface Cliente {
@@ -169,7 +170,7 @@ export default function ClienteForm() {
               <IdentificationCardIcon size={18} weight="duotone" />
               IDENTIFICAÇÃO
             </View>
-            <View tag="card-body">
+            <View tag="card-body" className="shadow-sm">
               <label>
                 Nome Completo
                 <input
@@ -217,7 +218,7 @@ export default function ClienteForm() {
               <UserList size={18} weight="duotone" />
               CONTATO
             </View>
-            <View tag="card-body">
+            <View tag="card-body" className="shadow-sm">
               <label>
                 WhatsApp
                 <input
@@ -252,7 +253,7 @@ export default function ClienteForm() {
                 <CircleNotch className="animate-spin text-amber-500" />
               )}
             </View>
-            <View tag="card-body">
+            <View tag="card-body" className="shadow-sm">
               <label>
                 CEP
                 <div className="relative">
@@ -270,7 +271,7 @@ export default function ClienteForm() {
                 </div>
               </label>
 
-              <div className="grid grid-cols-4 gap-4 mt-4">
+              <div className="grid grid-cols-3 gap-4 mt-4">
                 <label className="col-span-2">
                   Rua
                   <input
@@ -287,6 +288,9 @@ export default function ClienteForm() {
                     onChange={handleChange}
                   />
                 </label>
+              </div>
+
+              <View className="mt-4">
                 <label>
                   Comp.
                   <input
@@ -296,26 +300,26 @@ export default function ClienteForm() {
                     placeholder="Apto..."
                   />
                 </label>
-              </div>
+              </View>
 
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <label>
-                  Bairro
-                  <input
-                    name="bairro"
-                    value={formData.bairro}
-                    onChange={handleChange}
-                  />
-                </label>
-                <label>
-                  Cidade
-                  <input
-                    name="cidade"
-                    value={formData.cidade}
-                    onChange={handleChange}
-                  />
-                </label>
-              </div>
+              {/* <div className="grid grid-cols-2 gap-4 mt-4"> */}
+              <label className="mt-4">
+                Bairro
+                <input
+                  name="bairro"
+                  value={formData.bairro}
+                  onChange={handleChange}
+                />
+              </label>
+              <label className="mt-4">
+                Cidade
+                <input
+                  name="cidade"
+                  value={formData.cidade}
+                  onChange={handleChange}
+                />
+              </label>
+              {/* </div> */}
             </View>
           </View>
 
@@ -325,7 +329,7 @@ export default function ClienteForm() {
               <ExclamationMarkIcon size={18} weight="duotone" />
               OBSERVAÇÕES
             </View>
-            <View tag="card-body">
+            <View tag="card-body" className="shadow-sm">
               <textarea
                 name="obs"
                 className="input w-full p-2 rounded-md border h-24 bg-transparent outline-none"
@@ -339,11 +343,7 @@ export default function ClienteForm() {
         </View>
 
         <footer className="footer-btn p-6">
-          <button
-            className="btn-save w-full flex justify-center items-center gap-2"
-            onClick={handleSave}
-            disabled={loading}
-          >
+          <Pressable onClick={handleSave} disabled={loading}>
             {loading ? (
               <CircleNotch size={24} className="animate-spin" />
             ) : (
@@ -354,7 +354,23 @@ export default function ClienteForm() {
               : editId
                 ? "SALVAR ALTERAÇÕES"
                 : "SALVAR CLIENTE"}
-          </button>
+          </Pressable>
+          {/* <button */}
+          {/*   className="btn-save w-full flex justify-center items-center gap-2" */}
+          {/*   onClick={handleSave} */}
+          {/*   disabled={loading} */}
+          {/* > */}
+          {/*   {loading ? ( */}
+          {/*     <CircleNotch size={24} className="animate-spin" /> */}
+          {/*   ) : ( */}
+          {/*     <FloppyDisk size={24} /> */}
+          {/*   )} */}
+          {/*   {loading */}
+          {/*     ? "PROCESSANDO..." */}
+          {/*     : editId */}
+          {/*       ? "SALVAR ALTERAÇÕES" */}
+          {/*       : "SALVAR CLIENTE"} */}
+          {/* </button> */}
         </footer>
       </View>
     </>

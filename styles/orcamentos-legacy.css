@@ -1,3 +1,7 @@
+:root {
+  --bg: #f5f5f5;
+  --bg-2: #1212120a;
+}
 /* --- [ Budget.css ] --- */
 budget-page {
   flex-direction: column;

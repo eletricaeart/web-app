@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import View from "./layout/View";
-import styles from "./Pressable.module.css";
+import "./Pressable.css";
 
 /**
  * Interface para as propriedades do componente Pressable.
@@ -11,17 +11,18 @@ interface PressableProps {
   /** Texto exibido em estado normal */
   label: string;
   /** Texto opcional exibido quando o botão está sendo pressionado */
-  pressedLabel?: string;
+  pressed?: string;
   /** Cor de fundo (formato Tailwind ex: 'bg-blue-500' ou cor hex) */
-  backgroundColor?: string;
+  bg?: string;
   /** Arredondamento das bordas (formato Tailwind ex: 'rounded-lg') */
-  borderRadius?: string;
+  radius?: string;
   /** Função disparada ao clicar/pressionar */
   onClick?: () => void;
   /** Classes adicionais do Tailwind */
   className?: string;
   /** Tag personalizada para o componente View interno */
   tag?: string;
+  children?: React.ReactNode;
 }
 
 /**
@@ -36,12 +37,14 @@ interface PressableProps {
  */
 export default function Pressable({
   label,
-  pressedLabel,
-  backgroundColor = "bg-primary",
-  borderRadius = "rounded-md",
+  pressed,
+  bg = "bg-transparent",
+  rounded = "rounded-md",
+  m = "0",
   onClick,
   className = "",
-  tag = "pressable-btn",
+  tag = "pressable",
+  children,
 }: PressableProps) {
   const [isPressed, setIsPressed] = useState(false);
 
@@ -54,35 +57,42 @@ export default function Pressable({
     <View
       tag={tag}
       className={`
-        ${styles.pressable} 
-        ${backgroundColor} 
-        ${borderRadius} 
-        ${className}
+        ${"pressable"} 
       `}
       style={
         {
           // Permite cores hexadecimais se não forem classes Tailwind
-          backgroundColor: !backgroundColor.startsWith("bg-")
-            ? backgroundColor
-            : undefined,
-          borderRadius: !borderRadius.startsWith("rounded")
-            ? borderRadius
-            : undefined,
+          background: !bg.startsWith("bg-") ? bg : undefined,
+          padding: m,
         } as React.CSSProperties
       }
     >
-      <button
-        type="button"
+      <View
+        tag="pressable-btn"
+        // type="button"
         onClick={onClick}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         onTouchStart={handleMouseDown}
         onTouchEnd={handleMouseUp}
-        className="w-full h-full bg-transparent border-none cursor-pointer flex items-center justify-center p-4 font-medium"
+        // className="pressable-btn w-full h-full bg-transparent border-none cursor-pointer flex items-center justify-center p-4 font-medium"
+        className={`
+        ${"pressable-btn"}
+        ${bg} 
+        ${rounded} 
+        ${className}
+      `}
+        style={
+          {
+            // Permite cores hexadecimais se não forem classes Tailwind
+            bg: !bg.startsWith("bg-") ? bg : undefined,
+            rounded: !rounded.startsWith("rounded") ? rounded : undefined,
+          } as React.CSSProperties
+        }
       >
-        {isPressed && pressedLabel ? pressedLabel : label}
-      </button>
+        {children ? children : isPressed && pressed ? pressed : label}
+      </View>
     </View>
   );
 }
