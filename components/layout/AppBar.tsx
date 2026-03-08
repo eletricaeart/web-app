@@ -27,7 +27,7 @@ interface AppBarProps {
   position?: "sticky" | "relative" | "absolute" | "fixed";
   bg?: string;
   borderb?: string;
-  shadow: string;
+  shadow?: string;
   transparent?: boolean;
 }
 
