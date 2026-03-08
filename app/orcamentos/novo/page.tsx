@@ -378,7 +378,7 @@ export default function NewBudgetPage() {
           />
         </View>
 
-        <footer className="footer">
+        <footer className="footer flex flex-col">
           <Pressable>
             {loading ? (
               <>
@@ -391,6 +391,8 @@ export default function NewBudgetPage() {
               </span>
             )}
           </Pressable>
+        </footer>
+        <footer className="footer">
           <button
             className="btnSave"
             onClick={handleSave}

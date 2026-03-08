@@ -92,7 +92,7 @@ export default function Pressable({
           } as React.CSSProperties
         }
       >
-        {children ? children : isPressed && pressed ? pressed : label}
+        {children ? children : !children && isPressed ? pressed : label}
       </View>
     </View>
   );
