@@ -66,7 +66,7 @@ export default function AppBar({
     }
   };
 
-  const styled = !transparent
+  const styled: React.CSSProperties = !transparent
     ? {
         background: bg,
         borderBottom: borderb,
