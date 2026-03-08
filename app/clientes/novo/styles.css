@@ -1,0 +1,33 @@
+page.add-client-page {
+}
+
+page.add-client-page page-header {
+  background: var(--sv-sodalita);
+}
+
+page.add-client-page :where(input, textarea, #genre_label > button) {
+  background: #f5f5f5 !important;
+}
+
+page.add-client-page card-client {
+  margin-bottom: 1.5rem;
+}
+
+page.add-client-page card-header {
+  display: flex;
+  font-size: 0.875rem;
+  color: var(--indigo-600);
+  font-weight: 500;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+page.add-client-page card-body {
+  padding: 1rem;
+  background: #fff;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: #0003 0 1px;
+}

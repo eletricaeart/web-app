@@ -7,10 +7,13 @@ import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
 import {
+  AddressBook,
   CircleNotch,
+  ExclamationMarkIcon,
   FloppyDisk,
   IdentificationCardIcon,
   MapPinPlus,
+  UserList,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import AvatarUpload from "@/components/forms/AvatarUpload"; // Componente que faremos
@@ -25,6 +28,7 @@ import {
 } from "@/components/ui/select";
 
 import "../Clientes.css";
+import "./styles.css";
 
 // Interface para definir a estrutura do Cliente e evitar 'any'
 interface Cliente {
@@ -149,7 +153,7 @@ export default function ClienteForm() {
       />
 
       <View tag="page" className="add-client-page">
-        <View tag="page-content">
+        <View tag="page-header">
           {/* Seção da Foto */}
           <AvatarUpload
             value={formData.photo}
@@ -158,16 +162,14 @@ export default function ClienteForm() {
               setFormData((prev) => ({ ...prev, photo: url }))
             }
           />
-
-          <View tag="card-ea-client" className="add-client-form">
-            <View
-              tag="card-ea-header"
-              className="flex text-sm text-indigo-600 font-medium gap-2 py-3"
-            >
+        </View>
+        <View tag="page-content">
+          <View tag="card-client" className="add-client-form">
+            <View tag="card-header" className="">
               <IdentificationCardIcon size={18} weight="duotone" />
               IDENTIFICAÇÃO
             </View>
-            <View tag="card-ea-body">
+            <View tag="card-body">
               <label>
                 Nome Completo
                 <input
@@ -179,7 +181,7 @@ export default function ClienteForm() {
               </label>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
-                <label>
+                <label id="genre_label">
                   Gênero
                   <Select
                     value={formData.gender}
@@ -210,9 +212,12 @@ export default function ClienteForm() {
             </View>
           </View>
 
-          <View tag="card-ea-client">
-            <View tag="card-ea-header">CONTATO</View>
-            <View tag="card-ea-body">
+          <View tag="card-client">
+            <View tag="card-header">
+              <UserList size={18} weight="duotone" />
+              CONTATO
+            </View>
+            <View tag="card-body">
               <label>
                 WhatsApp
                 <input
@@ -234,17 +239,20 @@ export default function ClienteForm() {
             </View>
           </View>
 
-          <View tag="card-ea-client">
+          <View tag="card-client">
             <View
-              tag="card-ea-header"
+              tag="card-header"
               className="flex justify-between items-center"
             >
-              ENDEREÇO
+              <span className="flex gap-2">
+                <AddressBook size={18} weight="duotone" />
+                ENDEREÇO
+              </span>
               {fetchingCep && (
                 <CircleNotch className="animate-spin text-amber-500" />
               )}
             </View>
-            <View tag="card-ea-body">
+            <View tag="card-body">
               <label>
                 CEP
                 <div className="relative">
@@ -312,9 +320,12 @@ export default function ClienteForm() {
           </View>
 
           {/* Campo de Observações */}
-          <View tag="card-ea-client">
-            <View tag="card-ea-header">OBSERVAÇÕES INTERNAS</View>
-            <View tag="card-ea-body">
+          <View tag="card-client">
+            <View tag="card-header">
+              <ExclamationMarkIcon size={18} weight="duotone" />
+              OBSERVAÇÕES
+            </View>
+            <View tag="card-body">
               <textarea
                 name="obs"
                 className="input w-full p-2 rounded-md border h-24 bg-transparent outline-none"

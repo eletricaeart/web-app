@@ -76,6 +76,9 @@
   --sv-sodalita: rgb(86 108 155);
   --sv-sombra-azul: rgb(21 74 143);
 
+  /* --- indigo --- */
+  --indigo-600: #4f39f6;
+
   /* --- [ elements ] --- */
   --scrollbar-thumb: var(--ceo-golden);
 
