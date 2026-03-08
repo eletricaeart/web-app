@@ -68,6 +68,20 @@ export default function BudgetShareMenu({
           <meta charset="UTF-8">
           <script src="https://cdn.tailwindcss.com"></script>
           <style>${styles}\n${prestyle}\n${styles4send}\n${EACardStyles}\n${TextStylesheet}</style>
+          <style>
+            @media print {
+              @page {
+    size: A4;
+    margin: 5mm 0 5mm 0;
+    @bottom-right {
+      content: "Pág. " counter(page) " de " counter(pages);
+      font-size: 9pt;
+      padding-bottom: 5px;
+      padding-right: 5px;
+    }
+  }
+            }
+          </style>
         </head>
         <body class="p-10">${budgetHtml}</body>
       </html>
@@ -254,9 +268,12 @@ export default function BudgetShareMenu({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="pb-10 bg-white">
+      <DrawerContent
+        className="pb-10 bg-white rounded-[2rem_2rem_0_0_!important] border-none"
+        style={{ bordeTopWidth: "0 !important" }}
+      >
         <DrawerHeader>
-          <DrawerTitle className="text-center text-slate-500 uppercase text-xs tracking-widest font-thunder">
+          <DrawerTitle className="text-center text-slate-800 text-xl font-geist-mono capitalize tracking-widest font-semibold">
             Opções de Compartilhamento
           </DrawerTitle>
         </DrawerHeader>

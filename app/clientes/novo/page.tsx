@@ -343,7 +343,7 @@ export default function ClienteForm() {
         </View>
 
         <footer className="footer-btn p-6">
-          <Pressable onClick={handleSave} disabled={loading}>
+          <Pressable onClick={handleSave}>
             {loading ? (
               <CircleNotch size={24} className="animate-spin" />
             ) : (
