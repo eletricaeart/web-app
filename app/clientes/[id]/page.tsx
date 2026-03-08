@@ -299,7 +299,7 @@ export default function ClientePerfil() {
 
         <View
           tag="avatar-section-bottom"
-          className="flex relative w-full h-24 mt-[-2rem] bg-gray-100 rounded-[2rem_2rem_0_0]"
+          className="flex relative w-full h-24 mt-[-2rem] bg-mauve-50 rounded-[2rem_2rem_0_0]"
         >
           <View
             tag="avatar-section-bottom-overlay"
@@ -319,7 +319,10 @@ export default function ClientePerfil() {
                 h="full"
               />
             </View>
-            <View tag="descs" className="flex-1 mt-4">
+            <View
+              tag="descs"
+              className="flex flex-col w-full h-24 justify-end flex-1 pb-3"
+            >
               <h3 className=" text-2xl text-slate-900 capitalize font-medium">
                 {client.name}
               </h3>
