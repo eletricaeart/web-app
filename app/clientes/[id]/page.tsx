@@ -70,7 +70,7 @@ interface Nota {
   title: string;
 }
 
-type Tab_ = "dados do cliente" | "orçamentos" | "notas";
+type Tab_ = "infos" | "budgets" | "notes";
 interface Tab_prop {
   selectedTab: Tab_;
 }
@@ -87,7 +87,7 @@ export default function ClientePerfil() {
 
   const [client, setClient] = useState<Cliente | null>(null);
 
-  const [activeTab, setActiveTab] = useState<Tab_>("dados do cliente");
+  const [activeTab, setActiveTab] = useState<Tab_>("infos");
 
   // Busca o cliente específico no cache local/remoto
   useEffect(() => {
@@ -212,7 +212,7 @@ export default function ClientePerfil() {
         {/* SEÇÃO HEADER: AVATAR E NOME */}
         <View
           tag="avatar-section"
-          className="relative min-h-[150px] text-center bg-[var(--sv-sodalita)] text-white "
+          className="relative min-h-[200px] text-center bg-[var(--sv-sodalita)] text-white "
         >
           <View
             tag="perfil-pic"
@@ -228,7 +228,7 @@ export default function ClientePerfil() {
             />
             <View
               tag="client-links"
-              className="absolute bottom-0 left-0 z-20 w-full py-4 pt-6 px-6 bg-linear-to-b from-transparent to-[#0003]"
+              className="absolute bottom-[2rem] left-0 z-20 w-full py-4 pt-6 px-6 bg-linear-to-b from-transparent to-[#0003]"
             >
               <View
                 tag="contact-shortcuts"
@@ -299,7 +299,7 @@ export default function ClientePerfil() {
 
         <View
           tag="avatar-section-bottom"
-          className=" flex relative w-full h-24"
+          className="flex relative w-full h-24 mt-[-2rem] bg-gray-100 rounded-[2rem_2rem_0_0]"
         >
           <View
             tag="avatar-section-bottom-overlay"
@@ -320,7 +320,7 @@ export default function ClientePerfil() {
               />
             </View>
             <View tag="descs" className="flex-1 mt-4">
-              <h3 className="font-thunder text-2xl text-slate-900 capitalize font-bold">
+              <h3 className=" text-2xl text-slate-900 capitalize font-medium">
                 {client.name}
               </h3>
               <p className="opacity-80 text-sm text-slate-400 capitalize font-bold">
@@ -333,58 +333,56 @@ export default function ClientePerfil() {
         {/* --- tabs --- */}
         <View
           tag={"Tabs"}
-          className="grid grid-cols-3 text-sm bg-[#e5e5e5] rounded-[.7rem] p-2"
+          className="grid grid-cols-3 text-sm bg-[#e5e5e5] rounded-[1rem_1rem_0_0] px-3 pt-3 pb-[1rem]"
         >
           <View
             tag="tab"
-            className="grid place-items-center bg-[#e5e5e5] p-2 text-slate-50 rounded-[.5rem]"
+            className="grid place-items-center bg-[#f5f5f5] p-2 text-slate-50 rounded-[.7rem_.7rem_0_0]"
             style={{
-              background:
-                activeTab === "dados do cliente"
-                  ? "var(--sv-sodalita)"
-                  : "#d5d5d5",
-              color: activeTab === "dados do cliente" ? "#fff" : "#666",
-              fontWeight: activeTab === "dados do cliente" ? "bold" : "600",
+              background: activeTab === "infos" ? "#fff" : "#f5f5f5",
+              color: activeTab === "infos" ? "#666" : "#999",
+              fontWeight: activeTab === "infos" ? "bold" : "600",
               transition: ".2s ease",
             }}
-            onClick={() => tabHandler("dados do cliente")}
+            onClick={() => tabHandler("infos")}
           >
-            Dados De Cliente
+            Informações
           </View>
           <View
             tag="tab"
-            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
+            className="grid place-items-center bg-[#f5f5f5] p-2 text-slate-50 rounded-[.7rem_.7rem_0_0]"
             style={{
-              background:
-                activeTab === "orçamentos" ? "var(--sv-sodalita)" : "#d5d5d5",
-              color: activeTab === "orçamentos" ? "#fff" : "#666",
-              fontWeight: activeTab === "orçamentos" ? "bold" : "600",
+              background: activeTab === "budgets" ? "#fff" : "#f5f5f5",
+              color: activeTab === "budgets" ? "#666" : "#999",
+              fontWeight: activeTab === "budgets" ? "bold" : "600",
               transition: ".2s ease",
             }}
-            onClick={() => tabHandler("orçamentos")}
+            onClick={() => tabHandler("budgets")}
           >
             Orçamentos
           </View>
           <View
             tag="tab"
-            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
+            className="grid place-items-center bg-[#f5f5f5] p-2 text-slate-50 rounded-[.7rem_.7rem_0_0]"
             style={{
-              background:
-                activeTab === "notas" ? "var(--sv-sodalita)" : "#d5d5d5",
-              color: activeTab === "notas" ? "#fff" : "#666",
-              fontWeight: activeTab === "notas" ? "bold" : "600",
+              background: activeTab === "notes" ? "#fff" : "#f5f5f5",
+              color: activeTab === "notes" ? "#666" : "#999",
+              fontWeight: activeTab === "notes" ? "bold" : "600",
               transition: ".2s ease",
             }}
-            onClick={() => tabHandler("notas")}
+            onClick={() => tabHandler("notes")}
           >
             Notas
           </View>
         </View>
         {/* --- end tabs --- */}
 
-        <View tag="main-content" className="flex flex-col gap-4">
+        <View
+          tag="main-content"
+          className="flex flex-col gap-4 mt-[-1rem] rounded-[1rem_1rem_0_0] overflow-hidden"
+        >
           {/* CARD: INFORMAÇÕES DE CONTATO */}
-          {activeTab === "dados do cliente" && (
+          {activeTab === "infos" && (
             <InfoSection
               title="Dados do contato"
               icon={<IdentificationCard size={18} weight="duotone" />}
@@ -422,7 +420,7 @@ export default function ClientePerfil() {
           )}
 
           {/* SEÇÃO: HISTÓRICO DE ORÇAMENTOS */}
-          {activeTab === "orçamentos" && (
+          {activeTab === "budgets" && (
             <InfoSection
               title="Orçamentos"
               icon={<FileText size={18} weight="duotone" />}
@@ -461,7 +459,7 @@ export default function ClientePerfil() {
           )}
 
           {/* SEÇÃO: HISTÓRICO DE NOTAS TÉCNICAS */}
-          {activeTab === "notas" && (
+          {activeTab === "notes" && (
             <InfoSection
               title="Notas técnicas"
               icon={<Note size={18} weight="duotone" />}

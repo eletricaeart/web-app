@@ -7,7 +7,8 @@
 }
 
 /* Classe utilitária para uso rápido via CSS */
-.thunder-text {
+.thunder-text,
+.font-thunder {
   font-family: "GodOfThunder", sans-serif;
   text-transform: uppercase;
 }
