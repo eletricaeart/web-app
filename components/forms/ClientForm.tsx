@@ -251,7 +251,7 @@ export default function ClientForm({
         tag="logradouro_numero-inputs"
         style={{
           display: "grid",
-          gridTemplateColumns: "2fr 1fr 1fr",
+          gridTemplateColumns: "2fr 1fr",
           gap: "10px",
         }}
       >
@@ -281,19 +281,19 @@ export default function ClientForm({
             />
           </label>
         </View>
-        <View tag="complemento-input">
-          <label>
-            <View tag="t">Comp.</View>
-            <input
-              type="text"
-              id="c_complemento"
-              className="input"
-              value={clientData.complemento || ""}
-              onChange={handleChange}
-              placeholder="Apto..."
-            />
-          </label>
-        </View>
+      </View>
+      <View tag="complemento-input">
+        <label>
+          <View tag="t">Complemento</View>
+          <input
+            type="text"
+            id="c_complemento"
+            className="input"
+            value={clientData.complemento || ""}
+            onChange={handleChange}
+            placeholder="Apto..."
+          />
+        </label>
       </View>
 
       <View tag="bairro-input">

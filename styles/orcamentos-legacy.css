@@ -822,15 +822,10 @@ menu {
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    /* color-interpolation-filters: sRGB; */
-    /* color: inherit; */
-    /* background-color: inherit; */
-    /* border-color: inherit; */
   }
 
   @page {
     size: A4;
-    /* margin: 0mm; */
     /* margin: 5mm 0 5mm 0; */
     @bottom-right {
       content: "Pág. " counter(page) " de " counter(pages);
@@ -838,10 +833,6 @@ menu {
       padding-bottom: 5px;
       padding-right: 5px;
     }
-    /* margin: 1cm; /* Sua margem atual */
-    /* Não é possível colocar 'background' direto aqui, então usamos o truque abaixo */
-    /* margin-left: 10x; */
-    /* margin-right: 10x; */
   }
 
   body {
@@ -849,9 +840,6 @@ menu {
     -webkit-print-color-adjust: exact !important;
     /* Firefox e padrão W3C */
     print-color-adjust: exact !important;
-
-    /* margin-left: 10x; */
-    /* margin-right: 10x; */
   }
   html,
   body {

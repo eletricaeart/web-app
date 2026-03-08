@@ -14,8 +14,9 @@ interface PressableProps {
   pressed?: string;
   /** Cor de fundo (formato Tailwind ex: 'bg-blue-500' ou cor hex) */
   bg?: string;
+  m?: string;
   /** Arredondamento das bordas (formato Tailwind ex: 'rounded-lg') */
-  radius?: string;
+  rounded?: string;
   /** Função disparada ao clicar/pressionar */
   onClick?: () => void;
   /** Classes adicionais do Tailwind */

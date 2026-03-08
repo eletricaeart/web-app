@@ -31,6 +31,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 
 import "./style.css";
+import Pressable from "@/components/Pressable";
 
 /**
  * Interfaces de Tipagem
@@ -378,6 +379,18 @@ export default function NewBudgetPage() {
         </View>
 
         <footer className="footer">
+          <Pressable>
+            {loading ? (
+              <>
+                <CircleNotch size={20} weight="bold" className="animate-spin" />
+                <span>PROCESSANDO...</span>
+              </>
+            ) : (
+              <span>
+                {budget.id ? "ATUALIZAR ORÇAMENTO" : "SALVAR ORÇAMENTO"}
+              </span>
+            )}
+          </Pressable>
           <button
             className="btnSave"
             onClick={handleSave}
