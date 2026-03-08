@@ -52,13 +52,13 @@ export default function BottomNavbar() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center gap-1 group transition-all w-full"
+            className="flex flex-col items-center gap-1 group  w-full"
           >
             <div
               className={cn(
-                "p-2 rounded-2xl transition-all duration-300",
+                "p-2 rounded-2xl ease-in duration-[.2s]",
                 isActive
-                  ? "bg-mauve-400 rounded-[5rem] w-full grid items-center justify-center text-white shadow-lg shadow-indigo-200 -translate-y-1"
+                  ? "bg-[#00559C] rounded-[5rem] w-full grid items-center justify-center text-white shadow-lg shadow-indigo-200 -translate-y-1"
                   : "text-slate-400 group-active:scale-90",
               )}
             >
