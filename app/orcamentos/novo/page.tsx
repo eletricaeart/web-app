@@ -379,7 +379,10 @@ export default function NewBudgetPage() {
         </View>
 
         <footer className="footer flex flex-col">
-          <Pressable>
+          <Pressable
+            onClick={handleSave}
+            style={{ cursor: loading ? "not-allowed" : "pointer" }}
+          >
             {loading ? (
               <>
                 <CircleNotch size={20} weight="bold" className="animate-spin" />
@@ -392,33 +395,33 @@ export default function NewBudgetPage() {
             )}
           </Pressable>
         </footer>
-        <footer className="footer">
-          <button
-            className="btnSave"
-            onClick={handleSave}
-            disabled={loading}
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "10px",
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-            }}
-          >
-            {loading ? (
-              <>
-                <CircleNotch size={20} weight="bold" className="animate-spin" />
-                <span>PROCESSANDO...</span>
-              </>
-            ) : (
-              <span>
-                {budget.id ? "ATUALIZAR ORÇAMENTO" : "SALVAR ORÇAMENTO"}
-              </span>
-            )}
-          </button>
-        </footer>
+        {/* <footer className="footer"> */}
+        {/*   <button */}
+        {/*     className="btnSave" */}
+        {/*     onClick={handleSave} */}
+        {/*     disabled={loading} */}
+        {/*     style={{ */}
+        {/*       display: "flex", */}
+        {/*       justifyContent: "center", */}
+        {/*       alignItems: "center", */}
+        {/*       gap: "10px", */}
+        {/*       opacity: loading ? 0.7 : 1, */}
+        {/*       cursor: loading ? "not-allowed" : "pointer", */}
+        {/*       transition: "all 0.3s ease", */}
+        {/*     }} */}
+        {/*   > */}
+        {/*     {loading ? ( */}
+        {/*       <> */}
+        {/*         <CircleNotch size={20} weight="bold" className="animate-spin" /> */}
+        {/*         <span>PROCESSANDO...</span> */}
+        {/*       </> */}
+        {/*     ) : ( */}
+        {/*       <span> */}
+        {/*         {budget.id ? "ATUALIZAR ORÇAMENTO" : "SALVAR ORÇAMENTO"} */}
+        {/*       </span> */}
+        {/*     )} */}
+        {/*   </button> */}
+        {/* </footer> */}
       </View>
     </>
   );

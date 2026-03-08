@@ -21,6 +21,7 @@ interface PressableProps {
   onClick?: () => void;
   /** Classes adicionais do Tailwind */
   className?: string;
+  style?: React.CSSProperties;
   /** Tag personalizada para o componente View interno */
   tag?: string;
   children?: React.ReactNode;
@@ -46,6 +47,7 @@ export default function Pressable({
   className = "",
   tag = "pressable",
   children,
+  style,
 }: PressableProps) {
   const [isPressed, setIsPressed] = useState(false);
 
@@ -85,11 +87,12 @@ export default function Pressable({
         ${className}
       `}
         style={
-          {
+          ({
             // Permite cores hexadecimais se não forem classes Tailwind
             bg: !bg.startsWith("bg-") ? bg : undefined,
             rounded: !rounded.startsWith("rounded") ? rounded : undefined,
-          } as React.CSSProperties
+          } as React.CSSProperties,
+          { ...style })
         }
       >
         {children ? children : !children && isPressed ? pressed : label}
