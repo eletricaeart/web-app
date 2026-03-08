@@ -333,16 +333,18 @@ export default function ClientePerfil() {
         {/* --- tabs --- */}
         <View
           tag={"Tabs"}
-          className="grid grid-cols-3 text-sm bg-[var(--sv-sombra-azul)] rounded-[.7rem] p-2"
+          className="grid grid-cols-3 text-sm bg-[#e5e5e5] rounded-[.7rem] p-2"
         >
           <View
             tag="tab"
-            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
+            className="grid place-items-center bg-[#e5e5e5] p-2 text-slate-50 rounded-[.5rem]"
             style={{
               background:
                 activeTab === "dados do cliente"
                   ? "var(--sv-sodalita)"
-                  : "var(--sv-sombra-azul)",
+                  : "#d5d5d5",
+              color: activeTab === "dados do cliente" ? "#fff" : "#666",
+              fontWeight: activeTab === "dados do cliente" ? "bold" : "600",
               transition: ".2s ease",
             }}
             onClick={() => tabHandler("dados do cliente")}
@@ -354,9 +356,9 @@ export default function ClientePerfil() {
             className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
             style={{
               background:
-                activeTab === "orçamentos"
-                  ? "var(--sv-sodalita)"
-                  : "var(--sv-sombra-azul)",
+                activeTab === "orçamentos" ? "var(--sv-sodalita)" : "#d5d5d5",
+              color: activeTab === "orçamentos" ? "#fff" : "#666",
+              fontWeight: activeTab === "orçamentos" ? "bold" : "600",
               transition: ".2s ease",
             }}
             onClick={() => tabHandler("orçamentos")}
@@ -368,9 +370,9 @@ export default function ClientePerfil() {
             className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
             style={{
               background:
-                activeTab === "notas"
-                  ? "var(--sv-sodalita)"
-                  : "var(--sv-sombra-azul)",
+                activeTab === "notas" ? "var(--sv-sodalita)" : "#d5d5d5",
+              color: activeTab === "notas" ? "#fff" : "#666",
+              fontWeight: activeTab === "notas" ? "bold" : "600",
               transition: ".2s ease",
             }}
             onClick={() => tabHandler("notas")}
