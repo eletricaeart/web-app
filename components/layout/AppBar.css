@@ -10,11 +10,11 @@ appbar {
   justify-content: space-between;
   padding: 0;
   box-sizing: border-box;
-  box-shadow:
-    #0003 0 0 6px,
-    #008 0 0 6px;
+  /* box-shadow: */
+  /*   #0003 0 0 6px, */
+  /*   #008 0 0 6px; */
   z-index: 9000;
-  border-bottom: 2px solid #00559c99;
+  /* border-bottom:  2px solid #00559c99; */
 
   flex-direction: row;
 }

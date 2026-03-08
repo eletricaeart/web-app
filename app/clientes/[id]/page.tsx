@@ -136,8 +136,10 @@ export default function ClientePerfil() {
   return (
     <>
       <AppBar
-        title="Perfil do Cliente"
+        // title="Perfil do Cliente"
+        title=" "
         backAction={() => router.push("/clientes")}
+        transparent={true}
         options={
           <Popover>
             <PopoverTrigger asChild>
@@ -205,7 +207,7 @@ export default function ClientePerfil() {
 
       <View
         tag="client-page"
-        className="client-perfil-page bg-mauve-50 min-h-[95dvh] pb-40"
+        className="client-perfil-page absolute top-0 w-full bg-mauve-50 min-h-[95dvh] pb-40"
       >
         {/* SEÇÃO HEADER: AVATAR E NOME */}
         <View

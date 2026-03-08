@@ -24,12 +24,22 @@ interface AppBarProps {
   options?: Option[] | React.ReactNode;
   title?: string | null;
   backAction?: string | (() => void) | null;
+  position?: "sticky" | "relative" | "absolute" | "fixed";
+  bg?: string;
+  borderb?: string;
+  shadow: string;
+  transparent?: boolean;
 }
 
 export default function AppBar({
   options = [],
   title = null,
   backAction = null,
+  position = "sticky",
+  bg = "#00559C",
+  borderb = "2px solid #00559c99",
+  shadow = "#0003 0 0 6px, #008 0 0 6px",
+  transparent = false,
 }: AppBarProps) {
   const router = useRouter();
 
@@ -56,8 +66,27 @@ export default function AppBar({
     }
   };
 
+  const styled = !transparent
+    ? {
+        background: bg,
+        borderBottom: borderb,
+        boxShadow: shadow,
+        position: position,
+      }
+    : { position: "relative", background: "transparent" };
+
   return (
-    <View tag="appbar" className="app-bar">
+    <View
+      tag="appbar"
+      className="app-bar"
+      // style={{
+      //   position: position,
+      //   background: bg,
+      //   borderBottom: borderb,
+      //   boxShadow: shadow,
+      // }}
+      style={{ ...styled }}
+    >
       <View tag="navigation-slot">
         {backAction && (
           <View
