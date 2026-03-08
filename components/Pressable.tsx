@@ -9,7 +9,7 @@ import "./Pressable.css";
  */
 interface PressableProps {
   /** Texto exibido em estado normal */
-  label: string;
+  label?: string;
   /** Texto opcional exibido quando o botão está sendo pressionado */
   pressed?: string;
   /** Cor de fundo (formato Tailwind ex: 'bg-blue-500' ou cor hex) */
