@@ -129,7 +129,7 @@ export default function ClientePerfil() {
     AVATARS[client.gender as keyof typeof AVATARS] ||
     AVATARS.masc;
 
-  function tabHandler(selectedTab: Tab_prop) {
+  function tabHandler(selectedTab: Tab_) {
     setActiveTab(selectedTab);
   }
 
