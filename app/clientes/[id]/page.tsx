@@ -333,25 +333,46 @@ export default function ClientePerfil() {
         {/* --- tabs --- */}
         <View
           tag={"Tabs"}
-          className="grid grid-cols-3 text-sm bg-[var(--sv-sombra-azul)] rounded-[20px_20px_0_0] p-2"
+          className="grid grid-cols-3 text-sm bg-[var(--sv-sombra-azul)] rounded-[.7rem] p-2"
         >
           <View
             tag="tab"
-            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[18px_0_0_0]"
+            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
+            style={{
+              background:
+                activeTab === "dados do cliente"
+                  ? "var(--sv-sodalita)"
+                  : "var(--sv-sombra-azul)",
+              transition: ".2s ease",
+            }}
             onClick={() => tabHandler("dados do cliente")}
           >
             Dados De Cliente
           </View>
           <View
             tag="tab"
-            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50"
+            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
+            style={{
+              background:
+                activeTab === "orçamentos"
+                  ? "var(--sv-sodalita)"
+                  : "var(--sv-sombra-azul)",
+              transition: ".2s ease",
+            }}
             onClick={() => tabHandler("orçamentos")}
           >
             Orçamentos
           </View>
           <View
             tag="tab"
-            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[0_18px_0_0]"
+            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[.5rem]"
+            style={{
+              background:
+                activeTab === "notas"
+                  ? "var(--sv-sodalita)"
+                  : "var(--sv-sombra-azul)",
+              transition: ".2s ease",
+            }}
             onClick={() => tabHandler("notas")}
           >
             Notas
