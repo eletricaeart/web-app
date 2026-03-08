@@ -6,7 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
-import { CircleNotch, FloppyDisk, MapPinPlus } from "@phosphor-icons/react";
+import {
+  CircleNotch,
+  FloppyDisk,
+  IdentificationCardIcon,
+  MapPinPlus,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import AvatarUpload from "@/components/forms/AvatarUpload"; // Componente que faremos
 
@@ -155,7 +160,13 @@ export default function ClienteForm() {
           />
 
           <View tag="card-ea-client" className="add-client-form">
-            <View tag="card-ea-header">IDENTIFICAÇÃO</View>
+            <View
+              tag="card-ea-header"
+              className="flex text-sm text-indigo-600 font-medium gap-2 py-3"
+            >
+              <IdentificationCardIcon size={18} weight="duotone" />
+              IDENTIFICAÇÃO
+            </View>
             <View tag="card-ea-body">
               <label>
                 Nome Completo
