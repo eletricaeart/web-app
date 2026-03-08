@@ -270,7 +270,7 @@ export default function BudgetShareMenu({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         className="pb-10 bg-white rounded-[2rem_2rem_0_0_!important] border-none"
-        style={{ bordeTopWidth: "0 !important" }}
+        style={{ borderTopWidth: "0 !important" }}
       >
         <DrawerHeader>
           <DrawerTitle className="text-center text-slate-800 text-xl font-geist-mono capitalize tracking-widest font-semibold">
