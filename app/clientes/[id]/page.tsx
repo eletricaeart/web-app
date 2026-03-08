@@ -17,6 +17,9 @@ import {
   DotsThreeOutlineVertical,
   Notebook,
   PhoneTransferIcon,
+  IdentificationCard,
+  FileText,
+  Note,
 } from "@phosphor-icons/react";
 import { getCleanDate } from "@/utils/helpers";
 import { Mask } from "@/utils/mask";
@@ -67,6 +70,11 @@ interface Nota {
   title: string;
 }
 
+type Tab_ = "dados do cliente" | "orçamentos" | "notas";
+interface Tab_prop {
+  selectedTab: Tab_;
+}
+
 export default function ClientePerfil() {
   const params = useParams();
   const clientId = params?.id;
@@ -78,6 +86,8 @@ export default function ClientePerfil() {
   const { data: notes } = useEASync<Nota>("notas");
 
   const [client, setClient] = useState<Cliente | null>(null);
+
+  const [activeTab, setActiveTab] = useState<Tab_>("dados do cliente");
 
   // Busca o cliente específico no cache local/remoto
   useEffect(() => {
@@ -118,6 +128,10 @@ export default function ClientePerfil() {
     client.photo ||
     AVATARS[client.gender as keyof typeof AVATARS] ||
     AVATARS.masc;
+
+  function tabHandler(selectedTab: Tab_prop) {
+    setActiveTab(selectedTab);
+  }
 
   return (
     <>
@@ -191,12 +205,12 @@ export default function ClientePerfil() {
 
       <View
         tag="client-page"
-        className="client-perfil-page bg-[#fff_!important] min-h-[95dvh] pb-40"
+        className="client-perfil-page bg-mauve-50 min-h-[95dvh] pb-40"
       >
         {/* SEÇÃO HEADER: AVATAR E NOME */}
         <View
           tag="avatar-section"
-          className="relative min-h-[200px] text-center bg-[var(--sv-sodalita)] text-white "
+          className="relative min-h-[150px] text-center bg-[var(--sv-sodalita)] text-white "
         >
           <View
             tag="perfil-pic"
@@ -304,109 +318,155 @@ export default function ClientePerfil() {
               />
             </View>
             <View tag="descs" className="flex-1 mt-4">
-              <h3 className="font-thunder text-2xl capitalize">
+              <h3 className="font-thunder text-2xl text-slate-900 capitalize font-bold">
                 {client.name}
               </h3>
-              <p className="opacity-80 text-sm">{client.cidade}</p>
+              <p className="opacity-80 text-sm text-slate-400 capitalize font-bold">
+                {client.cidade}
+              </p>
             </View>
           </View>
         </View>
 
+        {/* --- tabs --- */}
+        <View
+          tag={"Tabs"}
+          className="grid grid-cols-3 text-sm bg-[var(--sv-sombra-azul)] rounded-[20px_20px_0_0] p-2"
+        >
+          <View
+            tag="tab"
+            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[18px_0_0_0]"
+            onClick={() => tabHandler("dados do cliente")}
+          >
+            Dados De Cliente
+          </View>
+          <View
+            tag="tab"
+            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50"
+            onClick={() => tabHandler("orçamentos")}
+          >
+            Orçamentos
+          </View>
+          <View
+            tag="tab"
+            className="grid place-items-center bg-[var(--sv-sodalita)] p-2 text-slate-50 rounded-[0_18px_0_0]"
+            onClick={() => tabHandler("notas")}
+          >
+            Notas
+          </View>
+        </View>
+        {/* --- end tabs --- */}
+
         <View tag="main-content" className="flex flex-col gap-4">
           {/* CARD: INFORMAÇÕES DE CONTATO */}
-          <InfoSection title="Dados do contato">
-            <InfoItem
-              icon={
-                <WhatsappLogo
-                  size={30}
-                  weight="duotone"
-                  className="text-green-500"
-                />
-              }
-              txt={Mask.phone(client?.whatsapp as string | number)}
-              fallTxt="Não informado"
-            />
-            <InfoItem
-              icon={
-                <EnvelopeSimple
-                  size={30}
-                  weight="duotone"
-                  className="text-blue-500"
-                />
-              }
-              txt={client.email}
-              fallTxt=""
-            />
-            <InfoItem
-              icon={
-                <MapPin size={30} weight="duotone" className="text-red-500" />
-              }
-              txt={`${client.rua}, ${client.num} - ${client.bairro}`}
-              fallTxt=""
-            />
-          </InfoSection>
+          {activeTab === "dados do cliente" && (
+            <InfoSection
+              title="Dados do contato"
+              icon={<IdentificationCard size={18} weight="duotone" />}
+            >
+              <InfoItem
+                icon={
+                  <WhatsappLogo
+                    size={25}
+                    weight="duotone"
+                    className="text-green-500"
+                  />
+                }
+                txt={Mask.phone(client?.whatsapp as string | number)}
+                fallTxt="Não informado"
+              />
+              <InfoItem
+                icon={
+                  <EnvelopeSimple
+                    size={25}
+                    weight="duotone"
+                    className="text-blue-500"
+                  />
+                }
+                txt={client.email}
+                fallTxt=""
+              />
+              <InfoItem
+                icon={
+                  <MapPin size={25} weight="duotone" className="text-red-500" />
+                }
+                txt={`${client.rua}, ${client.num} - ${client.bairro}`}
+                fallTxt=""
+              />
+            </InfoSection>
+          )}
 
           {/* SEÇÃO: HISTÓRICO DE ORÇAMENTOS */}
-          <InfoSection
-            title="Orçamentos"
-            actionIcon={
-              <FilePlus
-                size={25}
-                onClick={() => router.push("/orcamentos/novo")}
-              />
-            }
-          >
-            {historicoOrcamentos.length > 0 ? (
-              historicoOrcamentos.map((orc, i) => (
-                <React.Fragment key={orc.id}>
-                  <View
-                    className="history-item"
-                    onClick={() => router.push(`/orcamentos/${orc.id}`)}
-                  >
-                    <View tag="t" className="date text-gray-400">
-                      {getCleanDate(String(orc.docTitle.emissao))}
+          {activeTab === "orçamentos" && (
+            <InfoSection
+              title="Orçamentos"
+              icon={<FileText size={18} weight="duotone" />}
+              actionIcon={
+                <FilePlus
+                  size={20}
+                  onClick={() => router.push("/orcamentos/novo")}
+                />
+              }
+            >
+              {historicoOrcamentos.length > 0 ? (
+                historicoOrcamentos.map((orc, i) => (
+                  <React.Fragment key={orc.id}>
+                    <View
+                      className="history-item"
+                      onClick={() => router.push(`/orcamentos/${orc.id}`)}
+                    >
+                      <View tag="t" className="date text-gray-400">
+                        {getCleanDate(String(orc.docTitle.emissao))}
+                      </View>
+                      <p className="title text-gray-600 font-medium">
+                        {orc.docTitle.text}
+                      </p>
                     </View>
-                    <p className="title text-gray-600 font-medium">
-                      {orc.docTitle.text}
-                    </p>
-                  </View>
-                  {i < historicoOrcamentos.length - 1 && (
-                    <Divider spacing="1rem" />
-                  )}
-                </React.Fragment>
-              ))
-            ) : (
-              <View tag="t" className="empty-text text-gray-600">
-                Nenhum orçamento para este cliente.
-              </View>
-            )}
-          </InfoSection>
+                    {i < historicoOrcamentos.length - 1 && (
+                      <Divider spacing="1rem" />
+                    )}
+                  </React.Fragment>
+                ))
+              ) : (
+                <View tag="t" className="empty-text text-gray-600">
+                  Nenhum orçamento para este cliente.
+                </View>
+              )}
+            </InfoSection>
+          )}
 
           {/* SEÇÃO: HISTÓRICO DE NOTAS TÉCNICAS */}
-          <InfoSection title="Notas técnicas">
-            {historicoNotas.length > 0 ? (
-              historicoNotas.map((n, i) => (
-                <React.Fragment key={n.id}>
-                  <View
-                    className="history-item"
-                    onClick={() => router.push(`/notas/${n.id}`)}
-                  >
-                    <View tag="t" className="date">
-                      {new Date(n.date).toLocaleDateString("pt-BR")}
+          {activeTab === "notas" && (
+            <InfoSection
+              title="Notas técnicas"
+              icon={<Note size={18} weight="duotone" />}
+            >
+              {historicoNotas.length > 0 ? (
+                historicoNotas.map((n, i) => (
+                  <React.Fragment key={n.id}>
+                    <View
+                      className="history-item"
+                      onClick={() => router.push(`/notas/${n.id}`)}
+                    >
+                      <View tag="t" className="date">
+                        {new Date(n.date).toLocaleDateString("pt-BR")}
+                      </View>
+                      <View tag="t" className="title">
+                        {n.title}
+                      </View>
                     </View>
-                    <View tag="t" className="title">
-                      {n.title}
-                    </View>
-                  </View>
-                  {i < historicoNotas.length - 1 && <Divider spacing="1rem" />}
-                </React.Fragment>
-              ))
-            ) : (
-              <View tag="t" className="empty-text text-gray-600">
-                Nenhuma nota vinculada.
-              </View>
-            )}
-          </InfoSection>
+                    {i < historicoNotas.length - 1 && (
+                      <Divider spacing="1rem" />
+                    )}
+                  </React.Fragment>
+                ))
+              ) : (
+                <View tag="t" className="empty-text text-gray-600">
+                  Nenhuma nota vinculada.
+                </View>
+              )}
+            </InfoSection>
+          )}
         </View>
       </View>
     </>
@@ -416,6 +476,7 @@ export default function ClientePerfil() {
 interface InfoSectionProps {
   // Aceita string ("Título") ou JSX (<span>Título</span>)
   title?: React.ReactNode;
+  icon?: React.ReactElement;
 
   // Aceita especificamente um elemento (Ex: <UserIcon onClick/>)
   actionIcon?: React.ReactElement;
@@ -429,6 +490,7 @@ interface InfoSectionProps {
 
 function InfoSection({
   title,
+  icon,
   actionIcon,
   children,
   className,
@@ -437,14 +499,17 @@ function InfoSection({
     <>
       <View
         tag="profile-card"
-        className="flex flex-col gap-3 p-4 bg-mauve-50 shadow-sm"
+        className="flex flex-col px-[1.5rem] py-4 bg-white shadow-sm"
       >
         {title && (
           <View
             tag="card-header"
             className="flex items-center justify-between capitalize text-[1.2rem] font-bold text-gray-800"
           >
-            {title}
+            <span className="flex items-center gap-2 pb-[1rem] text-indigo-600 font-bold text-xs uppercase tracking-widest">
+              {icon && icon}
+              {title}
+            </span>
             {actionIcon && (
               <View className="flex items-center justify-center p-2 bg-mauve-200 text-blue-500 rounded-xl">
                 {actionIcon}
@@ -484,7 +549,7 @@ function InfoItem({ icon, txt, fallTxt, children, className }: InfoItemProps) {
         {children}
         {!children && (
           <>
-            {icon}
+            {icon && <View className="bg-green-50 p-2 rounded-xl">{icon}</View>}
             <View tag="t" className="text-gray-600 py-3">
               {txt || fallTxt || ""}
             </View>

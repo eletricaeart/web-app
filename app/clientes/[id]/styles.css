@@ -1,6 +1,5 @@
 /* Lista de Clientes */
 client-page {
-  background-color: #fff;
   flex-direction: column;
   display: flex;
 }
