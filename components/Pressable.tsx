@@ -14,6 +14,7 @@ interface PressableProps {
   pressed?: string;
   /** Cor de fundo (formato Tailwind ex: 'bg-blue-500' ou cor hex) */
   bg?: string;
+  color?: string;
   m?: string;
   /** Arredondamento das bordas (formato Tailwind ex: 'rounded-lg') */
   rounded?: string;
@@ -41,6 +42,7 @@ export default function Pressable({
   label,
   pressed,
   bg = "bg-transparent",
+  color,
   rounded = "rounded-md",
   m = "0",
   onClick,
@@ -90,6 +92,7 @@ export default function Pressable({
           ({
             // Permite cores hexadecimais se não forem classes Tailwind
             bg: !bg.startsWith("bg-") ? bg : undefined,
+            color: color,
             rounded: !rounded.startsWith("rounded") ? rounded : undefined,
           } as React.CSSProperties,
           { ...style })

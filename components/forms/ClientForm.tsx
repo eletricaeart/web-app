@@ -73,7 +73,7 @@ export default function ClientForm({
     if (cep.length === 8) {
       setLoadingCep(true);
       try {
-        const res = await fetch(`https://viacep.com.br{cep}/json/`);
+        const res = await fetch(`https://viacep.com.br${cep}/json/`);
         const data = await res.json();
         if (!data.erro) {
           onClientChange({
@@ -217,6 +217,7 @@ export default function ClientForm({
         </View>
         <input
           type="text"
+          id="c_name"
           className="input"
           placeholder="Selecione acima ou digite..."
           value={clientData.name || ""}

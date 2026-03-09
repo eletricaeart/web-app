@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import View from "@/components/layout/View";
 import styles from "./ClauseManager.module.css";
+import Pressable from "../Pressable";
 
 /**
  * Interfaces para garantir a tipagem estrita do Gerenciador de Cláusulas
@@ -207,40 +208,28 @@ export default function ClauseManager({
 
           <View
             tag="footer-options"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "1rem 1rem",
-            }}
+            className="flex flex-col justify-center p-4"
           >
-            <button
-              className="btn_add-subclause"
+            <Pressable
+              label="+ Adicionar Subcláusula"
               style={{ background: "#27f2", color: "#29f" }}
               onClick={() => addItem(clause.id)}
-            >
-              + Adicionar Subcláusula
-            </button>
+            />
           </View>
         </View>
       ))}
 
       <View
         tag="btn_add-clause-field"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "0 1rem",
-        }}
+        className="flex flex-col justify-center px-4 py-0"
       >
-        <button
+        <Pressable
           className="btn_add-clause"
           style={{ background: "#27f2", color: "#29f" }}
           onClick={addClause}
         >
           + Adicionar Cláusula
-        </button>
+        </Pressable>
       </View>
     </View>
   );

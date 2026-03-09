@@ -130,12 +130,38 @@ export default function ClienteForm() {
       id: editId || `TEMP_${Date.now()}`,
     };
 
-    // Tipagem do retorno do save conforme useEASync
-    const res = (await saveClient(payload, action)) as { success: boolean };
+    const res = (await saveClient(payload, action)) as {
+      success: boolean;
+      id?: string;
+    };
 
     if (res.success) {
       toast.success(editId ? "Cliente atualizado" : "Cliente cadastrado");
-      if (editId) {
+
+      const draftStr = localStorage.getItem("ea_draft_budget");
+
+      if (!editId && draftStr) {
+        // 1. Pegamos o rascunho atual
+        const draft = JSON.parse(draftStr);
+
+        // 2. Atualizamos a parte do cliente com os dados que acabamos de salvar
+        draft.cliente = {
+          name: formData.name,
+          cep: formData.cep,
+          rua: formData.rua,
+          num: formData.num,
+          bairro: formData.bairro,
+          cidade: formData.cidade,
+          complemento: formData.complemento,
+          obs: formData.obs,
+        };
+
+        // 3. Salvamos o rascunho atualizado de volta no localStorage
+        localStorage.setItem("ea_draft_budget", JSON.stringify(draft));
+
+        // 4. Voltamos para a página de orçamento (sem precisar de ID na URL)
+        router.replace(`/orcamentos/novo`);
+      } else if (editId) {
         router.replace(`/clientes/${editId}`);
       } else {
         router.replace("/clientes");
