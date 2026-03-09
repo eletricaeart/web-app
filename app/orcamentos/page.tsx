@@ -152,8 +152,11 @@ export default function Budgets() {
         style={{ position: "absolute", left: "-9999px", top: 0 }}
       />
 
-      <View tag="budgets" className="dash-page">
-        <main className="orcamento-list px-0 py-4">
+      <View tag="budgets" className="dash-page flex flex-col bg-[#f5f5f5]">
+        <main
+          className="flex flex-col px-0 py-4 gap-2 bg-[#f5f5f5]"
+          style={{ paddingBottom: "190px" }}
+        >
           {filteredOrcamentos.length > 0 ? (
             filteredOrcamentos.map((orc) => {
               const isTemp = String(orc.id).startsWith("TEMP_");
@@ -168,7 +171,7 @@ export default function Budgets() {
               return (
                 <div
                   key={orc.id}
-                  className="client-card-wrapper mb-3"
+                  className="client-card-wrapper shadow-sm"
                   style={{ position: "relative" }}
                 >
                   {/* Aplicando a mesma classe de círculo e estilo de imagem */}

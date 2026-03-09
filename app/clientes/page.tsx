@@ -95,12 +95,16 @@ export default function ClientesLista() {
         value={term}
       />
 
-      <View tag="clients-list">
-        <View tag="clients-container">
+      <View
+        tag="clients-list"
+        className="flex flex-col bg-[#f5f5f5]"
+        style={{ paddingBottom: "190px" }}
+      >
+        <View tag="clients-container" className="flex flex-col gap-2">
           {filtered.map((c) => (
             <div
               key={c.id}
-              className="client-card-wrapper"
+              className="client-card-wrapper shadow-sm"
               style={{ position: "relative" }}
             >
               <ClientCard
