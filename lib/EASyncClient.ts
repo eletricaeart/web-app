@@ -16,12 +16,11 @@ const QUEUE_KEY = "ea_sync_queue";
 class EASyncClient {
   private isProcessing = false;
 
-  /* =========================
-     CACHE
-  ========================= */
-
   private getCacheKey(entity: string) {
     return `ea_cache_${entity}`;
+  }
+  private getPrevKey(entity: string) {
+    return `ea_prev_${entity}`;
   }
 
   getLocalData(entity: string) {
@@ -34,104 +33,89 @@ class EASyncClient {
   }
 
   /* =========================
-     QUEUE
-  ========================= */
-
-  private getQueue(): SyncOperation[] {
-    const raw = localStorage.getItem(QUEUE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  }
-
-  private setQueue(queue: SyncOperation[]) {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  }
-
-  private addToQueue(operation: Omit<SyncOperation, "id" | "retries">) {
-    const queue = this.getQueue();
-
-    const newOp: SyncOperation = {
-      id: crypto.randomUUID(),
-      retries: 0,
-      ...operation,
-    };
-
-    queue.push(newOp);
-    this.setQueue(queue);
-  }
-
-  /* =========================
      SAVE (INSTANT UX)
   ========================= */
-
   async save(entity: string, payload: any, action: SyncAction) {
     const localData = this.getLocalData(entity);
-
     let updatedData = [...localData];
 
-    if (action === "create") {
-      updatedData.push(payload);
-    }
+    // Adiciona timestamp local para comparação futura
+    const enrichedPayload = {
+      ...payload,
+      updatedAt: new Date().toISOString(),
+    };
 
-    if (action === "update") {
+    if (action === "create") {
+      updatedData.push(enrichedPayload);
+    } else if (action === "update") {
       updatedData = updatedData.map((item) =>
-        item.id === payload.id ? payload : item,
+        item.id === enrichedPayload.id ? { ...item, ...enrichedPayload } : item,
+      );
+    } else if (action === "delete") {
+      updatedData = updatedData.filter(
+        (item) => item.id !== enrichedPayload.id,
       );
     }
 
-    if (action === "delete") {
-      updatedData = updatedData.filter((item) => item.id !== payload.id);
-    }
-
-    // Atualiza cache instantaneamente
     this.setLocalData(entity, updatedData);
 
-    // Adiciona à fila
-    this.addToQueue({ entity, action, payload });
+    const queue = this.getQueue();
+    queue.push({
+      id: crypto.randomUUID(),
+      entity,
+      action,
+      payload: enrichedPayload,
+      retries: 0,
+    });
+    this.setQueue(queue);
 
-    // Dispara sync em background
     this.processQueue();
-
     return { success: true };
   }
 
   /* =========================
-     PULL (FORÇA SINCRONIZAÇÃO REMOTA)
+     PULL (CONFLITO POR DATA)
   ========================= */
-
   async pull(entity: string) {
     if (!navigator.onLine) return this.getLocalData(entity);
 
     try {
-      const res = await fetch(`/api/data/${entity}`, { cache: "no-store" });
-
-      // Se o servidor não responder OK, não toque no cache local!
+      const res = await fetch(`/api/data/${entity}`);
       if (!res.ok) return this.getLocalData(entity);
 
-      const remote = await res.json();
+      const remoteData = await res.json();
+      if (!Array.isArray(remoteData)) return this.getLocalData(entity);
 
-      // SÓ ATUALIZA SE RECEBER UM ARRAY VÁLIDO
-      if (Array.isArray(remote)) {
-        this.setLocalData(entity, remote);
-        return remote;
-      }
+      const localData = this.getLocalData(entity);
 
-      // Se o remote vier estranho ou vazio (mas você tem dados),
-      // mantenha o local por segurança.
-      return this.getLocalData(entity);
-    } catch (error) {
-      // Em caso de erro de rede, o Rafael continua vendo os dados no celular
+      // LÓGICA DE MERGE: Compara item por item via updatedAt
+      const mergedData = remoteData.map((remoteItem) => {
+        const localItem = localData.find((l: any) => l.id === remoteItem.id);
+
+        if (localItem) {
+          const remoteTime = new Date(remoteItem.updatedAt || 0).getTime();
+          const localTime = new Date(localItem.updatedAt || 0).getTime();
+
+          // Se o dado local for mais novo e ainda não sincronizou (está na fila), mantém o local
+          return localTime > remoteTime ? localItem : remoteItem;
+        }
+        return remoteItem;
+      });
+
+      this.setLocalData(entity, mergedData);
+      localStorage.setItem(this.getPrevKey(entity), JSON.stringify(mergedData));
+
+      return mergedData;
+    } catch (err) {
       return this.getLocalData(entity);
     }
   }
 
   /* =========================
-     PROCESS QUEUE
+     PROCESS QUEUE (SUBSTITUIÇÃO DE ID)
   ========================= */
-
   async processQueue() {
-    if (this.isProcessing) return;
-    if (!navigator.onLine) return;
-
+    if (this.isProcessing || !navigator.onLine) return;
     this.isProcessing = true;
 
     let queue = this.getQueue();
@@ -140,39 +124,68 @@ class EASyncClient {
       const current = queue[0];
 
       try {
-        await fetch(`/api/data/${current.entity}`, {
+        const res = await fetch(`/api/data/${current.entity}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: current.action,
-            ...current.payload,
-          }),
+          body: JSON.stringify({ action: current.action, ...current.payload }),
         });
 
-        // Remove operação processada
-        queue.shift();
-        this.setQueue(queue);
+        const result = await res.json();
+
+        if (
+          res.ok &&
+          (result.status === "success" ||
+            result.status === "created" ||
+            result.status === "updated")
+        ) {
+          // Se for criação, troca o TEMP_ID pelo ID real do GS
+          if (
+            current.action === "create" &&
+            result.id &&
+            result.id !== current.payload.id
+          ) {
+            this.updateIdInCache(current.entity, current.payload.id, result.id);
+          }
+
+          queue.shift();
+          this.setQueue(queue);
+          this.updatePrevAnchor(current.entity);
+        } else {
+          break;
+        }
       } catch (error) {
         current.retries++;
         this.setQueue(queue);
-        break; // sai e tenta depois
+        break;
       }
-
       queue = this.getQueue();
     }
-
     this.isProcessing = false;
   }
 
-  /* =========================
-     INIT LISTENER
-  ========================= */
+  // Métodos auxiliares de fila e âncora...
+  private getQueue(): SyncOperation[] {
+    const raw = localStorage.getItem(QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }
+  private setQueue(queue: SyncOperation[]) {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  }
+  private updateIdInCache(entity: string, oldId: string, newId: string) {
+    const data = this.getLocalData(entity);
+    const updated = data.map((item: any) =>
+      item.id === oldId ? { ...item, id: newId } : item,
+    );
+    this.setLocalData(entity, updated);
+  }
+  private updatePrevAnchor(entity: string) {
+    const currentCache = this.getLocalData(entity);
+    localStorage.setItem(this.getPrevKey(entity), JSON.stringify(currentCache));
+  }
 
   init() {
     if (typeof window !== "undefined") {
-      window.addEventListener("online", () => {
-        this.processQueue();
-      });
+      window.addEventListener("online", () => this.processQueue());
     }
   }
 }

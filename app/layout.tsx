@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 // import { usePathname } from "next/navigation";
 import { cookies } from "next/headers";
 import NavWrapper from "./NavWrapper";
+import GlobalSync from "@/utils/GlobalSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,9 +75,9 @@ export default async function RootLayout({
         // className={`${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} antialiased pb-24`}
         className={`${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} antialiased`}
       >
+        <GlobalSync /> {/* O mestre da sincronização rodando aqui */}
         {children}
         <Toaster richColors position="top-center" />
-
         {/* O Wrapper decide se renderiza ou não a barra no cliente */}
         <NavWrapper hasSession={hasSession} />
       </body>
