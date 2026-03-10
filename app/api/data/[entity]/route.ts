@@ -4,13 +4,14 @@ import { getSession } from "@/lib/auth";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ entity: string }> }, // Ajuste para Promise
+  { params }: { params: Promise<{ entity: string }> },
 ) {
   const { entity } = await params;
   const session = await getSession();
 
-  if (!session)
+  if (!session) {
     return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
+  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -21,14 +22,16 @@ export async function GET(
       data: id ? { entity, id } : { entity },
     });
 
-    // Se o GAS retornar erro, não mandamos um array vazio, mandamos o erro
-    if (data && data.status === "error") {
-      return NextResponse.json([], { status: 200 });
-    }
+    console.log("GET GAS response:", data);
 
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json([], { status: 200 });
+    console.error("GET ERROR:", error);
+
+    return NextResponse.json(
+      { status: "error", message: String(error) },
+      { status: 500 },
+    );
   }
 }
 
@@ -39,20 +42,35 @@ export async function POST(
   const { entity } = await params;
   const session = await getSession();
 
-  if (!session)
+  if (!session) {
     return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
+  }
 
   try {
     const body = await request.json();
-    const payload = { ...body, entity, owner_id: session.id };
+
+    const payload = {
+      ...body,
+      entity,
+      owner_id: session.id,
+    };
+
+    console.log("POST payload:", payload);
 
     const result = await fetchFromGAS({
       method: "POST",
       data: payload,
     });
 
+    console.log("POST GAS response:", result);
+
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ status: "error" }, { status: 500 });
+    console.error("POST ERROR:", error);
+
+    return NextResponse.json(
+      { status: "error", message: String(error) },
+      { status: 500 },
+    );
   }
 }
