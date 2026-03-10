@@ -19,7 +19,6 @@ import Link from "next/link";
 import Image from "next/image";
 import BottomNavbar from "@/components/layout/BottomNavbar";
 import View from "@/components/layout/View";
-import Page from "@/components/layout/Page";
 
 // Interface para tipar o usuário na Home
 interface UsuarioHome {
@@ -71,105 +70,100 @@ export default function HomePage() {
 
   return (
     <>
-      <Page hasBottomNavBar={true} className="">
-        <main className="p-6">
-          {/* Header */}
-          <header className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                Olá, {(currentUser.name || "Usuário").split(" ")[0]}
-              </h1>
-              <p className="text-slate-500 text-sm">{randomPhrase}</p>
-            </div>
-            <Link href="/perfil">
-              {/* <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative"> */}
-              <div className="w-12 h-12 bg-indigo-950 rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
-                {currentUser.photo ? (
-                  <Image
-                    src={currentUser.photo}
-                    alt="Perfil"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <Lightning
-                    size={24}
-                    weight="duotone"
-                    className="text-white"
-                  />
-                )}
-              </div>
-            </Link>
-          </header>
-
-          {/* Grid de Atalhos */}
-          <div className="grid grid-cols-1 gap-4">
-            <QuickAction
-              href="/orcamentos/novo"
-              icon={<FilePlus size={32} weight="duotone" />}
-              title="Novo Orçamento"
-              description="Criar proposta rápida"
-              color="bg-indigo-600"
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <MenuCard
-                href="/clientes"
-                icon={<Users size={28} weight="duotone" />}
-                title="Clientes"
-                count={`${clients.length} cadastrados`}
-              />
-              <MenuCard
-                href="/notas"
-                icon={<Notebook size={28} weight="duotone" />}
-                title="Notas"
-                count={`${notes.length} registros`}
-              />
-              {/* CARD DA EQUIPE (USUÁRIOS) */}
-              <MenuCard
-                href="/equipe"
-                icon={<Lightning size={28} weight="duotone" />}
-                title="Equipe"
-                count={`${users.length} membros`}
-              />
-              {/* CARD DE PERFIL (Para o Rafael se ver) */}
-              <MenuCard
-                href="/perfil"
-                icon={<UserCircle size={28} weight="duotone" />}
-                title="Meu Perfil"
-                count="Editar"
-              />
-              {/* TERRENO PREPARADO: Card de Chat (Futuro) */}
-              <MenuCard
-                href="/chat"
-                icon={
-                  <ChatCircleDots
-                    size={28}
-                    weight="duotone"
-                    className="text-emerald-500"
-                  />
-                }
-                title="Mensagens"
-                count="Em breve"
-              />
-            </div>
+      <main className="min-h-svh bg-slate-50 p-6 pb-24 bg-[linear-gradient(45deg,#00559c50,#0000)]">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Olá, {(currentUser.name || "Usuário").split(" ")[0]}
+            </h1>
+            <p className="text-slate-500 text-sm">{randomPhrase}</p>
           </div>
-        </main>
+          <Link href="/perfil">
+            {/* <div className="w-12 h-12 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative"> */}
+            <div className="w-12 h-12 bg-indigo-950 rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
+              {currentUser.photo ? (
+                <Image
+                  src={currentUser.photo}
+                  alt="Perfil"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <Lightning size={24} weight="duotone" className="text-white" />
+              )}
+            </div>
+          </Link>
+        </header>
 
-        {/* Botão de Sair elegante */}
-        <footer className="flex flex-col w-full px-4 py-8">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 gap-3 h-14 rounded-2xl"
-            onClick={() => {
-              /* Criaremos a lógica de logout */
-            }}
-          >
-            <SignOut size={24} />
-            <span className="font-bold">Sair do Sistema</span>
-          </Button>
-        </footer>
-      </Page>
+        {/* Grid de Atalhos */}
+        <div className="grid grid-cols-1 gap-4">
+          <QuickAction
+            href="/orcamentos/novo"
+            icon={<FilePlus size={32} weight="duotone" />}
+            title="Novo Orçamento"
+            description="Criar proposta rápida"
+            color="bg-indigo-600"
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <MenuCard
+              href="/clientes"
+              icon={<Users size={28} weight="duotone" />}
+              title="Clientes"
+              count={`${clients.length} cadastrados`}
+            />
+            <MenuCard
+              href="/notas"
+              icon={<Notebook size={28} weight="duotone" />}
+              title="Notas"
+              count={`${notes.length} registros`}
+            />
+            {/* CARD DA EQUIPE (USUÁRIOS) */}
+            <MenuCard
+              href="/equipe"
+              icon={<Lightning size={28} weight="duotone" />}
+              title="Equipe"
+              count={`${users.length} membros`}
+            />
+            {/* CARD DE PERFIL (Para o Rafael se ver) */}
+            <MenuCard
+              href="/perfil"
+              icon={<UserCircle size={28} weight="duotone" />}
+              title="Meu Perfil"
+              count="Editar"
+            />
+            {/* TERRENO PREPARADO: Card de Chat (Futuro) */}
+            <MenuCard
+              href="/chat"
+              icon={
+                <ChatCircleDots
+                  size={28}
+                  weight="duotone"
+                  className="text-emerald-500"
+                />
+              }
+              title="Mensagens"
+              count="Em breve"
+            />
+          </div>
+        </div>
+      </main>
+
+      {/* Botão de Sair elegante */}
+      <footer className="flex flex-col w-full px-4 py-8">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 gap-3 h-14 rounded-2xl"
+          onClick={() => {
+            /* Criaremos a lógica de logout */
+          }}
+        >
+          <SignOut size={24} />
+          <span className="font-bold">Sair do Sistema</span>
+        </Button>
+      </footer>
+      <View tag="bottom-spacer" className="flex w-full h-[92px]" />
       <BottomNavbar />
     </>
   );

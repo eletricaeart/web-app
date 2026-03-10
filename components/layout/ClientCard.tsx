@@ -55,7 +55,7 @@ export default function ClientCard({
   };
 
   return (
-    <View tag="client-card">
+    <View tag="client-card" className="rounded-[1rem] shadow-sm">
       <View tag="client-avatar" onClick={onClick} className="cursor-pointer">
         <Avatar className="w-12 h-12">
           {/* Prioridade 1: Foto do Cloudinary */}

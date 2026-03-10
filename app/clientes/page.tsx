@@ -25,6 +25,7 @@ import {
 
 /* styles */
 import "./Clientes.css";
+import Page from "@/components/layout/Page";
 
 // Interface alinhada com as definições anteriores para evitar 'any'
 interface Cliente {
@@ -95,17 +96,18 @@ export default function ClientesLista() {
         value={term}
       />
 
-      <View
+      <Page
         tag="clients-list"
-        className="flex flex-col bg-[#f5f5f5]"
-        style={{ paddingBottom: "190px" }}
+        hasBottomNavBar={true}
+        bg="#f5f5f5"
+        pd="0 0 90px 0"
       >
         <View tag="clients-container" className="flex flex-col gap-2">
           {filtered.map((c) => (
             <div
               key={c.id}
-              className="client-card-wrapper shadow-sm"
-              style={{ position: "relative" }}
+              className="client-card-wrapper"
+              style={{ position: "relative", padding: "0 1rem" }}
             >
               <ClientCard
                 client={c}
@@ -170,7 +172,7 @@ export default function ClientesLista() {
             </div>
           ))}
         </View>
-      </View>
+      </Page>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
       {/* <BottomNavbar /> */}

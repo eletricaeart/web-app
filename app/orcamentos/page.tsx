@@ -29,6 +29,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import Page from "@/components/layout/Page";
 
 // --- Interfaces para Tipagem ---
 
@@ -152,9 +153,9 @@ export default function Budgets() {
         style={{ position: "absolute", left: "-9999px", top: 0 }}
       />
 
-      <View tag="budgets" className="dash-page flex flex-col bg-[#f5f5f5]">
+      <Page tag="budgets" bg="#f5f5f5">
         <main
-          className="flex flex-col px-0 py-4 gap-2 bg-[#f5f5f5]"
+          className="flex flex-col px-0 py-4 gap-2"
           style={{ paddingBottom: "190px" }}
         >
           {filteredOrcamentos.length > 0 ? (
@@ -171,8 +172,8 @@ export default function Budgets() {
               return (
                 <div
                   key={orc.id}
-                  className="client-card-wrapper shadow-sm"
-                  style={{ position: "relative" }}
+                  className="client-card-wrapper"
+                  style={{ position: "relative", padding: "0 1rem" }}
                 >
                   {/* Aplicando a mesma classe de círculo e estilo de imagem */}
                   <BudgetCard
@@ -251,7 +252,7 @@ export default function Budgets() {
             </div>
           )}
         </main>
-      </View>
+      </Page>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
       {/* <BottomNavbar /> */}

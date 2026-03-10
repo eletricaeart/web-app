@@ -41,7 +41,7 @@ export default function BudgetCard({
   };
 
   return (
-    <View tag="client-card">
+    <View tag="client-card" className="rounded-[1rem] shadow-sm">
       {" "}
       {/* Mantemos a tag para herdar o CSS de layout */}
       <View tag="client-avatar" onClick={onClick} className="cursor-pointer">

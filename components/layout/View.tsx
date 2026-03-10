@@ -1,7 +1,7 @@
 import React, { ElementType, forwardRef, ReactNode } from "react";
 
 // Definimos as nossas props customizadas
-interface ViewCustomProps {
+export interface ViewProps {
   tag?: string | ElementType;
   bg?: string;
   flex?: boolean;
@@ -11,13 +11,14 @@ interface ViewCustomProps {
   m?: string | number;
   pd?: string | number;
   children?: ReactNode;
+  className?: string;
 }
 
 // Usamos um Generic <T> para herdar as props da tag HTML escolhida (ex: div, section)
-// type ViewProps<T extends ElementType> = ViewCustomProps &
-//   Omit<ComponentPropsWithoutRef<T>, keyof ViewCustomProps>;
+// type ViewProps<T extends ElementType> = ViewProps &
+//   Omit<ComponentPropsWithoutRef<T>, keyof ViewProps>;
 
-/*const View = forwardRef<HTMLDivElement, ViewCustomProps & React.HTMLAttributes<HTMLDivElement>>(
+/*const View = forwardRef<HTMLDivElement, ViewProps & React.HTMLAttributes<HTMLDivElement>>(
   ({ tag, bg, flex, grid, w, h, m, pd, children, style: styleProp, ...props }, ref) => {*/
 
 function ViewComponent(
@@ -31,9 +32,10 @@ function ViewComponent(
     m,
     pd,
     children,
+    className,
     style: styleProp,
     ...props
-  }: ViewCustomProps & React.HTMLAttributes<HTMLDivElement>,
+  }: ViewProps & React.HTMLAttributes<HTMLDivElement>,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
   // Mantemos a sua lógica de Tag dinâmica
@@ -51,7 +53,7 @@ function ViewComponent(
   };
 
   return (
-    <Tag ref={ref} style={style} {...props}>
+    <Tag ref={ref} style={style} className={className} {...props}>
       {children}
     </Tag>
   );

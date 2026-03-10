@@ -14,12 +14,13 @@ export function getCleanDate(date: string | null | undefined): string {
  *  */
 export function generateUUID(): string {
   if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
+    typeof window !== "undefined" &&
+    window.crypto &&
+    window.crypto.randomUUID
   ) {
-    return crypto.randomUUID();
+    return window.crypto.randomUUID();
   }
-  // Fallback para navegadores antigos
+  // Fallback para navegadores que bloqueiam ou não suportam a função
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;

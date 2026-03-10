@@ -21,7 +21,10 @@
   width: 65px;
   height: 60px;
   background-color: #ffcc00;
-  color: #333 !important;
+  /* color: #333 !important; */
+  color: #fff;
+  /* -webkit-text-stroke: #000 0px; */
+  text-shadow: #000 0 0 15px;
   border-radius: 1.2rem;
   display: flex;
   align-items: center;

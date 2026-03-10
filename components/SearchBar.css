@@ -49,6 +49,5 @@ toolbar {
 
 .search-input::placeholder {
   color: #a6a6a6;
-  font-size: 14px;
-}
-/* -- end toolbar --- */
+  font-size: 0.8rem;
+} /* -- end toolbar --- */

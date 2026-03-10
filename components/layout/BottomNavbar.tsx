@@ -39,7 +39,7 @@ export default function BottomNavbar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-slate-100 flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)] py-4 px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 flex justify-between items-center shadow-[0_3px_8px_0px_#0003] py-4 px-2">
       {navItems.map((item) => {
         // Lógica de ativação ajustada para evitar falsos positivos
         const isActive =

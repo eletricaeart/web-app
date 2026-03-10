@@ -18,6 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import Page from "@/components/layout/Page";
 // import "./Notas.css";
 
 // Interface para garantir a tipagem das Notas Técnicas
@@ -66,48 +67,53 @@ export default function NotasLista() {
         </View>
       </div>
 
-      <View
-        tag="page"
-        className="p-6 pb-24 bg-slate-50 bg-[#f5f5f5_!important] grid grid-cols-1 gap-4"
-      >
-        {/* <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}> */}
-        <div
-          className={
-            viewMode === "grid" ? "grid grid-cols-2 gap-4" : "notes-list gap-2"
-          }
-        >
-          {filtered.map((nota) => {
-            const isImportant = nota.important === true;
-
-            // ESTILO IMPORTANTE (ESTILO QUICKACTION DA HOME)
-            if (isImportant) {
-              return (
-                <div
-                  key={nota.id}
-                  className="note-card-important flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
-                  onClick={() => router.push(`/notas/${nota.id}`)}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="icon-wrapper">
-                      <Star size={32} weight="fill" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg leading-tight">
-                        {nota.title}
-                      </h3>
-                      <p className="text-muted text-sm">{nota.clienteNome}</p>
-                    </div>
-                  </div>
-                  <CaretRight size={20} weight="bold" className="opacity-50" />
-                </div>
-              );
+      <Page tag="notes-page" hasBottomNavBar bg="#f5f5f5">
+        <main className="p-6 pb-24 bg-slate-50 bg-[#f5f5f5_!important] grid grid-cols-1 gap-4">
+          {/* <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}> */}
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-2 gap-4"
+                : "notes-list gap-2"
             }
+          >
+            {filtered.map((nota) => {
+              const isImportant = nota.important === true;
 
-            // ESTILO PADRÃO (ESTILO MENUCARD DA HOME)
-            return <NoteCard key={nota.id} nota={nota} viewMode={viewMode} />;
-          })}
-        </div>
-      </View>
+              // ESTILO IMPORTANTE (ESTILO QUICKACTION DA HOME)
+              if (isImportant) {
+                return (
+                  <div
+                    key={nota.id}
+                    className="note-card-important flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
+                    onClick={() => router.push(`/notas/${nota.id}`)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="icon-wrapper">
+                        <Star size={32} weight="fill" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg leading-tight">
+                          {nota.title}
+                        </h3>
+                        <p className="text-muted text-sm">{nota.clienteNome}</p>
+                      </div>
+                    </div>
+                    <CaretRight
+                      size={20}
+                      weight="bold"
+                      className="opacity-50"
+                    />
+                  </div>
+                );
+              }
+
+              // ESTILO PADRÃO (ESTILO MENUCARD DA HOME)
+              return <NoteCard key={nota.id} nota={nota} viewMode={viewMode} />;
+            })}
+          </div>
+        </main>
+      </Page>
 
       <FAB
         hasBottomNav={true} // Adicione esta linha
