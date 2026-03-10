@@ -1,4 +1,6 @@
 // lib/gas.ts
+console.log("GAS URL:", process.env.GAS_MASTER_URL);
+
 export async function fetchFromGAS(params: {
   method: "GET" | "POST";
   data: any;
