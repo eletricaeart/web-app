@@ -4,7 +4,7 @@
 type SyncAction = "create" | "update" | "delete";
 
 type SyncOperation = {
-  id: string;
+  id: string; // ID único da operação na fila
   entity: string;
   action: SyncAction;
   payload: any;
@@ -23,13 +23,19 @@ class EASyncClient {
     return `ea_prev_${entity}`;
   }
 
+  /* =========================
+     GESTÃO DE CACHE LOCAL
+  ========================= */
   getLocalData(entity: string) {
+    if (typeof window === "undefined") return [];
     const raw = localStorage.getItem(this.getCacheKey(entity));
     return raw ? JSON.parse(raw) : [];
   }
 
   setLocalData(entity: string, data: any[]) {
-    localStorage.setItem(this.getCacheKey(entity), JSON.stringify(data));
+    if (typeof window !== "undefined") {
+      localStorage.setItem(this.getCacheKey(entity), JSON.stringify(data));
+    }
   }
 
   /* =========================
@@ -39,7 +45,7 @@ class EASyncClient {
     const localData = this.getLocalData(entity);
     let updatedData = [...localData];
 
-    // Adiciona timestamp local para comparação futura
+    // Carimba o dado com a data atual para controle de versão
     const enrichedPayload = {
       ...payload,
       updatedAt: new Date().toISOString(),
@@ -57,8 +63,10 @@ class EASyncClient {
       );
     }
 
+    // Atualiza o UI instantaneamente via LocalStorage
     this.setLocalData(entity, updatedData);
 
+    // Adiciona a operação à fila de sincronização
     const queue = this.getQueue();
     queue.push({
       id: crypto.randomUUID(),
@@ -69,18 +77,21 @@ class EASyncClient {
     });
     this.setQueue(queue);
 
+    // Tenta processar a fila imediatamente
     this.processQueue();
     return { success: true };
   }
 
   /* =========================
-     PULL (CONFLITO POR DATA)
+     PULL (SINCRONIZAÇÃO REMOTA)
   ========================= */
   async pull(entity: string) {
-    if (!navigator.onLine) return this.getLocalData(entity);
+    if (typeof window === "undefined" || !navigator.onLine)
+      return this.getLocalData(entity);
 
     try {
-      const res = await fetch(`/api/data/${entity}`);
+      // Passamos a entidade na URL para garantir o roteamento correto no GAS/Middleware
+      const res = await fetch(`/api/data/${entity}?entity=${entity}`);
       if (!res.ok) return this.getLocalData(entity);
 
       const remoteData = await res.json();
@@ -88,15 +99,13 @@ class EASyncClient {
 
       const localData = this.getLocalData(entity);
 
-      // LÓGICA DE MERGE: Compara item por item via updatedAt
+      // LÓGICA DE MERGE: O dado mais recente (updatedAt) sempre vence
       const mergedData = remoteData.map((remoteItem) => {
         const localItem = localData.find((l: any) => l.id === remoteItem.id);
-
         if (localItem) {
           const remoteTime = new Date(remoteItem.updatedAt || 0).getTime();
           const localTime = new Date(localItem.updatedAt || 0).getTime();
-
-          // Se o dado local for mais novo e ainda não sincronizou (está na fila), mantém o local
+          // Se o local for mais novo (edição offline pendente), mantém o local
           return localTime > remoteTime ? localItem : remoteItem;
         }
         return remoteItem;
@@ -107,15 +116,17 @@ class EASyncClient {
 
       return mergedData;
     } catch (err) {
+      console.error(`Erro no pull de ${entity}:`, err);
       return this.getLocalData(entity);
     }
   }
 
   /* =========================
-     PROCESS QUEUE (SUBSTITUIÇÃO DE ID)
+     PROCESS QUEUE (BACKGROUND SYNC)
   ========================= */
   async processQueue() {
-    if (this.isProcessing || !navigator.onLine) return;
+    if (this.isProcessing || typeof window === "undefined" || !navigator.onLine)
+      return;
     this.isProcessing = true;
 
     let queue = this.getQueue();
@@ -124,21 +135,35 @@ class EASyncClient {
       const current = queue[0];
 
       try {
-        const res = await fetch(`/api/data/${current.entity}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: current.action, ...current.payload }),
-        });
+        console.log(
+          `📤 Enviando ${current.entity} (${current.action}):`,
+          current.payload,
+        );
+
+        const res = await fetch(
+          `/api/data/${current.entity}?entity=${current.entity}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: current.action,
+              entity: current.entity,
+              ...current.payload,
+            }),
+          },
+        );
 
         const result = await res.json();
+        console.log(`📥 Resposta do servidor (${current.entity}):`, result);
 
         if (
           res.ok &&
           (result.status === "success" ||
             result.status === "created" ||
-            result.status === "updated")
+            result.status === "updated" ||
+            result.status === "deleted")
         ) {
-          // Se for criação, troca o TEMP_ID pelo ID real do GS
+          // TROCA DE ID: Se o GAS criou um ID real, remove o TEMP_ do cache local
           if (
             current.action === "create" &&
             result.id &&
@@ -147,15 +172,31 @@ class EASyncClient {
             this.updateIdInCache(current.entity, current.payload.id, result.id);
           }
 
+          // Sucesso: remove da fila e atualiza a âncora de segurança
           queue.shift();
           this.setQueue(queue);
           this.updatePrevAnchor(current.entity);
         } else {
+          // TRATAMENTO DE ERROS FATAIS:
+          // Se for um delete e o ID não existe no GS, removemos da fila para não travar o app
+          if (
+            current.action === "delete" &&
+            (result.message === "ID não encontrado" || res.status === 500)
+          ) {
+            console.warn(
+              "🗑️ Removendo operação de delete inválida para destravar a fila.",
+            );
+            queue.shift();
+            this.setQueue(queue);
+            continue;
+          }
+          // Para outros erros (como rede), paramos e tentamos depois
           break;
         }
       } catch (error) {
         current.retries++;
         this.setQueue(queue);
+        console.error("Erro na sincronização, retentando mais tarde...", error);
         break;
       }
       queue = this.getQueue();
@@ -163,14 +204,21 @@ class EASyncClient {
     this.isProcessing = false;
   }
 
-  // Métodos auxiliares de fila e âncora...
+  /* =========================
+     MÉTODOS AUXILIARES
+  ========================= */
   private getQueue(): SyncOperation[] {
+    if (typeof window === "undefined") return [];
     const raw = localStorage.getItem(QUEUE_KEY);
     return raw ? JSON.parse(raw) : [];
   }
+
   private setQueue(queue: SyncOperation[]) {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    if (typeof window !== "undefined") {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    }
   }
+
   private updateIdInCache(entity: string, oldId: string, newId: string) {
     const data = this.getLocalData(entity);
     const updated = data.map((item: any) =>
@@ -178,6 +226,7 @@ class EASyncClient {
     );
     this.setLocalData(entity, updated);
   }
+
   private updatePrevAnchor(entity: string) {
     const currentCache = this.getLocalData(entity);
     localStorage.setItem(this.getPrevKey(entity), JSON.stringify(currentCache));
@@ -185,7 +234,11 @@ class EASyncClient {
 
   init() {
     if (typeof window !== "undefined") {
-      window.addEventListener("online", () => this.processQueue());
+      // Tenta processar a fila sempre que voltar a ficar online
+      window.addEventListener("online", () => {
+        console.log("🌐 Conexão restaurada. Processando fila...");
+        this.processQueue();
+      });
     }
   }
 }
