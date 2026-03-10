@@ -136,6 +136,9 @@ export default function ClientesLista() {
                           boxShadow: "#e5e5e5 0 0 10px 2px",
                         }}
                         align="end"
+                        onOpenAutoFocus={(e) => {
+                          e?.preventDefault();
+                        }}
                       >
                         <div className="flex flex-col">
                           <button
