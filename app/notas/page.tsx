@@ -58,6 +58,7 @@ export default function NotasLista() {
             value={term}
           />
         </div>
+
         <View
           tag="btn-view-toggle"
           className="btn-view-toggle"
