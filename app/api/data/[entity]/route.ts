@@ -1,75 +1,65 @@
+/** app/api/data/[entity]/route.ts */
 import { NextResponse } from "next/server";
-import { fetchFromGAS } from "@/lib/gas";
+import * as db from "@/lib/sheets/db";
 import { getSession } from "@/lib/auth";
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ entity: string }> },
+  req: Request,
+  { params }: { params: { entity: string } },
 ) {
-  const { entity } = await params;
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
-  }
-
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const session = await getSession();
+    if (!session)
+      return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
 
-    const data = await fetchFromGAS({
-      method: "GET",
-      data: id ? { entity, id } : { entity },
-    });
-
-    console.log("GET GAS response:", data);
-
+    const data = await db.getAll(params.entity);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("GET ERROR:", error);
-
     return NextResponse.json(
-      { status: "error", message: String(error) },
+      { error: "Erro ao buscar dados" },
       { status: 500 },
     );
   }
 }
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ entity: string }> },
+  req: Request,
+  { params }: { params: { entity: string } },
 ) {
-  const { entity } = await params;
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
-  }
-
   try {
-    const body = await request.json();
+    const session = await getSession();
+    if (!session)
+      return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
 
-    const payload = {
+    const body = await req.json();
+    const result = await db.create(params.entity, {
       ...body,
-      entity,
       owner_id: session.id,
-    };
-
-    console.log("POST payload:", payload);
-
-    const result = await fetchFromGAS({
-      method: "POST",
-      data: payload,
     });
-
-    console.log("POST GAS response:", result);
-
     return NextResponse.json(result);
   } catch (error) {
-    console.error("POST ERROR:", error);
-
     return NextResponse.json(
-      { status: "error", message: String(error) },
+      { error: "Erro ao salvar dados" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { entity: string } },
+) {
+  try {
+    const session = await getSession();
+    if (!session)
+      return NextResponse.json({ message: "Não autorizado" }, { status: 401 });
+
+    const { id } = await req.json();
+    const result = await db.remove(params.entity, id);
+    return NextResponse.json(result);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Erro ao eliminar dado" },
       { status: 500 },
     );
   }

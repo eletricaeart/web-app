@@ -1,4 +1,4 @@
-// /lib/sheets.ts
+/** lib/sheets.ts */
 import { google } from "googleapis";
 
 const auth = new google.auth.GoogleAuth({
