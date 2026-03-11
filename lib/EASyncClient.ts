@@ -167,11 +167,19 @@ class EASyncClient {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: current.action,
-              entity: current.entity,
-              ...current.payload,
-            }),
+            body: JSON.stringify(
+              current.action === "delete"
+                ? {
+                    action: "delete",
+                    entity: current.entity,
+                    id: current.payload.id,
+                  }
+                : {
+                    action: current.action,
+                    entity: current.entity,
+                    ...current.payload,
+                  },
+            ),
           },
         );
 
