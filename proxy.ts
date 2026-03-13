@@ -1,6 +1,6 @@
 // middleware.ts
 import { NextResponse, type NextRequest } from "next/server";
-import type { NextRequest } from "next/request";
+// import type { NextRequest } from "next/request";
 import { getSession } from "@/lib/auth";
 
 // 1. Defina quais rotas são públicas (não precisam de login)
