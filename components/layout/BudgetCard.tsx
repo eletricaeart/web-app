@@ -16,8 +16,8 @@ import { getCleanDate } from "@/utils/helpers";
 interface BudgetCardProps {
   orc: {
     id: string | number;
-    cliente: { name: string };
-    docTitle: { text: string; emissao: string };
+    cliente?: { name?: string }; // Tornamos opcionais
+    docTitle?: { text?: string; emissao?: string }; // Tornamos opcionais
   };
   clientData?: {
     photo?: string;
@@ -40,6 +40,11 @@ export default function BudgetCard({
     fem: "/pix/avatar/default_avatar_fem.webp",
   };
 
+  // Extraímos os valores com fallbacks seguros para evitar o erro de toLowerCase()
+  const clienteNome = orc?.cliente?.name || "Cliente não identificado";
+  const tituloOrcamento = orc?.docTitle?.text || "Sem título";
+  const dataEmissao = orc?.docTitle?.emissao || new Date().toISOString();
+
   return (
     <View tag="client-card" className="rounded-[1rem] shadow-sm">
       {" "}
@@ -54,7 +59,7 @@ export default function BudgetCard({
               ] ||
               defaultAvatars.masc
             }
-            alt={orc.cliente.name}
+            alt={clienteNome}
             className="object-cover"
           />
           <AvatarFallback>
@@ -73,7 +78,7 @@ export default function BudgetCard({
       >
         <div className="flex items-center justify-between">
           <h4 className="text-[#333] capitalize font-bold leading-tight truncate">
-            {orc.cliente.name.toLowerCase()}
+            {clienteNome.toLowerCase()}
           </h4>
           <small className="text-[10px] text-slate-400 flex items-center gap-1 flex-shrink-0">
             {isTemp ? (
@@ -88,11 +93,11 @@ export default function BudgetCard({
                 className="text-emerald-500"
               />
             )}
-            {getCleanDate(orc.docTitle.emissao)}
+            {getCleanDate(dataEmissao)}
           </small>
         </div>
         <p className="text-xs text-indigo-600 font-medium truncate mt-1">
-          {orc.docTitle.text}
+          {tituloOrcamento}
         </p>
       </View>
       <View tag="client-badge" className="bg-transparent">

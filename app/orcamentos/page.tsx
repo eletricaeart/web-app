@@ -41,13 +41,15 @@ interface ClienteCache {
 
 interface Orcamento {
   id: string | number;
-  cliente: {
-    name: string;
+  cliente?: {
+    // Transformado em opcional
+    name?: string;
   };
-  docTitle: {
-    text: string;
-    emissao: string;
-    validade: string;
+  docTitle?: {
+    // Transformado em opcional
+    text?: string;
+    emissao?: string;
+    validade?: string;
     subtitle?: string;
   };
   servicos?: any[];
@@ -85,15 +87,15 @@ export default function Budgets() {
   };
 
   const filteredOrcamentos = orcamentos
-    .filter(
-      (orc) =>
-        (orc.cliente?.name || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (orc.docTitle?.text || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()),
-    )
+    .filter((orc) => {
+      const clientName = orc?.cliente?.name || "";
+      const docTitle = orc?.docTitle?.text || "";
+
+      return (
+        clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        docTitle.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    })
     .reverse();
 
   const fabConfig = [
@@ -142,8 +144,8 @@ export default function Budgets() {
           onOpenChange={(open: boolean) => setShareData({ ...shareData, open })}
           budgetRef={hiddenBudgetRef}
           data={shareData.orc}
-          clientName={shareData.orc.cliente.name}
-          budgetTitle={shareData.orc.docTitle.text}
+          clientName={shareData.orc?.cliente?.name || "Cliente"}
+          budgetTitle={shareData.orc?.docTitle?.text || "Orçamento"}
         />
       )}
 
@@ -163,10 +165,10 @@ export default function Budgets() {
               const isTemp = String(orc.id).startsWith("TEMP_");
 
               // Buscamos os dados completos do cliente no cache de clientes
-              const clientData = clientes.find(
+              const clientData = clientes?.find(
                 (c) =>
-                  String(c.name).toLowerCase() ===
-                  String(orc.cliente.name).toLowerCase(),
+                  String(c?.name || "").toLowerCase() ===
+                  String(orc?.cliente?.name || "").toLowerCase(),
               );
 
               return (
