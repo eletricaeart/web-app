@@ -1,6 +1,6 @@
 // middleware.ts
 import { NextResponse, type NextRequest } from "next/server";
-// import type { NextRequest } from "next/request";
+import type { NextRequest } from "next/request";
 import { getSession } from "@/lib/auth";
 
 // 1. Defina quais rotas são públicas (não precisam de login)
@@ -28,6 +28,6 @@ export default async function middleware(req: NextRequest) {
 // Configura em quais caminhos o middleware deve rodar
 export const config = {
   // matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-// Certifique-se de que manifest.json NÃO está sendo interceptado
+  // Certifique-se de que manifest.json NÃO está sendo interceptado
   matcher: ["/((?!api|_next/static|_next/image|manifest.json|favicon.ico).*)"],
 };

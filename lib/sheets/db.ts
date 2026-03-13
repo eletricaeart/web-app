@@ -1,43 +1,59 @@
 /** lib/sheets/db.ts */
 import { google } from "googleapis";
 
-// Configuração de Autenticação
-const auth = new google.auth.JWT(
-  process.env.GOOGLE_CLIENT_EMAIL,
-  undefined,
-  process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  ["https://www.googleapis.com/auth/spreadsheets"],
-);
+// Função para limpar a chave
+const getCleanKey = (key: string | undefined) => {
+  if (!key) return undefined;
+  return key.replace(/\\n/g, "\n").replace(/^"(.*)"$/, "$1");
+};
 
-const sheets = google.sheets({ version: "v4", auth });
-const spreadsheetId = process.env.GOOGLE_SHEETS_ID!;
+async function getSheetsClient() {
+  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+  const privateKey = getCleanKey(process.env.GOOGLE_PRIVATE_KEY);
 
-// Função auxiliar para pegar o ID numérico da aba (necessário para DELETE)
-async function getSheetIdByName(entity: string) {
-  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
-  const sheet = spreadsheet.data.sheets?.find(
-    (s) => s.properties?.title === entity,
-  );
-  return sheet?.properties?.sheetId;
-}
-
-// LER TODOS
-export async function getAll(entity: string) {
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${entity}!A2:C`, // Coluna A: ID, B: Data, C: JSON
+  // Usando GoogleAuth em vez de JWT diretamente para maior compatibilidade
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: clientEmail,
+      private_key: privateKey,
+    },
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
-  const rows = res.data.values || [];
-  return rows.map((r) => ({
-    id: r[0],
-    created_at: r[1],
-    ...(r[2] ? JSON.parse(r[2]) : {}),
-  }));
+  const authClient = await auth.getClient();
+  // @ts-ignore
+  return google.sheets({ version: "v4", auth: authClient });
 }
 
-// CRIAR
+export async function getAll(entity: string) {
+  try {
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    if (!spreadsheetId) throw new Error("GOOGLE_SHEET_ID ausente.");
+
+    const sheets = await getSheetsClient();
+
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${entity}!A2:C`,
+    });
+
+    const rows = res.data.values || [];
+    return rows.map((r) => ({
+      id: r[0],
+      created_at: r[1],
+      ...(r[2] ? JSON.parse(r[2]) : {}),
+    }));
+  } catch (error: any) {
+    console.error(`[SHEETS ERROR] Erro em ${entity}:`, error.message);
+    throw error;
+  }
+}
+
+// Faz o mesmo para as funções create e remove...
 export async function create(entity: string, data: any) {
+  const sheets = await getSheetsClient();
+  const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+
   const id = data.id || crypto.randomUUID();
   const row = [id, new Date().toISOString(), JSON.stringify(data)];
 
@@ -49,39 +65,4 @@ export async function create(entity: string, data: any) {
   });
 
   return { id, ...data };
-}
-
-// REMOVER
-export async function remove(entity: string, id: string) {
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${entity}!A:A`,
-  });
-
-  const rows = res.data.values || [];
-  const rowIndex = rows.findIndex((row) => row[0] === id);
-
-  if (rowIndex === -1) throw new Error("Registo não encontrado");
-
-  const sheetId = await getSheetIdByName(entity);
-
-  await sheets.spreadsheets.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      requests: [
-        {
-          deleteDimension: {
-            range: {
-              sheetId,
-              dimension: "ROWS",
-              startIndex: rowIndex,
-              endIndex: rowIndex + 1,
-            },
-          },
-        },
-      ],
-    },
-  });
-
-  return { success: true };
 }
