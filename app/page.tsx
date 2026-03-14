@@ -77,7 +77,7 @@ export default function HomePage() {
           <header className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                Olá, {(currentUser.name || "Usuário").split(" ")[0]}
+                {(`Olá, ${currentUser.name}` || "Usuário").split(" ")[0]}
               </h1>
               <p className="text-slate-500 text-sm">{randomPhrase}</p>
             </div>
