@@ -173,7 +173,7 @@ export default function NewBudgetPage() {
       })),
     }));
 
-    setBudget({
+    /* setBudget({
       id: data.id,
       documentTitle:
         data.documentTitle || data.docTitle?.text || data["Título Doc"] || "",
@@ -206,6 +206,69 @@ export default function NewBudgetPage() {
           data.client?.city || data.cliente?.cidade || data["Cidade/UF"] || "",
         complement: data.client?.complement || data.cliente?.complemento || "",
         obs: data.client?.obs || data.cliente?.obs || "",
+      },
+      services: mappedClauses,
+    }); */
+    setBudget({
+      id: data.id,
+      documentTitle:
+        data.documentTitle || data.docTitle?.text || data["Título Doc"] || "",
+      issueDate: formatDateForInput(
+        data.issueDate || data.docTitle?.emissao || data["Emissão"],
+      ),
+      expiration:
+        data.expiration ||
+        data.docTitle?.validade ||
+        data["Validade"] ||
+        "15 dias",
+      subtitle:
+        data.subtitle ||
+        data.docTitle?.subtitle ||
+        data["Subtítulo"] ||
+        "PROPOSTA DE ORÇAMENTO",
+      client: {
+        name:
+          data.clientName ||
+          data.client?.name ||
+          data.cliente?.name ||
+          data["Nome Cliente"] ||
+          "",
+        zip:
+          data.zip ||
+          data.client?.zip ||
+          data.cliente?.cep ||
+          data["CEP"] ||
+          "",
+        street:
+          data.street ||
+          data.client?.street ||
+          data.cliente?.rua ||
+          data["Rua"] ||
+          "",
+        number:
+          data.number ||
+          data.client?.number ||
+          data.cliente?.num ||
+          data["Número"] ||
+          "",
+        neighborhood:
+          data.neighborhood ||
+          data.client?.neighborhood ||
+          data.cliente?.bairro ||
+          data["Bairro"] ||
+          "",
+        city:
+          data.city ||
+          data.client?.city ||
+          data.cliente?.cidade ||
+          data["Cidade/UF"] ||
+          "",
+        complement:
+          data.complement ||
+          data.client?.complement ||
+          data.cliente?.complemento ||
+          "",
+        obs: data.obs || data.client?.obs || data.cliente?.obs || "",
       },
       services: mappedClauses,
     });
@@ -242,6 +305,27 @@ export default function NewBudgetPage() {
     const formattedDate = `${d}/${m}/${y}`;
 
     // PAYLOAD LIMPO E EM INGLÊS PARA O GOOGLE SHEETS
+    /* const payload = {
+      id: editId || budget.id || `EA-${Date.now()}`,
+      clientName: budget.client.name,
+      zip: budget.client.zip,
+      street: budget.client.street,
+      number: budget.client.number,
+      neighborhood: budget.client.neighborhood,
+      city: budget.client.city,
+      complement: budget.client.complement,
+      obs: budget.client.obs,
+      subtitle: budget.subtitle || "PROPOSTA DE ORÇAMENTO",
+      issueDate: formattedDate,
+      expiration: budget.expiration,
+      documentTitle: budget.documentTitle,
+      services: budget.services.map((c) => ({
+        titulo: c.titulo,
+        itens: c.items.map((it) => ({
+          subtitulo: it.subtitulo,
+          detalhes: formatMarkdownForSheets(it.content),
+        })),
+      })), */
     const payload = {
       id: editId || budget.id || `EA-${Date.now()}`,
       clientName: budget.client.name,

@@ -42,6 +42,47 @@ export default function HomePage() {
   };
 
   /**
+   * --- saudações para o User
+   *  */
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    // Listas de frases por período
+    const morning = [
+      "Bom dia",
+      "Acordou cedo, hein?",
+      "Ótimo dia para você",
+      "Energia total agora",
+    ];
+    const afternoon = [
+      "Boa tarde",
+      "Como vai a tarde?",
+      "Produtividade lá em cima",
+      "Bora finalizar o dia",
+    ];
+    const evening = [
+      "Boa noite",
+      "Bom descanso",
+      "Trabalhando até tarde?",
+      "Finalizando o expediente",
+    ];
+    const generic = ["Olá", "E aí", "Tudo certo", "Que bom te ver"];
+
+    // Seleciona a lista baseada na hora
+    let selectedList = generic;
+    if (hour >= 5 && hour < 12) selectedList = [...morning, ...generic];
+    else if (hour >= 12 && hour < 18) selectedList = [...afternoon, ...generic];
+    else selectedList = [...evening, ...generic];
+
+    // Pega uma frase aleatória da lista escolhida
+    return selectedList[Math.floor(Math.random() * selectedList.length)];
+  };
+
+  // gera a saudação
+  const greeting = React.useMemo(() => getGreeting(), []);
+  const firstName = (currentUser.name || "Usuário").split(" ")[0];
+
+  /**
    * --- frases para o topo
    *  */
   // Estado para a frase de efeito
@@ -77,7 +118,7 @@ export default function HomePage() {
           <header className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                {(`Olá, ${currentUser.name}` || "Usuário").split(" ")[0]}
+                {greeting}, {firstName}
               </h1>
               <p className="text-slate-500 text-sm">{randomPhrase}</p>
             </div>

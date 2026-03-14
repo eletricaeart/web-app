@@ -1,68 +1,41 @@
-# 📋 Checklist de Migração: Elétrica & Art (Next.js Edition)
+# 📋 Checklist
 
-### 🟢 Etapa 1: Setup e Infraestrutura
+### clientes
 
-<!-- - [ ] Criar novo repositório no GitHub. -->
-<!-- - [ ] Inicializar projeto Next.js com `pnpm` e TypeScript. -->
-<!-- - [ ] Configurar variáveis de ambiente (`.env.local`) para proteger o GAS. -->
-<!-- - [ ] Configurar Absolute Imports e Path Aliases (`@/*`). -->
-<!-- - [ ] Integrar Shadcn/UI (versão oficial para Next.js). -->
+- [ ] nome do cliente se for muito cumprido, fica grande de mais e quebra o layout do card na listagem de clientes e na pagina de visualização do cliente
+- [ ] preencher com mais detalhes a pagina de perfil do cliente
+- [ ] corrigir a sombra na parte de cima do card principal
+- [ ] testar e implementar as funções de criar novos orçamentos e notas pela pagina de perfil do cliente
+- [ ] colocar modal para confirmar a remoção do cliente ao inves de alert()
+- [ ] adicionar um modo de sort na listagem
 
-### 🟡 Etapa 2: Core de Autenticação (Server Side)
+### orçamentos
 
-<!-- - [ ] Criar API Route para Login (`/api/auth`). -->
-<!-- - [ ] Implementar Middleware de proteção de rotas. -->
-<!-- - [ ] Configurar sessão segura (JWT ou Cookies persistentes). -->
+- [ ] adicionar um modo de sort na listagem
+- [ ] colocar um modal para confirmar a remoção do orçamento ao invés de alert()
 
-### 🟡 Etapa 3: Camada de Dados (O novo "EASync")
+### notas
 
-<!-- - [ ] Criar Route Handlers genéricos para as entidades (Orçamentos, Clientes, Notas). -->
-<!-- - [ ] Implementar validação de esquemas com **Zod** (para aproveitar o TypeScript). -->
+- [ ] implementar a pagina de nova nota
+- [ ] criar a pagina de visualização da nota
 
-### 🔴 Etapa 4: Migração de Telas (UI/UX)
+### equipe
 
-<!-- - [ ] Refatorar Dashboard (Home). -->
+- [ ] criar a pagina de criação de novo membro, o membro será adicionado na aba de usuarios em gs e terá um login baseado na propriedade "role"
+- [ ] implementar a pagina de listagem de membros da equipe com funcionalidades de banimento, deletar, editar, dar permissões e seguir os padrões do que já existe comercialmente por ai na industria
 
-- [ ] Migrar Fluxo de Clientes.
-- [ ] Migrar Fluxo de Orçamentos.
-- [ ] Migrar Fluxo de Notas.
+### login/signup
 
-### 🔴 Etapa 5: O Motor de PDF (Puppeteer)
+- [ ] criar a pagina e o sistema de resgistrar um login com paginas e rotas especificas, o novo login criado será enviado para o aceite para os usuarios com "role" admin, e só após o aceite o novo login de usuario será cadastrado na aba de usuarios em gs e só funcionará de forma efetiva para se logar ao sistema após o aceite, o registro pode ser feito por formas modernas como cadastrar uma conta atraves do facebook ou google ou email ou telefone
 
-- [ ] Criar rota exclusiva para renderização de impressão.
-- [ ] Implementar Server Action para gerar PDF via Puppeteer.
-- [ ] Configurar fluxo de compartilhamento.
+### pagina de configurações
 
----
+- [ ] criar a pagina, deve ter opções de modo escuro e modo claro com suport para temas
 
-### 🚀 Mão na Massa: Passo 1
+### mensagens
 
-Abra seu terminal na pasta onde ficam seus projetos e execute o comando abaixo com `pnpm`:
+- [ ] criar a pagina de mensagem para cada usuario, seguindo o padrão que ha por aí
 
-Bash
+### componentes
 
-`pnpm create next-app@latest eletrica-art-next`
-
-**Configurações para o Prompt:**
-
-1. **TypeScript?** Yes (Com certeza!)
-2. **ESLint?** Yes
-3. **Tailwind CSS?** Yes
-4. **`src/` directory?** Yes
-5. **App Router?** Yes
-6. **Customize import alias?** Yes (Deixe `@/*`)
-
----
-
-### 🔐 Passo 2: Protegendo os Segredos
-
-Dentro da raiz do projeto, crie o arquivo `.env.local`. Nele, vamos colocar a URL da sua nova planilha (o clone que você vai fazer agora).
-
-Snippet de código
-
-`# .env.local
-
-# O Next.js NÃO envia essas variáveis para o navegador se não tiver NEXT*PUBLIC*
-
-GAS_MASTER_URL="SUA_URL_DO_GOOGLE_SCRIPT_AQUI"
-APP_URL="http://localhost:3000"`
+- [ ] ajustar os botões da appbar para terem um fundo e dar mais visibilidade para os botões em telas onde a appbar não tiver fundo
