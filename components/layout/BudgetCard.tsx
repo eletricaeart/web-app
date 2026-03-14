@@ -16,8 +16,11 @@ import { getCleanDate } from "@/utils/helpers";
 interface BudgetCardProps {
   orc: {
     id: string | number;
-    cliente?: { name?: string }; // Tornamos opcionais
-    docTitle?: { text?: string; emissao?: string }; // Tornamos opcionais
+    clientName?: string; // Adicione esta linha
+    documentTitle?: string; // Adicione esta linha
+    issueDate?: string; // Adicione esta linha
+    cliente?: { name?: string }; // Mantenha como opcional para não quebrar
+    docTitle?: { text?: string; emissao?: string }; // Mantenha como opcional
   };
   clientData?: {
     photo?: string;
