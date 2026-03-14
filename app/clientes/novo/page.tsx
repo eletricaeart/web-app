@@ -82,19 +82,22 @@ export default function ClienteForm() {
     if (editId && clients.length > 0) {
       const target = clients.find((c) => String(c.id) === String(editId));
       if (target) {
+        // Criamos uma referência 'any' para o TS não reclamar das chaves antigas
+        const oldData = target as any;
+
         setFormData({
           id: target.id || "",
-          name: target.name || (target as any)["Nome Completo"] || "",
-          gender: target.gender || (target as any)["Gênero"] || "masc",
-          document: target.document || (target as any).doc || "",
+          name: target.name || oldData["Nome Completo"] || "",
+          gender: target.gender || oldData["Gênero"] || "masc",
+          document: target.document || oldData.doc || "",
           whatsapp: target.whatsapp || "",
           email: target.email || "",
-          zip: target.zip || target.cep || "",
-          street: target.street || target.rua || "",
-          number: target.number || target.num || "",
-          complement: target.complement || target.complemento || "",
-          neighborhood: target.neighborhood || target.bairro || "",
-          city: target.city || target.cidade || "",
+          zip: target.zip || oldData.cep || "", // <--- Corrigido aqui
+          street: target.street || oldData.rua || "", // <--- Corrigido aqui
+          number: target.number || oldData.num || "", // <--- Corrigido aqui
+          complement: target.complement || oldData.complemento || "",
+          neighborhood: target.neighborhood || oldData.bairro || "",
+          city: target.city || oldData.cidade || "",
           obs: target.obs || "",
           photo: target.photo || "",
         });
