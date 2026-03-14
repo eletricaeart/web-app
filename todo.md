@@ -2,17 +2,14 @@
 
 ### clientes
 
-- [ ] nome do cliente se for muito cumprido, fica grande de mais e quebra o layout do card na listagem de clientes e na pagina de visualização do cliente
 - [ ] preencher com mais detalhes a pagina de perfil do cliente
 - [ ] corrigir a sombra na parte de cima do card principal
 - [ ] testar e implementar as funções de criar novos orçamentos e notas pela pagina de perfil do cliente
-- [ ] colocar modal para confirmar a remoção do cliente ao inves de alert()
 - [ ] adicionar um modo de sort na listagem
 
 ### orçamentos
 
 - [ ] adicionar um modo de sort na listagem
-- [ ] colocar um modal para confirmar a remoção do orçamento ao invés de alert()
 
 ### notas
 

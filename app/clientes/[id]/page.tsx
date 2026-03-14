@@ -34,6 +34,8 @@ import "./styles.css";
 import Image from "next/image";
 import EAAvatar from "@/components/ui/EA-Avatar";
 import Link from "next/link";
+import DeleteClientModal from "../components/DeleteClientModal";
+import { useDeleteEntity } from "@/hooks/useDeleteEntity";
 
 // Interfaces Atualizadas (CamelCase / English)
 interface Cliente {
@@ -85,6 +87,22 @@ export default function ClientePerfil() {
   const [client, setClient] = useState<Cliente | null>(null);
   const [activeTab, setActiveTab] = useState<Tab_>("infos");
 
+  /* Estados para o Modal de Exclusão */
+  const {
+    isDelOpen,
+    setIsDelOpen,
+    itemToDelete,
+    handleDeleteRequest,
+    confirmDelete,
+  } = useDeleteEntity(saveClient, () => router.replace("/clientes"));
+
+  const handleDelete = async () => {
+    if (confirm("Excluir este cliente permanentemente?")) {
+      await saveClient({ id: client.id }, "delete");
+      router.replace("/clientes");
+    }
+  };
+
   useEffect(() => {
     if (clientId && clients.length > 0) {
       const found = clients.find((c) => String(c.id) === String(clientId));
@@ -112,13 +130,6 @@ export default function ClientePerfil() {
   const historicoNotas = notes.filter(
     (n) => String(n.clienteId) === String(client.id),
   );
-
-  const handleDelete = async () => {
-    if (confirm("Excluir este cliente permanentemente?")) {
-      await saveClient({ id: client.id }, "delete");
-      router.replace("/clientes");
-    }
-  };
 
   const AVATARS = {
     masc: "/pix/avatar/default_avatar_masc.webp",
@@ -173,7 +184,8 @@ export default function ClientePerfil() {
                     icon: <Trash size={20} color="#932" weight="duotone" />,
                     className:
                       "menu-item-pop w-full p-2 flex items-center cursor-pointer text-red-500 border-t border-slate-300 bg-red-100",
-                    option: handleDelete,
+                    option: () =>
+                      handleDeleteRequest(client.id, currentClientName),
                   },
                 ].map((O, i) => (
                   <View
@@ -269,10 +281,10 @@ export default function ClientePerfil() {
               />
             </View>
             <View className="flex flex-col w-full h-24 justify-end flex-1 pb-3">
-              <h3 className="text-2xl text-slate-900 capitalize font-medium">
+              <h3 className="text-2xl text-slate-900 capitalize font-medium line-clamp-1 trtuncate">
                 {currentClientName}
               </h3>
-              <p className="opacity-80 text-sm text-slate-400 capitalize font-bold">
+              <p className="opacity-80 text-sm text-slate-400 capitalize font-bold line-clamp-1 truncate">
                 {client.city || client.cidade || "Cidade não informada"}
               </p>
             </View>
@@ -391,6 +403,14 @@ export default function ClientePerfil() {
           )}
         </View>
       </View>
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+      <DeleteClientModal
+        isOpen={isDelOpen}
+        onOpenChange={setIsDelOpen}
+        client={itemToDelete}
+        onConfirm={confirmDelete}
+      />
     </>
   );
 }

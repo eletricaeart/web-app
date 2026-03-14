@@ -11,9 +11,12 @@ import { processTextToHtml } from "@/utils/TextPreProcessor";
 import View from "@/components/layout/View";
 import BudgetSkeleton from "../components/BudgetSkeleton";
 import BudgetShareMenu from "@/components/orcamentos/BudgetShareMenu";
-import { Pen, ShareNetwork } from "@phosphor-icons/react";
+import { Pen, ShareNetwork, Trash } from "@phosphor-icons/react";
 import { CID } from "@/utils/helpers";
 import { useEASync } from "@/hooks/useEASync";
+import { useDeleteEntity } from "@/hooks/useDeleteEntity"; // Importe o hook
+import DeleteBudgetModal from "../components/DeleteBudgetModal"; // Importe o modal
+import { Popover, PopoverContent } from "@/components/ui/popover";
 
 // --- Interfaces para Tipagem Atualizadas (English/CamelCase) ---
 
@@ -68,8 +71,19 @@ export default function Budget() {
   const params = useParams();
   const id = params?.id;
   const router = useRouter();
-  const { data: orcamentos } = useEASync<BudgetData>("orcamentos");
+  const { data: orcamentos, save: saveOrcamento } =
+    useEASync<BudgetData>("orcamentos");
   const budgetRef = useRef<HTMLDivElement | null>(null);
+
+  // --- HOOK DE DELEÇÃO INTEGRADO ---
+  // Aqui preciso redirecionar para a lista geral de orçamentos
+  const {
+    isDelOpen,
+    setIsDelOpen,
+    itemToDelete,
+    handleDeleteRequest,
+    confirmDelete,
+  } = useDeleteEntity(saveOrcamento, () => router.replace("/orcamentos"));
 
   const searchParams = useSearchParams();
   const isPrintMode = searchParams.get("print") === "true";
@@ -174,6 +188,15 @@ export default function Budget() {
       label: "Compartilhar",
       action: () => setIsShareOpen(true),
     },
+    {
+      icon: <Trash size={28} weight="duotone" />,
+      label: "Excluir",
+      action: () => {
+        if (displayData) {
+          handleDeleteRequest(data.id, displayData.documentTitle);
+        }
+      },
+    },
   ];
 
   useEffect(() => {
@@ -231,7 +254,32 @@ export default function Budget() {
   if (loading) {
     return (
       <>
-        <AppBar backAction={() => router.back()} />
+        <AppBar
+          backAction={() => router.back()}
+          options={
+            <Popover>
+              {/* ... Trigger dos 3 pontinhos ... */}
+              <PopoverContent className="w-52 p-0 bg-white shadow-xl border-none">
+                <View className="flex flex-col">
+                  <button
+                    className="p-3 flex items-center gap-2 text-sm hover:bg-slate-50"
+                    onClick={handleEdit}
+                  >
+                    <Pen size={18} weight="duotone" /> Editar Orçamento
+                  </button>
+                  <button
+                    className="p-3 flex items-center gap-2 text-sm text-red-500 hover:bg-red-50 border-t"
+                    onClick={() =>
+                      handleDeleteRequest(data!.id, displayData!.documentTitle)
+                    }
+                  >
+                    <Trash size={18} weight="duotone" /> Excluir Orçamento
+                  </button>
+                </View>
+              </PopoverContent>
+            </Popover>
+          }
+        />
         <BudgetSkeleton />
       </>
     );
@@ -363,6 +411,22 @@ export default function Budget() {
       </View>
 
       {!isPrintMode && <FAB actions={fabActions} hasBottomNav={false} />}
+
+      {/* --- MODAL DE CONFIRMAÇÃO --- */}
+      <DeleteBudgetModal
+        isOpen={isDelOpen}
+        onOpenChange={setIsDelOpen}
+        budget={
+          itemToDelete
+            ? {
+                id: itemToDelete.id,
+                documentTitle: itemToDelete.name, // O hook guarda o título aqui
+                clientName: displayData?.clientName || "Cliente",
+              }
+            : null
+        }
+        onConfirm={confirmDelete}
+      />
     </>
   );
 }

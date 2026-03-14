@@ -24,9 +24,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+/* AlertDialog Shadcn */
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 /* styles */
 import "./Clientes.css";
 import Page from "@/components/layout/Page";
+import ConfirmModal from "@/components/ModalConfirm";
+import { useDeleteEntity } from "@/hooks/useDeleteEntity";
+import DeleteClientModal from "./components/DeleteClientModal";
 
 // Interface alinhada com as novas definições (English/CamelCase)
 interface Cliente {
@@ -58,11 +73,14 @@ export default function ClientesLista() {
 
   const [term, setTerm] = useState("");
 
-  const handleDeleteQuick = async (id: string, name: string) => {
-    if (window.confirm(`Excluir ${name}?`)) {
-      await saveClient({ id }, "delete");
-    }
-  };
+  /* Estados para o Modal de Exclusão */
+  const {
+    isDelOpen,
+    setIsDelOpen,
+    itemToDelete,
+    handleDeleteRequest,
+    confirmDelete,
+  } = useDeleteEntity(saveClient);
 
   // Helper para extrair o nome de forma segura (Novo ou Antigo)
   const getClientName = (c: Cliente) =>
@@ -180,9 +198,9 @@ export default function ClientesLista() {
                             </button>
                             <button
                               className="menu-item delete"
-                              onClick={() =>
-                                handleDeleteQuick(c.id, currentName)
-                              }
+                              onClick={() => {
+                                handleDeleteRequest(c.id, currentName);
+                              }}
                               style={{
                                 ...menuItemStyle,
                                 color: "#ff4444",
@@ -210,6 +228,28 @@ export default function ClientesLista() {
       </Page>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+      <DeleteClientModal
+        isOpen={isDelOpen}
+        onOpenChange={setIsDelOpen}
+        client={itemToDelete}
+        onConfirm={confirmDelete}
+      />
+      {/* <ConfirmModal
+        isOpen={isDelOpen}
+        onOpenChange={setIsDelOpen}
+        onConfirm={confirmDelete}
+        title="Excluir Registro"
+        description={
+          <>
+            Você está prestes a excluir <b>{clientToDelete?.name}</b>. Esta ação
+            é permanente.
+          </>
+        }
+        confirmText="Sim, Excluir"
+        variant="danger"
+      /> */}
     </>
   );
 }

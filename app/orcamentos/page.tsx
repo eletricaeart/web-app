@@ -27,6 +27,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import Page from "@/components/layout/Page";
+import DeleteBudgetModal from "./components/DeleteBudgetModal";
+import { useDeleteEntity } from "@/hooks/useDeleteEntity";
 
 // --- Interfaces para Tipagem Atualizadas ---
 
@@ -69,6 +71,16 @@ export default function Budgets() {
     save: saveOrcamento,
     pull: syncOrcamentos,
   } = useEASync<Orcamento>("orcamentos");
+
+  // INTEGRANDO O HOOK DE DELEÇÃO
+  // não preciso de redirect aqui (onSuccess vazio ou para dar um toast)
+  const {
+    isDelOpen,
+    setIsDelOpen,
+    itemToDelete,
+    handleDeleteRequest,
+    confirmDelete,
+  } = useDeleteEntity(saveOrcamento);
 
   const { data: clientes } = useEASync<ClienteCache>("clientes");
 
@@ -155,6 +167,7 @@ export default function Budgets() {
             filteredOrcamentos.map((orc) => {
               const isTemp = String(orc.id).startsWith("TEMP_");
               const currentClientName = getClientName(orc);
+              const currentTitle = getDocTitle(orc);
 
               // Busca no cache de clientes para o avatar
               const clientData = clientes?.find((c) => {
@@ -210,7 +223,7 @@ export default function Budgets() {
                               </View>
                               <View
                                 onClick={() =>
-                                  handleDelete(orc.id, currentClientName)
+                                  handleDeleteRequest(orc.id, currentTitle)
                                 }
                                 style={{
                                   ...menuItemStyle,
@@ -239,6 +252,22 @@ export default function Budgets() {
       </Page>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
+
+      {/* RENDERIZANDO O MODAL DE ORÇAMENTO */}
+      <DeleteBudgetModal
+        isOpen={isDelOpen}
+        onOpenChange={setIsDelOpen}
+        budget={
+          itemToDelete
+            ? {
+                id: itemToDelete.id,
+                documentTitle: itemToDelete.name, // O hook salva o título no campo 'name'
+                clientName: "este cliente", // Opcional: buscar o nome do cliente no loop se quiser ser mais específico
+              }
+            : null
+        }
+        onConfirm={confirmDelete}
+      />
     </>
   );
 }
