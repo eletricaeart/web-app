@@ -1,3 +1,4 @@
+// app/clientes/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -27,23 +28,28 @@ import {
 import "./Clientes.css";
 import Page from "@/components/layout/Page";
 
-// Interface alinhada com as definições anteriores para evitar 'any'
+// Interface alinhada com as novas definições (English/CamelCase)
 interface Cliente {
   id: string;
-  name: string;
-  doc?: string;
+  name: string; // Novo padrão
+  document?: string; // Novo padrão
   gender?: string;
   photo?: string;
   whatsapp?: string;
   email?: string;
-  cidade?: string;
-  [key: string]: any; // Flexibilidade para outras propriedades do motor de busca
+  city?: string; // Novo padrão
+  neighborhood?: string; // Novo padrão
+  // Fallbacks para compatibilidade com dados antigos do GS
+  "Nome Completo"?: string;
+  "CPF / CNPJ"?: string;
+  Cidade?: string;
+  Bairro?: string;
+  [key: string]: any;
 }
 
 export default function ClientesLista() {
   const router = useRouter();
 
-  // Tipagem do hook useEASync com a interface Cliente
   const {
     data: allClients,
     pull: syncClients,
@@ -52,25 +58,25 @@ export default function ClientesLista() {
 
   const [term, setTerm] = useState("");
 
-  const AVATARS = {
-    masc: "/pix/avatar/default_avatar_masc.webp",
-    fem: "/pix/avatar/default_avatar_fem.webp",
-  };
-
   const handleDeleteQuick = async (id: string, name: string) => {
     if (window.confirm(`Excluir ${name}?`)) {
-      // O saveClient agora reconhece o payload baseado na interface
       await saveClient({ id }, "delete");
     }
   };
 
+  // Helper para extrair o nome de forma segura (Novo ou Antigo)
+  const getClientName = (c: Cliente) =>
+    c.name || c["Nome Completo"] || "Sem Nome";
+
+  // Helper para extrair o documento
+  const getClientDoc = (c: Cliente) => c.document || c["CPF / CNPJ"] || "";
+
   const filtered = allClients.filter((c) => {
     const searchTerm = term.trim().toLowerCase();
-    const nameMatches = c.name
-      ? c.name.toLowerCase().includes(searchTerm)
-      : false;
-    const docMatches = c.doc ? String(c.doc).includes(term) : false;
-    return nameMatches || docMatches;
+    const name = getClientName(c).toLowerCase();
+    const doc = String(getClientDoc(c));
+
+    return name.includes(searchTerm) || doc.includes(searchTerm);
   });
 
   const fabConfig = [
@@ -85,6 +91,21 @@ export default function ClientesLista() {
       action: () => syncClients(),
     },
   ];
+
+  const menuItemStyle: React.CSSProperties = {
+    padding: "12px 15px",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    width: "100%",
+    border: "none",
+    background: "none",
+    cursor: "pointer",
+    textAlign: "left",
+    fontFamily: "inherit",
+    fontSize: "0.9rem",
+    color: "#444",
+  };
 
   return (
     <>
@@ -103,94 +124,92 @@ export default function ClientesLista() {
         pd="0 0 90px 0"
       >
         <View tag="clients-container" className="flex flex-col gap-2">
-          {filtered.map((c) => (
-            <div
-              key={c.id}
-              className="client-card-wrapper"
-              style={{ position: "relative", padding: "0 1rem" }}
-            >
-              <ClientCard
-                client={c}
-                onClick={() => router.push(`/clientes/${c.id}`)}
-                options={
-                  <div className="options-container">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <View
-                          tag="vmenu-btn"
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#777",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <DotsThreeOutlineVertical
-                            size={24}
-                            weight="duotone"
-                          />
-                        </View>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-40 p-0 bg-white"
-                        style={{
-                          border: "none",
-                          boxShadow: "#e5e5e5 0 0 10px 2px",
-                        }}
-                        align="end"
-                        onOpenAutoFocus={(e) => {
-                          e?.preventDefault();
-                        }}
-                      >
-                        <div className="flex flex-col">
-                          <button
-                            className="menu-item"
-                            onClick={() =>
-                              router.push(`/clientes/novo?id=${c.id}`)
-                            }
-                            style={menuItemStyle}
-                          >
-                            <PencilSimple size={18} weight="duotone" /> Editar
-                          </button>
-                          <button
-                            className="menu-item delete"
-                            onClick={() => handleDeleteQuick(c.id, c.name)}
+          {filtered.map((c) => {
+            const currentName = getClientName(c);
+
+            return (
+              <div
+                key={c.id}
+                className="client-card-wrapper"
+                style={{ position: "relative", padding: "0 1rem" }}
+              >
+                <ClientCard
+                  client={{
+                    ...c,
+                    name: currentName,
+                    cidade: c.city || c["Cidade"] || "Cidade não informada",
+                    bairro: c.neighborhood || c["Bairro"] || "",
+                  }}
+                  onClick={() => router.push(`/clientes/${c.id}`)}
+                  options={
+                    <div className="options-container">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <View
+                            tag="vmenu-btn"
                             style={{
-                              ...menuItemStyle,
-                              color: "#ff4444",
-                              borderTop: "1px solid #f5f5f5",
+                              background: "none",
+                              border: "none",
+                              color: "#777",
+                              cursor: "pointer",
                             }}
                           >
-                            <Trash size={18} weight="duotone" /> Excluir
-                          </button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                }
-              />
+                            <DotsThreeOutlineVertical
+                              size={24}
+                              weight="duotone"
+                            />
+                          </View>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-40 p-0 bg-white"
+                          style={{
+                            border: "none",
+                            boxShadow: "#e5e5e5 0 0 10px 2px",
+                          }}
+                          align="end"
+                        >
+                          <div className="flex flex-col">
+                            <button
+                              className="menu-item"
+                              onClick={() =>
+                                router.push(`/clientes/novo?id=${c.id}`)
+                              }
+                              style={menuItemStyle}
+                            >
+                              <PencilSimple size={18} weight="duotone" /> Editar
+                            </button>
+                            <button
+                              className="menu-item delete"
+                              onClick={() =>
+                                handleDeleteQuick(c.id, currentName)
+                              }
+                              style={{
+                                ...menuItemStyle,
+                                color: "#ff4444",
+                                borderTop: "1px solid #f5f5f5",
+                              }}
+                            >
+                              <Trash size={18} weight="duotone" /> Excluir
+                            </button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  }
+                />
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 && (
+            <div className="text-center py-20 opacity-40">
+              <p>Nenhum cliente encontrado.</p>
             </div>
-          ))}
+          )}
         </View>
       </Page>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
-      {/* <BottomNavbar /> */}
     </>
   );
 }
-
-const menuItemStyle: React.CSSProperties = {
-  padding: "12px 15px",
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  width: "100%",
-  border: "none",
-  background: "none",
-  cursor: "pointer",
-  textAlign: "left",
-  fontFamily: "inherit",
-  fontSize: "0.9rem",
-  color: "#444",
-};

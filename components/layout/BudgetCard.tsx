@@ -41,9 +41,10 @@ export default function BudgetCard({
   };
 
   // Extraímos os valores com fallbacks seguros para evitar o erro de toLowerCase()
-  const clienteNome = orc?.cliente?.name || "Cliente não identificado";
-  const tituloOrcamento = orc?.docTitle?.text || "Sem título";
-  const dataEmissao = orc?.docTitle?.emissao || new Date().toISOString();
+  const clienteNome = orc?.clientName || "Cliente não identificado";
+  // console.warn("\n\n\norc", orc);
+  const tituloOrcamento = orc?.documentTitle || "Sem título";
+  const dataEmissao = orc?.issueDate || new Date().toISOString();
 
   return (
     <View tag="client-card" className="rounded-[1rem] shadow-sm">

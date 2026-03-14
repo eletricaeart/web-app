@@ -16,7 +16,7 @@ import {
   UserList,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import AvatarUpload from "@/components/forms/AvatarUpload"; // Componente que faremos
+import AvatarUpload from "@/components/forms/AvatarUpload";
 
 /* shadcn components */
 import {
@@ -31,22 +31,22 @@ import "../Clientes.css";
 import "./styles.css";
 import Pressable from "@/components/Pressable";
 
-// Interface para definir a estrutura do Cliente e evitar 'any'
+// Interface Atualizada para Nomenclatura em Inglês (CamelCase)
 interface Cliente {
   id: string;
-  name: string;
-  gender: string;
-  doc: string;
-  whatsapp: string;
-  email: string;
-  cep: string;
-  rua: string;
-  num: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  obs: string;
-  photo: string;
+  name: string; // "Nome Completo"
+  gender: string; // "Gênero"
+  document: string; // "CPF / CNPJ"
+  whatsapp: string; // "WhatsApp"
+  email: string; // "E-mail"
+  zip: string; // "CEP"
+  street: string; // "Rua"
+  number: string; // "Nº"
+  complement: string; // "Comp."
+  neighborhood: string; // "Bairro"
+  city: string; // "Cidade"
+  obs: string; // "Observações"
+  photo: string; // "photo"
 }
 
 export default function ClienteForm() {
@@ -54,36 +54,50 @@ export default function ClienteForm() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
 
-  // Uso do Generic <Cliente> para tipar o hook
   const { data: clients, save: saveClient } = useEASync<Cliente>("clientes");
 
   const [loading, setLoading] = useState(false);
   const [fetchingCep, setFetchingCep] = useState(false);
 
-  // Estado tipado com a interface Cliente
+  // Estado inicial com chaves limpas
   const [formData, setFormData] = useState<Cliente>({
     id: "",
     name: "",
     gender: "masc",
-    doc: "",
+    document: "",
     whatsapp: "",
     email: "",
-    cep: "",
-    rua: "",
-    num: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
+    zip: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
     obs: "",
     photo: "",
   });
 
-  // Carrega dados se for Edição
+  // Carrega dados se for Edição (Suporte a nomes antigos e novos)
   useEffect(() => {
     if (editId && clients.length > 0) {
-      const clientToEdit = clients.find((c) => String(c.id) === String(editId));
-      if (clientToEdit) {
-        setFormData((prev) => ({ ...prev, ...clientToEdit }));
+      const target = clients.find((c) => String(c.id) === String(editId));
+      if (target) {
+        setFormData({
+          id: target.id || "",
+          name: target.name || (target as any)["Nome Completo"] || "",
+          gender: target.gender || (target as any)["Gênero"] || "masc",
+          document: target.document || (target as any).doc || "",
+          whatsapp: target.whatsapp || "",
+          email: target.email || "",
+          zip: target.zip || target.cep || "",
+          street: target.street || target.rua || "",
+          number: target.number || target.num || "",
+          complement: target.complement || target.complemento || "",
+          neighborhood: target.neighborhood || target.bairro || "",
+          city: target.city || target.cidade || "",
+          obs: target.obs || "",
+          photo: target.photo || "",
+        });
       }
     }
   }, [editId, clients]);
@@ -94,21 +108,20 @@ export default function ClienteForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Lógica de busca de CEP original
   const handleCepBlur = async () => {
-    const cep = formData.cep.replace(/\D/g, "");
-    if (cep.length !== 8) return;
+    const cepValue = formData.zip.replace(/\D/g, "");
+    if (cepValue.length !== 8) return;
 
     setFetchingCep(true);
     try {
-      const res = await fetch(`https://viacep.com.br{cep}/json/`);
+      const res = await fetch(`https://viacep.com.br/ws/${cepValue}/json/`);
       const data = await res.json();
       if (!data.erro) {
         setFormData((prev) => ({
           ...prev,
-          rua: data.logradouro,
-          bairro: data.bairro,
-          cidade: data.localidade,
+          street: data.logradouro,
+          neighborhood: data.bairro,
+          city: data.localidade,
         }));
         toast.success("Endereço preenchido via CEP");
       }
@@ -127,7 +140,7 @@ export default function ClienteForm() {
 
     const payload: Cliente = {
       ...formData,
-      id: editId || `TEMP_${Date.now()}`,
+      id: editId || `CL-${Date.now()}`, // Usando prefixo CL para clientes
     };
 
     const res = (await saveClient(payload, action)) as {
@@ -141,28 +154,23 @@ export default function ClienteForm() {
       const draftStr = localStorage.getItem("ea_draft_budget");
 
       if (!editId && draftStr) {
-        // 1. Pegamos o rascunho atual
         const draft = JSON.parse(draftStr);
-
-        // 2. Atualizamos a parte do cliente com os dados que acabamos de salvar
-        draft.cliente = {
+        // Atualiza rascunho do orçamento com novas nomenclaturas
+        draft.client = {
           name: formData.name,
-          cep: formData.cep,
-          rua: formData.rua,
-          num: formData.num,
-          bairro: formData.bairro,
-          cidade: formData.cidade,
-          complemento: formData.complemento,
+          zip: formData.zip,
+          street: formData.street,
+          number: formData.number,
+          neighborhood: formData.neighborhood,
+          city: formData.city,
+          complement: formData.complement,
           obs: formData.obs,
         };
 
-        // 3. Salvamos o rascunho atualizado de volta no localStorage
         localStorage.setItem("ea_draft_budget", JSON.stringify(draft));
-
-        // 4. Voltamos para a página de orçamento (sem precisar de ID na URL)
         router.replace(`/orcamentos/novo`);
       } else if (editId) {
-        router.replace(`/clientes/${editId}`);
+        router.replace(`/clientes`);
       } else {
         router.replace("/clientes");
       }
@@ -181,7 +189,6 @@ export default function ClienteForm() {
 
       <View tag="page" className="add-client-page">
         <View tag="page-header">
-          {/* Seção da Foto */}
           <AvatarUpload
             value={formData.photo}
             gender={formData.gender}
@@ -192,7 +199,7 @@ export default function ClienteForm() {
         </View>
         <View tag="page-content">
           <View tag="card-client" className="add-client-form">
-            <View tag="card-header" className="">
+            <View tag="card-header">
               <IdentificationCardIcon size={18} weight="duotone" />
               IDENTIFICAÇÃO
             </View>
@@ -229,8 +236,8 @@ export default function ClienteForm() {
                 <label>
                   CPF / CNPJ
                   <input
-                    name="doc"
-                    value={formData.doc}
+                    name="document"
+                    value={formData.document}
                     onChange={handleChange}
                     placeholder="000.000.000-00"
                   />
@@ -284,8 +291,8 @@ export default function ClienteForm() {
                 CEP
                 <div className="relative">
                   <input
-                    name="cep"
-                    value={formData.cep}
+                    name="zip"
+                    value={formData.zip}
                     onChange={handleChange}
                     onBlur={handleCepBlur}
                     placeholder="00000-000"
@@ -301,16 +308,16 @@ export default function ClienteForm() {
                 <label className="col-span-2">
                   Rua
                   <input
-                    name="rua"
-                    value={formData.rua}
+                    name="street"
+                    value={formData.street}
                     onChange={handleChange}
                   />
                 </label>
                 <label>
                   Nº
                   <input
-                    name="num"
-                    value={formData.num}
+                    name="number"
+                    value={formData.number}
                     onChange={handleChange}
                   />
                 </label>
@@ -320,36 +327,33 @@ export default function ClienteForm() {
                 <label>
                   Comp.
                   <input
-                    name="complemento"
-                    value={formData.complemento}
+                    name="complement"
+                    value={formData.complement}
                     onChange={handleChange}
                     placeholder="Apto..."
                   />
                 </label>
               </View>
 
-              {/* <div className="grid grid-cols-2 gap-4 mt-4"> */}
               <label className="mt-4">
                 Bairro
                 <input
-                  name="bairro"
-                  value={formData.bairro}
+                  name="neighborhood"
+                  value={formData.neighborhood}
                   onChange={handleChange}
                 />
               </label>
               <label className="mt-4">
                 Cidade
                 <input
-                  name="cidade"
-                  value={formData.cidade}
+                  name="city"
+                  value={formData.city}
                   onChange={handleChange}
                 />
               </label>
-              {/* </div> */}
             </View>
           </View>
 
-          {/* Campo de Observações */}
           <View tag="card-client">
             <View tag="card-header">
               <ExclamationMarkIcon size={18} weight="duotone" />
@@ -381,22 +385,6 @@ export default function ClienteForm() {
                 ? "SALVAR ALTERAÇÕES"
                 : "SALVAR CLIENTE"}
           </Pressable>
-          {/* <button */}
-          {/*   className="btn-save w-full flex justify-center items-center gap-2" */}
-          {/*   onClick={handleSave} */}
-          {/*   disabled={loading} */}
-          {/* > */}
-          {/*   {loading ? ( */}
-          {/*     <CircleNotch size={24} className="animate-spin" /> */}
-          {/*   ) : ( */}
-          {/*     <FloppyDisk size={24} /> */}
-          {/*   )} */}
-          {/*   {loading */}
-          {/*     ? "PROCESSANDO..." */}
-          {/*     : editId */}
-          {/*       ? "SALVAR ALTERAÇÕES" */}
-          {/*       : "SALVAR CLIENTE"} */}
-          {/* </button> */}
         </footer>
       </View>
     </>

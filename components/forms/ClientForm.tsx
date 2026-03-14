@@ -15,18 +15,18 @@ import { Input } from "@/components/ui/input";
 import { UserPlus, MagnifyingGlass } from "@phosphor-icons/react";
 
 /**
- * Interfaces para garantir a tipagem estrita e evitar erros de build
+ * Interface Atualizada para Nomenclatura em Inglês
  */
 interface ClientData {
   name: string;
-  cep?: string;
-  rua?: string;
-  num?: string;
-  bairro?: string;
-  cidade?: string;
-  complemento?: string;
+  zip?: string; // CEP
+  street?: string; // Rua
+  number?: string; // Num
+  neighborhood?: string; // Bairro
+  city?: string; // Cidade/UF
+  complement?: string; // Complemento
   obs?: string;
-  [key: string]: any; // Flexibilidade para campos adicionais do motor de busca
+  [key: string]: any;
 }
 
 interface ClientFormProps {
@@ -48,40 +48,45 @@ export default function ClientForm({
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Filtro de busca para o Drawer
+  // Filtro de busca para o Drawer (Suporte a name ou Nome Completo)
   const filteredClients = useMemo(() => {
-    return clientsCache.filter((c) =>
-      (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return clientsCache.filter((c) => {
+      const name = c.name || c["Nome Completo"] || "";
+      return name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
   }, [searchTerm, clientsCache]);
 
   const handleSelectClient = (client: any) => {
+    // Mapeamento Inteligente: Tenta pegar o nome novo, senão o antigo
     onClientChange({
-      name: client.name,
-      cep: client.cep || client.address?.cep || "",
-      rua: client.rua || client.address?.rua || "",
-      num: client.num || client.address?.num || "",
-      bairro: client.bairro || client.address?.bairro || "",
-      cidade: client.cidade || client.address?.cidade || "",
+      name: client.name || client["Nome Completo"] || "",
+      zip: client.zip || client.cep || client["CEP"] || "",
+      street: client.street || client.rua || client["Rua"] || "",
+      number: client.number || client.num || client["Número"] || "",
+      neighborhood:
+        client.neighborhood || client.bairro || client["Bairro"] || "",
+      city: client.city || client.cidade || client["Cidade/UF"] || "",
+      complement: client.complement || client.complemento || "",
+      obs: client.obs || "",
     });
-    setIsDrawerOpen(false); // Fecha o drawer após selecionar
+    setIsDrawerOpen(false);
   };
 
   // Busca automática de CEP
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    const cep = e.target.value.replace(/\D/g, "");
-    if (cep.length === 8) {
+    const cepValue = e.target.value.replace(/\D/g, "");
+    if (cepValue.length === 8) {
       setLoadingCep(true);
       try {
-        const res = await fetch(`https://viacep.com.br${cep}/json/`);
+        const res = await fetch(`https://viacep.com.br/ws/${cepValue}/json/`);
         const data = await res.json();
         if (!data.erro) {
           onClientChange({
             ...clientData,
-            cep: e.target.value,
-            rua: data.logradouro,
-            bairro: data.bairro,
-            cidade: `${data.localidade} - ${data.uf}`,
+            zip: e.target.value,
+            street: data.logradouro,
+            neighborhood: data.bairro,
+            city: `${data.localidade} - ${data.uf}`,
           });
         }
       } catch (err) {
@@ -92,20 +97,29 @@ export default function ClientForm({
     }
   };
 
-  /* manter */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { id, value } = e.target;
-    // Mapeia o ID do input para a chave do objeto cliente
-    const fieldMap: Record<string, keyof ClientData> = {
+    // Mapeia o ID do input para a nova chave em inglês
+    /* const fieldMap: Record<string, keyof ClientData> = {
       c_name: "name",
-      c_cep: "cep",
-      c_rua: "rua",
-      c_num: "num",
-      c_complemento: "complemento",
-      c_bairro: "bairro",
-      c_cidade: "cidade",
+      c_cep: "zip",
+      c_rua: "street",
+      c_num: "number",
+      c_complemento: "complement",
+      c_bairro: "neighborhood",
+      c_cidade: "city",
+      c_obs: "obs",
+    }; */
+    const fieldMap: Record<string, string> = {
+      c_name: "name",
+      c_cep: "zip",
+      c_rua: "street",
+      c_num: "number",
+      c_complemento: "complement",
+      c_bairro: "neighborhood",
+      c_cidade: "city",
       c_obs: "obs",
     };
 
@@ -115,27 +129,26 @@ export default function ClientForm({
     }
   };
 
-  // Preenchimento automático ao selecionar da lista
+  // Preenchimento automático ao digitar nome idêntico ao cache
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = clientsCache.find((c) => c.name === e.target.value);
+    const value = e.target.value;
+    const selected = clientsCache.find(
+      (c) => (c.name || c["Nome Completo"]) === value,
+    );
+    console.warn(
+      clientsCache.find((c) => (c.name || c["Nome Completo"]) === value),
+    );
+
     if (selected) {
-      onClientChange({
-        name: selected.name,
-        cep: selected.cep || "",
-        rua: selected.rua || "",
-        num: selected.num || "",
-        bairro: selected.bairro || "",
-        cidade: selected.cidade || "",
-      });
+      handleSelectClient(selected);
     } else {
-      handleChange(e);
+      onClientChange({ ...clientData, name: value });
     }
   };
-  /* end manter */
 
   return (
     <View tag="cliente-fieldset">
-      {/* Nome do Cliente */}
+      {/* Nome do Cliente / Drawer */}
       <View tag="client-name_input">
         <View tag="client-name_label">
           <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
@@ -155,22 +168,20 @@ export default function ClientForm({
                 <div className="drawer-searchbar flex items-center gap-2 mb-4">
                   <div className="searchbar relative flex-1">
                     <MagnifyingGlass
-                      className="MagnifyingGlass absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                       size={18}
                     />
                     <Input
                       placeholder="Nome do cliente..."
-                      className="client-name_input pl-10"
+                      className="pl-10"
                       value={searchTerm}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setSearchTerm(e.target.value)
-                      }
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => onNewClientClick()}
-                    className="btn_add-newClient p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
                     <UserPlus size={24} weight="duotone" />
                   </button>
@@ -180,27 +191,24 @@ export default function ClientForm({
                   tag="clients-name_card"
                   className="overflow-y-auto max-h-[50vh] space-y-2"
                 >
-                  {filteredClients.map((c, i) => (
-                    <React.Fragment key={c.id || i}>
-                      <View
-                        tag="client-name_card"
-                        className="p-3 border rounded-lg active:bg-slate-100 cursor-pointer"
-                        onClick={() => handleSelectClient(c)}
-                      >
-                        <div className="font-bold">{c.name}</div>
-                        <div className="text-sm text-slate-500">
-                          {c.cidade ||
-                            c.address?.cidade ||
-                            "Cidade não informada"}
-                        </div>
-                      </View>
-                      {i !== filteredClients.length - 1 && (
-                        <View tag="divisor">
-                          <section></section>
+                  {filteredClients.map((c, i) => {
+                    const name = c.name || c["Nome Completo"] || "Sem Nome";
+                    const city =
+                      c.city || c.cidade || c["Cidade/UF"] || "Não informada";
+
+                    return (
+                      <React.Fragment key={c.id || i}>
+                        <View
+                          tag="client-name_card"
+                          className="p-3 border rounded-lg active:bg-slate-100 cursor-pointer"
+                          onClick={() => handleSelectClient(c)}
+                        >
+                          <div className="font-bold">{name}</div>
+                          <div className="text-sm text-slate-500">{city}</div>
                         </View>
-                      )}
-                    </React.Fragment>
-                  ))}
+                      </React.Fragment>
+                    );
+                  })}
                   {filteredClients.length === 0 && (
                     <div className="text-center py-8 text-slate-400">
                       Nenhum cliente encontrado
@@ -210,7 +218,6 @@ export default function ClientForm({
               </div>
             </DrawerContent>
           </Drawer>
-
           <View tag="t" className="label-text">
             Nome / Empresa
           </View>
@@ -225,7 +232,7 @@ export default function ClientForm({
         />
       </View>
 
-      {/* CEP */}
+      {/* ZIP (CEP) */}
       <View tag="cep-input">
         <label>
           <View tag="t">
@@ -240,21 +247,17 @@ export default function ClientForm({
             className="input"
             placeholder="00000-000"
             maxLength={9}
-            value={clientData.cep || ""}
+            value={clientData.zip || ""}
             onChange={handleChange}
             onBlur={handleCepBlur}
           />
         </label>
       </View>
 
-      {/* Endereço */}
+      {/* Street and Number */}
       <View
         tag="logradouro_numero-inputs"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "2fr 1fr",
-          gap: "10px",
-        }}
+        style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "10px" }}
       >
         <View tag="logradouro-input">
           <label>
@@ -263,8 +266,7 @@ export default function ClientForm({
               type="text"
               id="c_rua"
               className="input"
-              placeholder="Av. President Kennedy ..."
-              value={clientData.rua || ""}
+              value={clientData.street || ""}
               onChange={handleChange}
             />
           </label>
@@ -276,13 +278,14 @@ export default function ClientForm({
               type="text"
               id="c_num"
               className="input"
-              placeholder="Ex: 50"
-              value={clientData.num || ""}
+              value={clientData.number || ""}
               onChange={handleChange}
             />
           </label>
         </View>
       </View>
+
+      {/* Complement */}
       <View tag="complemento-input">
         <label>
           <View tag="t">Complemento</View>
@@ -290,13 +293,14 @@ export default function ClientForm({
             type="text"
             id="c_complemento"
             className="input"
-            value={clientData.complemento || ""}
+            value={clientData.complement || ""}
             onChange={handleChange}
             placeholder="Apto..."
           />
         </label>
       </View>
 
+      {/* Neighborhood and City */}
       <View tag="bairro-input">
         <label>
           <View tag="t">Bairro</View>
@@ -304,8 +308,7 @@ export default function ClientForm({
             type="text"
             id="c_bairro"
             className="input"
-            placeholder="Ex: Aviação"
-            value={clientData.bairro || ""}
+            value={clientData.neighborhood || ""}
             onChange={handleChange}
           />
         </label>
@@ -318,14 +321,13 @@ export default function ClientForm({
             type="text"
             id="c_cidade"
             className="input"
-            placeholder="Ex: Praia Grande - SP"
-            value={clientData.cidade || ""}
+            value={clientData.city || ""}
             onChange={handleChange}
           />
         </label>
       </View>
 
-      {/* seção de observações sobre o cliente */}
+      {/* Observações */}
       {!isOnNewBudget && (
         <View tag="obs-input" className="mt-4">
           <label>
@@ -334,9 +336,7 @@ export default function ClientForm({
               id="c_obs"
               className="input w-full p-2 rounded-md border h-20"
               value={clientData.obs || ""}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                onClientChange({ ...clientData, obs: e.target.value })
-              }
+              onChange={handleChange}
             />
           </label>
         </View>

@@ -34,7 +34,7 @@ import "./style.css";
 import Pressable from "@/components/Pressable";
 
 /**
- * Interfaces de Tipagem
+ * Interfaces de Tipagem - Agora seguindo o padrão camelCase em Inglês
  */
 interface ClauseItem {
   id: number;
@@ -50,23 +50,22 @@ interface Clause {
 
 interface BudgetData {
   id: string | null;
-  docTitle: {
-    text: string;
-    emissao: string;
-    validade: string;
-    subtitle?: string;
+  documentTitle: string; // "Título Doc" -> documentTitle
+  issueDate: string; // "Emissão" -> issueDate
+  expiration: string; // "Validade" -> expiration
+  subtitle?: string; // "Subtítulo" -> subtitle
+  client: {
+    // "cliente" -> client
+    name: string; // "Nome Cliente" -> name
+    zip: string; // "CEP" -> zip
+    street: string; // "Rua" -> street
+    number: string; // "Número" -> number
+    neighborhood: string; // "Bairro" -> neighborhood
+    city: string; // "Cidade/UF" -> city
+    complement?: string; // "complemento" -> complement
+    obs?: string; // "obs" -> obs
   };
-  cliente: {
-    name: string;
-    cep: string;
-    rua: string;
-    num: string;
-    bairro: string;
-    cidade: string;
-    complemento?: string;
-    obs?: string;
-  };
-  clauses: Clause[];
+  services: Clause[]; // "Serviços JSON" -> services
 }
 
 interface DetalheSheet {
@@ -83,15 +82,22 @@ export default function NewBudgetPage() {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [clientsCache, setClientsCache] = useState<any[]>([]);
+
+  // Estado inicial ajustado para as novas chaves
   const [budget, setBudget] = useState<BudgetData>({
     id: null,
-    docTitle: {
-      text: "",
-      emissao: new Date().toISOString().split("T")[0],
-      validade: "15 dias",
+    documentTitle: "",
+    issueDate: new Date().toISOString().split("T")[0],
+    expiration: "15 dias",
+    client: {
+      name: "",
+      zip: "",
+      street: "",
+      number: "",
+      neighborhood: "",
+      city: "",
     },
-    cliente: { name: "", cep: "", rua: "", num: "", bairro: "", cidade: "" },
-    clauses: [
+    services: [
       {
         id: Date.now(),
         titulo: "",
@@ -101,7 +107,7 @@ export default function NewBudgetPage() {
   });
 
   const getSelectedDate = () => {
-    const date = parseISO(budget.docTitle.emissao);
+    const date = parseISO(budget.issueDate);
     return isValid(date) ? date : new Date();
   };
 
@@ -143,13 +149,17 @@ export default function NewBudgetPage() {
     init();
   }, [editId]);
 
+  // Mapeamento de entrada corrigido (Aceita o antigo ou novo formato)
   const mapIncomingData = (data: any) => {
-    const mappedClauses: Clause[] = data.servicos.map((s: any) => ({
+    const rawServices =
+      data.services || data.servicos || data["Serviços JSON"] || [];
+
+    const mappedClauses: Clause[] = rawServices.map((s: any) => ({
       id: Math.random(),
-      titulo: s.titulo,
-      items: s.itens.map((it: any) => ({
+      titulo: s.titulo || s.title,
+      items: (s.itens || s.items || []).map((it: any) => ({
         id: Math.random(),
-        subtitulo: it.subtitulo,
+        subtitulo: it.subtitulo || it.subtitle,
         content: it.detalhes
           .map((d: any) => {
             if (d.tipo === "brk") return "---";
@@ -165,13 +175,39 @@ export default function NewBudgetPage() {
 
     setBudget({
       id: data.id,
-      docTitle: {
-        text: data.docTitle.text,
-        emissao: formatDateForInput(data.docTitle.emissao),
-        validade: data.docTitle.validade,
+      documentTitle:
+        data.documentTitle || data.docTitle?.text || data["Título Doc"] || "",
+      issueDate: formatDateForInput(
+        data.issueDate || data.docTitle?.emissao || data["Emissão"],
+      ),
+      expiration:
+        data.expiration ||
+        data.docTitle?.validade ||
+        data["Validade"] ||
+        "15 dias",
+      subtitle:
+        data.subtitle ||
+        data.docTitle?.subtitle ||
+        data["Subtítulo"] ||
+        "PROPOSTA DE ORÇAMENTO",
+      client: {
+        name:
+          data.client?.name || data.cliente?.name || data["Nome Cliente"] || "",
+        zip: data.client?.zip || data.cliente?.cep || data["CEP"] || "",
+        street: data.client?.street || data.cliente?.rua || data["Rua"] || "",
+        number:
+          data.client?.number || data.cliente?.num || data["Número"] || "",
+        neighborhood:
+          data.client?.neighborhood ||
+          data.cliente?.bairro ||
+          data["Bairro"] ||
+          "",
+        city:
+          data.client?.city || data.cliente?.cidade || data["Cidade/UF"] || "",
+        complement: data.client?.complement || data.cliente?.complemento || "",
+        obs: data.client?.obs || data.cliente?.obs || "",
       },
-      cliente: data.cliente,
-      clauses: mappedClauses,
+      services: mappedClauses,
     });
   };
 
@@ -202,19 +238,25 @@ export default function NewBudgetPage() {
 
   const handleSave = async () => {
     setLoading(true);
-    const [y, m, d] = budget.docTitle.emissao.split("-");
+    const [y, m, d] = budget.issueDate.split("-");
     const formattedDate = `${d}/${m}/${y}`;
 
+    // PAYLOAD LIMPO E EM INGLÊS PARA O GOOGLE SHEETS
     const payload = {
-      id: editId || budget.id || `TEMP_${Date.now()}`,
-      cliente: budget.cliente,
-      docTitle: {
-        subtitle: "PROPOSTA DE ORÇAMENTO",
-        emissao: formattedDate,
-        validade: budget.docTitle.validade,
-        text: budget.docTitle.text,
-      },
-      servicos: budget.clauses.map((c) => ({
+      id: editId || budget.id || `EA-${Date.now()}`,
+      clientName: budget.client.name,
+      zip: budget.client.zip,
+      street: budget.client.street,
+      number: budget.client.number,
+      neighborhood: budget.client.neighborhood,
+      city: budget.client.city,
+      complement: budget.client.complement,
+      obs: budget.client.obs,
+      subtitle: budget.subtitle || "PROPOSTA DE ORÇAMENTO",
+      issueDate: formattedDate,
+      expiration: budget.expiration,
+      documentTitle: budget.documentTitle,
+      services: budget.services.map((c) => ({
         titulo: c.titulo,
         itens: c.items.map((it) => ({
           subtitulo: it.subtitulo,
@@ -265,11 +307,11 @@ export default function NewBudgetPage() {
                 type="text"
                 className="input"
                 placeholder="SERVIÇOS DE ELÉTRICA (RESIDENCIAL)"
-                value={budget.docTitle.text}
+                value={budget.documentTitle}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setBudget({
                     ...budget,
-                    docTitle: { ...budget.docTitle, text: e.target.value },
+                    documentTitle: e.target.value,
                   })
                 }
               />
@@ -285,11 +327,11 @@ export default function NewBudgetPage() {
                     <Button
                       variant="outline"
                       className={`w-full h-[45px] justify-start text-left font-normal border-[#ccc] ${
-                        !budget.docTitle.emissao && "text-muted-foreground"
+                        !budget.issueDate && "text-muted-foreground"
                       }`}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {budget.docTitle.emissao ? (
+                      {budget.issueDate ? (
                         format(getSelectedDate(), "dd/MM/yyyy")
                       ) : (
                         <span>Selecione uma data</span>
@@ -304,10 +346,7 @@ export default function NewBudgetPage() {
                         if (date) {
                           setBudget({
                             ...budget,
-                            docTitle: {
-                              ...budget.docTitle,
-                              emissao: format(date, "yyyy-MM-dd"),
-                            },
+                            issueDate: format(date, "yyyy-MM-dd"),
                           });
                         }
                       }}
@@ -327,11 +366,11 @@ export default function NewBudgetPage() {
               <label className="flex-5 flex flex-col gap-1">
                 <View tag="t">Validade</View>
                 <Select
-                  value={budget.docTitle.validade}
+                  value={budget.expiration}
                   onValueChange={(value: string) =>
                     setBudget({
                       ...budget,
-                      docTitle: { ...budget.docTitle, validade: value },
+                      expiration: value,
                     })
                   }
                 >
@@ -350,30 +389,63 @@ export default function NewBudgetPage() {
             </View>
           </View>
 
-          <Divider />
+          <Default_Divider.default spacing="2rem" color="transparent" />
 
           <h3 className="page-subtitle">Dados do cliente</h3>
+          {/* <ClientForm */}
+          {/*   clientData={{ */}
+          {/*     name: budget.client.name, */}
+          {/*     cep: budget.client.zip, */}
+          {/*     rua: budget.client.street, */}
+          {/*     num: budget.client.number, */}
+          {/*     bairro: budget.client.neighborhood, */}
+          {/*     cidade: budget.client.city, */}
+          {/*     complemento: budget.client.complement, */}
+          {/*     obs: budget.client.obs, */}
+          {/*   }} */}
+          {/*   clientsCache={clientsCache} */}
+          {/*   onClientChange={(data: any) => */}
+          {/*     setBudget({ */}
+          {/*       ...budget, */}
+          {/*       client: { */}
+          {/*         name: data.name, */}
+          {/*         zip: data.cep, */}
+          {/*         street: data.rua, */}
+          {/*         number: data.num, */}
+          {/*         neighborhood: data.bairro, */}
+          {/*         city: data.cidade, */}
+          {/*         complement: data.complemento, */}
+          {/*         obs: data.obs, */}
+          {/*       }, */}
+          {/*     }) */}
+          {/*   } */}
+          {/*   onNewClientClick={goToCreateClient} */}
+          {/*   isOnNewBudget={true} */}
+          {/* /> */}
           <ClientForm
-            clientData={budget.cliente}
+            clientData={budget.client} // Passe o objeto direto
             clientsCache={clientsCache}
-            onClientChange={(data: any) =>
-              setBudget({ ...budget, cliente: data })
+            onClientChange={(updatedClientData: any) =>
+              setBudget({
+                ...budget,
+                client: updatedClientData, // Atualize o objeto client inteiro
+              })
             }
             onNewClientClick={goToCreateClient}
             isOnNewBudget={true}
           />
         </View>
 
-        <Divider />
+        <Default_Divider.default spacing="2rem" color="transparent" />
 
         <View tag="clauses-holder">
           <header className="subtitle-header">
             <h3 className="page-subtitle">Cláusulas e Itens</h3>
           </header>
           <ClauseManager
-            clauses={budget.clauses}
+            clauses={budget.services}
             onClausesChange={(newClauses: any) =>
-              setBudget({ ...budget, clauses: newClauses })
+              setBudget({ ...budget, services: newClauses })
             }
           />
         </View>
@@ -395,41 +467,11 @@ export default function NewBudgetPage() {
             )}
           </Pressable>
         </footer>
-        {/* <footer className="footer"> */}
-        {/*   <button */}
-        {/*     className="btnSave" */}
-        {/*     onClick={handleSave} */}
-        {/*     disabled={loading} */}
-        {/*     style={{ */}
-        {/*       display: "flex", */}
-        {/*       justifyContent: "center", */}
-        {/*       alignItems: "center", */}
-        {/*       gap: "10px", */}
-        {/*       opacity: loading ? 0.7 : 1, */}
-        {/*       cursor: loading ? "not-allowed" : "pointer", */}
-        {/*       transition: "all 0.3s ease", */}
-        {/*     }} */}
-        {/*   > */}
-        {/*     {loading ? ( */}
-        {/*       <> */}
-        {/*         <CircleNotch size={20} weight="bold" className="animate-spin" /> */}
-        {/*         <span>PROCESSANDO...</span> */}
-        {/*       </> */}
-        {/*     ) : ( */}
-        {/*       <span> */}
-        {/*         {budget.id ? "ATUALIZAR ORÇAMENTO" : "SALVAR ORÇAMENTO"} */}
-        {/*       </span> */}
-        {/*     )} */}
-        {/*   </button> */}
-        {/* </footer> */}
       </View>
     </>
   );
 }
 
-/**
- * Helpers e Componentes Internos
- */
 function formatDateForInput(dateStr: string) {
   if (!dateStr) return new Date().toISOString().split("T")[0];
   if (dateStr.includes("-")) return dateStr.split("T")[0];
@@ -442,7 +484,3 @@ function formatDateForInput(dateStr: string) {
   }
   return new Date().toISOString().split("T")[0];
 }
-
-const Divider = () => (
-  <Default_Divider.default spacing="2rem" color="transparent" />
-);

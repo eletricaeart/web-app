@@ -6,52 +6,40 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
-import {
-  FloppyDisk,
-  CircleNotch,
-  UserCircle,
-  Star,
-} from "@phosphor-icons/react";
+import { FloppyDisk, CircleNotch, Star } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import ClientForm from "@/components/forms/ClientForm"; // O componente com Drawer que você enviou
+import ClientForm from "@/components/forms/ClientForm";
 
-import "../../clientes/Clientes.css"; // Reutilizando os estilos de cards e formulários
+import "../../clientes/Clientes.css";
 
-// Interfaces para suportar o TypeScript sem 'any'
+// Interfaces Atualizadas (English/CamelCase)
 interface Cliente {
   id: string | number;
   name: string;
-  cep?: string;
-  rua?: string;
-  num?: string;
-  bairro?: string;
-  cidade?: string;
-  complemento?: string;
-  obs?: string;
-  address?: {
-    cep?: string;
-    rua?: string;
-    num?: string;
-    bairro?: string;
-    cidade?: string;
-  };
+  zip?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  // Fallback para busca no cache antigo
+  "Nome Completo"?: string;
 }
 
 interface NotaFormData {
   id: string;
-  title: string;
-  content: string;
-  date: string;
-  clienteId: string | number;
-  clienteNome: string;
-  important: boolean;
-  owner_id: string;
+  title: string; // "title"
+  content: string; // "content"
+  date: string; // "date"
+  clientId: string | number; // "clienteId" -> clientId
+  clientName: string; // "clienteNome" -> clientName
+  isImportant: boolean; // "important" -> isImportant
+  ownerId: string; // "owner_id" -> ownerId
 }
 
 export default function NovaNota() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clienteIdParam = searchParams.get("clienteId");
+  const clientIdParam = searchParams.get("clienteId");
 
   const { data: clients } = useEASync<Cliente>("clientes");
   const { save: saveNota } = useEASync("notas");
@@ -62,43 +50,44 @@ export default function NovaNota() {
     title: "",
     content: "",
     date: new Date().toISOString().split("T")[0],
-    clienteId: "",
-    clienteNome: "",
-    important: false,
-    owner_id: "", // Inicializado vazio para evitar erro de hidratação (SSR vs Client)
+    clientId: "",
+    clientName: "",
+    isImportant: false,
+    ownerId: "",
   });
 
-  // Hydration fix para o owner_id
+  // Hydration fix para o ownerId
   useEffect(() => {
     const userEmail =
       typeof window !== "undefined"
         ? localStorage.getItem("user_email") || ""
         : "";
-    setFormData((prev) => ({ ...prev, owner_id: userEmail }));
+    setFormData((prev) => ({ ...prev, ownerId: userEmail }));
   }, []);
 
-  // Se vier um clienteId via URL (ex: vindo do perfil do cliente)
+  // Preenchimento automático se vier clientId via URL
   useEffect(() => {
-    if (clienteIdParam && clients.length > 0) {
+    if (clientIdParam && clients.length > 0) {
       const target = clients.find(
-        (c) => String(c.id) === String(clienteIdParam),
+        (c) => String(c.id) === String(clientIdParam),
       );
       if (target) {
         setFormData((prev) => ({
           ...prev,
-          clienteId: target.id,
-          clienteNome: target.name,
+          clientId: target.id,
+          clientName: target.name || (target as any)["Nome Completo"] || "",
         }));
       }
     }
-  }, [clienteIdParam, clients]);
+  }, [clientIdParam, clients]);
 
   const handleSave = async () => {
-    if (!formData.title || !formData.clienteId) {
+    if (!formData.title || !formData.clientId) {
       return toast.error("Preencha o título e selecione um cliente");
     }
 
     setLoading(true);
+    // Payload limpo seguindo o novo padrão
     const payload = {
       ...formData,
       id: `NT-${Date.now()}`,
@@ -120,31 +109,31 @@ export default function NovaNota() {
 
       <View tag="page" className="add-client-page">
         <View tag="page-content" className="p-4">
-          {/* SELETOR DE CLIENTE (Reutilizando seu ClientForm modificado para Notas) */}
+          {/* SELETOR DE CLIENTE */}
           <View tag="card-ea-client">
             <View tag="card-ea-header">VINCULAR CLIENTE</View>
             <View tag="card-ea-body">
               <ClientForm
                 clientData={{
-                  name: formData.clienteNome,
-                  cep: "",
-                  rua: "",
-                  num: "",
-                  bairro: "",
-                  cidade: "",
-                  complemento: "",
+                  name: formData.clientName,
+                  zip: "",
+                  street: "",
+                  number: "",
+                  neighborhood: "",
+                  city: "",
+                  complement: "",
                   obs: "",
                 }}
                 clientsCache={clients}
-                onClientChange={(client: Partial<Cliente>) => {
-                  // Busca o ID no cache já que o ClientForm não retorna o ID no onClientChange
+                onClientChange={(client: any) => {
+                  // Busca o ID no cache (suporta name novo ou Nome Completo antigo)
                   const fullClient = clients.find(
-                    (c) => c.name === client.name,
+                    (c) => (c.name || c["Nome Completo"]) === client.name,
                   );
                   setFormData((prev) => ({
                     ...prev,
-                    clienteId: fullClient?.id || prev.clienteId,
-                    clienteNome: client.name || "",
+                    clientId: fullClient?.id || prev.clientId,
+                    clientName: client.name || "",
                   }));
                 }}
                 onNewClientClick={() => router.push("/clientes/novo")}
@@ -162,7 +151,7 @@ export default function NovaNota() {
                   className="input"
                   placeholder="Ex: Manutenção Quadro Geral"
                   value={formData.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
                 />
@@ -174,7 +163,7 @@ export default function NovaNota() {
                   type="date"
                   className="input"
                   value={formData.date}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange={(e) =>
                     setFormData({ ...formData, date: e.target.value })
                   }
                 />
@@ -184,9 +173,9 @@ export default function NovaNota() {
                 Descrição Detalhada
                 <textarea
                   className="input h-32 p-2"
-                  placeholder="Descreva os serviços executados, materiais utilizados ou pendências..."
+                  placeholder="Descreva os serviços executados..."
                   value={formData.content}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  onChange={(e) =>
                     setFormData({ ...formData, content: e.target.value })
                   }
                 />
@@ -201,9 +190,9 @@ export default function NovaNota() {
                 <div className="flex items-center gap-3">
                   <Star
                     size={24}
-                    weight={formData.important ? "fill" : "regular"}
+                    weight={formData.isImportant ? "fill" : "regular"}
                     className={
-                      formData.important ? "text-amber-500" : "text-slate-400"
+                      formData.isImportant ? "text-amber-500" : "text-slate-400"
                     }
                   />
                   <span className="font-bold text-slate-700">
@@ -213,9 +202,9 @@ export default function NovaNota() {
                 <input
                   type="checkbox"
                   className="w-6 h-6 rounded-md accent-indigo-600"
-                  checked={formData.important}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, important: e.target.checked })
+                  checked={formData.isImportant}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isImportant: e.target.checked })
                   }
                 />
               </label>

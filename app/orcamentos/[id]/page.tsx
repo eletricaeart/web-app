@@ -11,58 +11,146 @@ import { processTextToHtml } from "@/utils/TextPreProcessor";
 import View from "@/components/layout/View";
 import BudgetSkeleton from "../components/BudgetSkeleton";
 import BudgetShareMenu from "@/components/orcamentos/BudgetShareMenu";
-import { Pen, FilePdf, ShareNetwork } from "@phosphor-icons/react";
+import { Pen, ShareNetwork } from "@phosphor-icons/react";
 import { CID } from "@/utils/helpers";
 import { useEASync } from "@/hooks/useEASync";
 
-// --- Interfaces para Tipagem ---
+// --- Interfaces para Tipagem Atualizadas (English/CamelCase) ---
 
-interface DetalheOrcamento {
+interface DetailContent {
   tipo: "brk" | "tagc" | "t6" | "ul" | string;
-  conteudo: any; // Pode ser string ou string[] para 'ul'
+  conteudo: any;
 }
 
-interface ItemOrcamento {
+interface ItemBudget {
   subtitulo: string;
-  detalhes: DetalheOrcamento[];
+  detalhes: DetailContent[];
 }
 
-interface ServicoOrcamento {
+interface ServiceBudget {
   titulo: string;
-  itens: ItemOrcamento[];
+  itens: ItemBudget[];
 }
 
-interface OrcamentoData {
+interface BudgetData {
   id: string | number;
-  docTitle: {
-    emissao: string;
-    validade: string;
-    subtitle: string;
-    text: string;
+  // Propriedades Novas
+  clientName?: string;
+  documentTitle?: string;
+  issueDate?: string;
+  expiration?: string;
+  subtitle?: string;
+  services?: ServiceBudget[];
+  clientAddress?: {
+    street?: string;
+    number?: string;
+    neighborhood?: string;
+    city?: string;
   };
-  cliente: {
+  // Propriedades Antigas (para compatibilidade)
+  cliente?: {
     name: string;
     rua?: string;
     num?: string;
     bairro?: string;
     cidade?: string;
   };
-  servicos: ServicoOrcamento[];
+  docTitle?: {
+    emissao: string;
+    validade: string;
+    subtitle: string;
+    text: string;
+  };
+  servicos?: ServiceBudget[];
 }
 
 export default function Budget() {
   const params = useParams();
   const id = params?.id;
   const router = useRouter();
-  const { data: orcamentos } = useEASync<OrcamentoData>("orcamentos");
+  const { data: orcamentos } = useEASync<BudgetData>("orcamentos");
   const budgetRef = useRef<HTMLDivElement | null>(null);
 
   const searchParams = useSearchParams();
   const isPrintMode = searchParams.get("print") === "true";
 
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [data, setData] = useState<OrcamentoData | null>(null);
+  const [data, setData] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Normalização de dados para exibição
+  const displayData = data
+    ? {
+        clientName:
+          data.clientName ||
+          data.cliente?.name ||
+          (data as any)["Nome Cliente"] ||
+          "Cliente",
+        documentTitle:
+          data.documentTitle ||
+          data.docTitle?.text ||
+          (data as any)["Título Doc"] ||
+          "Orçamento",
+        issueDate:
+          data.issueDate ||
+          data.docTitle?.emissao ||
+          (data as any)["Emissão"] ||
+          "",
+        expiration:
+          data.expiration ||
+          data.docTitle?.validade ||
+          (data as any)["Validade"] ||
+          "",
+        subtitle:
+          data.subtitle ||
+          data.docTitle?.subtitle ||
+          (data as any)["Subtítulo"] ||
+          "PROPOSTA DE ORÇAMENTO",
+
+        // --- LÓGICA ROBUSTA PARA OS SERVIÇOS ---
+        services: (() => {
+          const raw =
+            data.services || data.servicos || (data as any)["Serviços JSON"];
+          if (!raw) return [];
+          // Se for string (formato antigo do GS), faz o parse. Se já for objeto, usa direto.
+          if (typeof raw === "string") {
+            try {
+              return JSON.parse(raw);
+            } catch (e) {
+              console.error(
+                "Erro ao converter serviços de string para JSON",
+                e,
+              );
+              return [];
+            }
+          }
+          return Array.isArray(raw) ? raw : [];
+        })(),
+
+        address: {
+          street:
+            data.clientAddress?.street ||
+            data.cliente?.rua ||
+            (data as any)["Rua"] ||
+            "",
+          number:
+            data.clientAddress?.number ||
+            data.cliente?.num ||
+            (data as any)["Número"] ||
+            "",
+          neighborhood:
+            data.clientAddress?.neighborhood ||
+            data.cliente?.bairro ||
+            (data as any)["Bairro"] ||
+            "",
+          city:
+            data.clientAddress?.city ||
+            data.cliente?.cidade ||
+            (data as any)["Cidade/UF"] ||
+            "",
+        },
+      }
+    : null;
 
   const getCleanDate = (date: string) =>
     date?.includes("T")
@@ -86,11 +174,6 @@ export default function Budget() {
       label: "Compartilhar",
       action: () => setIsShareOpen(true),
     },
-    // {
-    //   icon: <FilePdf size={28} weight="duotone" />,
-    //   label: "Imprimir PDF",
-    //   action: () => window.print(),
-    // },
   ];
 
   useEffect(() => {
@@ -107,16 +190,14 @@ export default function Budget() {
 
       if (found) {
         setData(found);
-        document.title = `Orçamento_${found.cliente.name}`;
       }
-
       setLoading(false);
-    }, 500); // 🔥 seu delay de .5 segundo
+    }, 500);
 
     return () => clearTimeout(minimumTimer);
   }, [orcamentos, id]);
 
-  const renderMarkdown = (itens: ItemOrcamento[]) => {
+  const renderMarkdown = (itens: ItemBudget[]) => {
     return itens.map((item, idx) => {
       const markdownText = item.detalhes
         .map((d) => {
@@ -156,7 +237,7 @@ export default function Budget() {
     );
   }
 
-  if (!data) {
+  if (!data || !displayData) {
     return (
       <>
         <AppBar backAction={() => router.back()} />
@@ -164,6 +245,22 @@ export default function Budget() {
       </>
     );
   }
+
+  const address_v1 = `${displayData.address.street ? displayData.address.street + ", " : ""}${
+    displayData.address.number ? displayData.address.number + " - " : ""
+  }${
+    displayData.address.neighborhood
+      ? displayData.address.neighborhood + " - "
+      : ""
+  }${displayData.address.city}`;
+
+  const address_v2 = `${displayData.address.street ? displayData.address.street + ", " : ""}${
+    displayData.address.number ? displayData.address.number + " - " : ""
+  }${
+    displayData.address.neighborhood
+      ? displayData.address.neighborhood + " - "
+      : ""
+  }${displayData.address.city}`;
 
   return (
     <>
@@ -174,8 +271,8 @@ export default function Budget() {
         onOpenChange={setIsShareOpen}
         budgetRef={budgetRef}
         data={data}
-        clientName={data?.cliente?.name}
-        budgetTitle={data?.docTitle?.text}
+        clientName={displayData.clientName}
+        budgetTitle={displayData.documentTitle}
       />
 
       <View tag="pageContainer">
@@ -186,12 +283,12 @@ export default function Budget() {
               <span>
                 <b>Data de Emissão:</b>
                 <View tag="issue-date">
-                  {getCleanDate(data.docTitle.emissao)}
+                  {getCleanDate(displayData.issueDate)}
                 </View>
               </span>
               <span>
                 <b>Validade da Proposta:</b>{" "}
-                <View tag="t">{data.docTitle.validade}</View>
+                <View tag="t">{displayData.expiration}</View>
               </span>
             </View>
           </View>
@@ -205,10 +302,10 @@ export default function Budget() {
                   shadow="var(--sv-sodalita, #00559c)"
                   font='font-family: "inter", "Roboto", sans-serif'
                 >
-                  {data.docTitle.subtitle}
+                  {displayData.subtitle}
                 </Text>
               </View>
-              <View tag="doc-title_title">{data.docTitle.text}</View>
+              <View tag="doc-title_title">{displayData.documentTitle}</View>
             </View>
           </View>
 
@@ -223,15 +320,19 @@ export default function Budget() {
                 <View tag="card">
                   <View tag="ui">
                     <View tag="t">
-                      <b>Nome:</b> {data.cliente.name}
+                      <b>Nome:</b> {displayData.clientName}
                     </View>
                     <View tag="t">
                       <b>Endereço:</b>{" "}
-                      {`${data.cliente.rua ? data.cliente.rua + ", " : ""}${
-                        data.cliente.num ? data.cliente.num + " - " : ""
+                      {`${displayData.address.street ? displayData.address.street + ", " : ""}${
+                        displayData.address.number
+                          ? displayData.address.number + " - "
+                          : ""
                       }${
-                        data.cliente.bairro ? data.cliente.bairro + " - " : ""
-                      }${data.cliente?.cidade || ""}`}
+                        displayData.address.neighborhood
+                          ? displayData.address.neighborhood + " - "
+                          : ""
+                      }${displayData.address.city}`}
                     </View>
                   </View>
                 </View>
@@ -240,7 +341,7 @@ export default function Budget() {
           </View>
 
           <View tag="budget-body">
-            {data.servicos.map((servico, index) => (
+            {displayData.services.map((servico: any, index: number) => (
               <View key={index} tag="clause">
                 <View tag="ui">
                   <View tag="clause-header">
@@ -256,7 +357,6 @@ export default function Budget() {
                 </View>
               </View>
             ))}
-
             <FooterContent />
           </View>
         </View>

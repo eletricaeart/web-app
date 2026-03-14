@@ -13,15 +13,12 @@ import {
   FilePlus,
   ArrowsCounterClockwise,
   Trash,
-  CloudCheck,
-  ArrowsClockwise,
   DotsThreeOutlineVertical,
   PencilSimple,
-  Copy,
   ShareNetwork,
 } from "@phosphor-icons/react";
 import View from "@/components/layout/View";
-import { CID, getCleanDate } from "@/utils/helpers";
+import { CID } from "@/utils/helpers";
 
 /* shadcn components */
 import {
@@ -31,7 +28,7 @@ import {
 } from "@/components/ui/popover";
 import Page from "@/components/layout/Page";
 
-// --- Interfaces para Tipagem ---
+// --- Interfaces para Tipagem Atualizadas ---
 
 interface ClienteCache {
   id: string | number;
@@ -41,18 +38,16 @@ interface ClienteCache {
 
 interface Orcamento {
   id: string | number;
-  cliente?: {
-    // Transformado em opcional
-    name?: string;
-  };
-  docTitle?: {
-    // Transformado em opcional
-    text?: string;
-    emissao?: string;
-    validade?: string;
-    subtitle?: string;
-  };
-  servicos?: any[];
+  // Nomes novos (camelCase)
+  clientName?: string;
+  documentTitle?: string;
+  issueDate?: string;
+  // Fallbacks para compatibilidade com dados antigos
+  "Nome Cliente"?: string;
+  "Título Doc"?: string;
+  cliente?: { name: string };
+  docTitle?: { text: string; emissao: string };
+  services?: any[];
 }
 
 interface ShareState {
@@ -77,24 +72,27 @@ export default function Budgets() {
 
   const { data: clientes } = useEASync<ClienteCache>("clientes");
 
-  const handleOpenShare = (orc: Orcamento) => {
-    setShareData({ open: true, orc });
-  };
+  // Helper para normalizar o nome do cliente na listagem (Novo vs Antigo)
+  const getClientName = (orc: Orcamento) =>
+    orc.clientName ||
+    orc.cliente?.name ||
+    orc["Nome Cliente"] ||
+    "Cliente não identificado";
 
-  const AVATARS = {
-    masc: "/pix/avatar/default_avatar_masc.webp",
-    fem: "/pix/avatar/default_avatar_fem.webp",
-  };
+  // Helper para normalizar o título do documento
+  const getDocTitle = (orc: Orcamento) =>
+    orc.documentTitle ||
+    orc.docTitle?.text ||
+    orc["Título Doc"] ||
+    "Sem título";
 
   const filteredOrcamentos = orcamentos
     .filter((orc) => {
-      const clientName = orc?.cliente?.name || "";
-      const docTitle = orc?.docTitle?.text || "";
+      const name = getClientName(orc).toLowerCase();
+      const title = getDocTitle(orc).toLowerCase();
+      const term = searchTerm.toLowerCase();
 
-      return (
-        clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        docTitle.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      return name.includes(term) || title.includes(term);
     })
     .reverse();
 
@@ -122,16 +120,10 @@ export default function Budgets() {
     router.push(`/orcamentos/novo?natabiruta=${CID()}&id=${orc.id}`);
   };
 
-  const handleDuplicate = async (orc: Orcamento) => {
-    const duplicated = { ...orc, id: "EA-" + Date.now() };
-    await saveOrcamento(duplicated, "create");
-  };
-
   return (
     <>
       <AppBar title="Orçamentos" />
 
-      {/* Adicionando a SearchBar logo abaixo da AppBar */}
       <SearchBar
         placeholder="Buscar por cliente ou título..."
         onSearch={(val: string) => setSearchTerm(val)}
@@ -144,12 +136,11 @@ export default function Budgets() {
           onOpenChange={(open: boolean) => setShareData({ ...shareData, open })}
           budgetRef={hiddenBudgetRef}
           data={shareData.orc}
-          clientName={shareData.orc?.cliente?.name || "Cliente"}
-          budgetTitle={shareData.orc?.docTitle?.text || "Orçamento"}
+          clientName={getClientName(shareData.orc)}
+          budgetTitle={getDocTitle(shareData.orc)}
         />
       )}
 
-      {/* Container invisível para a Ref do ShareMenu */}
       <div
         ref={hiddenBudgetRef}
         style={{ position: "absolute", left: "-9999px", top: 0 }}
@@ -163,13 +154,14 @@ export default function Budgets() {
           {filteredOrcamentos.length > 0 ? (
             filteredOrcamentos.map((orc) => {
               const isTemp = String(orc.id).startsWith("TEMP_");
+              const currentClientName = getClientName(orc);
 
-              // Buscamos os dados completos do cliente no cache de clientes
-              const clientData = clientes?.find(
-                (c) =>
-                  String(c?.name || "").toLowerCase() ===
-                  String(orc?.cliente?.name || "").toLowerCase(),
-              );
+              // Busca no cache de clientes para o avatar
+              const clientData = clientes?.find((c) => {
+                // Verificamos se 'c' existe e se 'c.name' existe antes de dar toLowerCase()
+                const cName = c?.name || (c as any)?.["Nome"] || "";
+                return cName.toLowerCase() === currentClientName.toLowerCase();
+              });
 
               return (
                 <div
@@ -177,9 +169,17 @@ export default function Budgets() {
                   className="client-card-wrapper"
                   style={{ position: "relative", padding: "0 1rem" }}
                 >
-                  {/* Aplicando a mesma classe de círculo e estilo de imagem */}
                   <BudgetCard
-                    orc={orc}
+                    orc={{
+                      id: orc.id,
+                      clientName: currentClientName,
+                      documentTitle: getDocTitle(orc),
+                      issueDate:
+                        orc.issueDate ||
+                        orc.docTitle?.emissao ||
+                        (orc as any)["Emissão"] ||
+                        new Date().toISOString(),
+                    }}
                     clientData={clientData}
                     onClick={() => router.push(`/orcamentos/${orc.id}`)}
                     options={
@@ -201,18 +201,6 @@ export default function Budgets() {
                             align="end"
                           >
                             <View tag="budget-vmenu" className="flex flex-col">
-                              {/* <View */}
-                              {/*   tag="budget-vmenu-btn" */}
-                              {/*   onClick={() => handleOpenShare(orc)} */}
-                              {/*   style={menuItemStyle} */}
-                              {/* > */}
-                              {/*   <ShareNetwork */}
-                              {/*     size={18} */}
-                              {/*     color="#29f" */}
-                              {/*     weight="duotone" */}
-                              {/*   />{" "} */}
-                              {/*   Compartilhar */}
-                              {/* </View> */}
                               <View
                                 onClick={() => handleEdit(orc)}
                                 style={menuItemStyle}
@@ -220,15 +208,9 @@ export default function Budgets() {
                                 <PencilSimple size={18} weight="duotone" />{" "}
                                 Editar
                               </View>
-                              {/* <View */}
-                              {/*   onClick={() => handleDuplicate(orc)} */}
-                              {/*   style={menuItemStyle} */}
-                              {/* > */}
-                              {/*   <Copy size={18} weight="duotone" /> Duplicar */}
-                              {/* </View> */}
                               <View
                                 onClick={() =>
-                                  handleDelete(orc.id, orc.cliente.name)
+                                  handleDelete(orc.id, currentClientName)
                                 }
                                 style={{
                                   ...menuItemStyle,
@@ -257,7 +239,6 @@ export default function Budgets() {
       </Page>
 
       <FAB actions={fabConfig} hasBottomNav={true} />
-      {/* <BottomNavbar /> */}
     </>
   );
 }
