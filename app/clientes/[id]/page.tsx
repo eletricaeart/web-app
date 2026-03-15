@@ -96,13 +96,6 @@ export default function ClientePerfil() {
     confirmDelete,
   } = useDeleteEntity(saveClient, () => router.replace("/clientes"));
 
-  // const handleDelete = async () => {
-  //   if (confirm("Excluir este cliente permanentemente?")) {
-  //     await saveClient({ id: client.id }, "delete");
-  //     router.replace("/clientes");
-  //   }
-  // };
-
   useEffect(() => {
     if (clientId && clients.length > 0) {
       const found = clients.find((c) => String(c.id) === String(clientId));

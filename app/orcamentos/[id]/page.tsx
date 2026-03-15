@@ -17,8 +17,6 @@ import { useEASync } from "@/hooks/useEASync";
 import { useDeleteEntity } from "@/hooks/useDeleteEntity"; // Importe o hook
 import DeleteBudgetModal from "../components/DeleteBudgetModal"; // Importe o modal
 import { Popover, PopoverContent } from "@/components/ui/popover";
-import { futimes } from "node:fs";
-import { toUpperCase } from "zod";
 
 // --- Interfaces para Tipagem Atualizadas (English/CamelCase) ---
 
@@ -198,7 +196,7 @@ export default function Budget() {
       icon: <Trash size={28} weight="duotone" />,
       label: "Excluir",
       action: () => {
-        if (displayData) {
+        if (data && displayData) {
           handleDeleteRequest(data.id, displayData.documentTitle);
         }
       },
