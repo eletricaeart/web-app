@@ -40,10 +40,11 @@ export default function NotasLista() {
   const { data: notes } = useEASync<NotaTecnica>("notas");
 
   const [term, setTerm] = useState("");
-  const { searchTerm, setSearchTerm, filteredData } = useSearch(notes, [
-    "title",
-    "clienteNome",
-  ]);
+  const { searchTerm, setSearchTerm, filteredData } = useSearch(
+    notes,
+    ["title", "clienteNome"],
+    "notas",
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid"); // Padrão Grid
 
   const filtered = notes.filter(
