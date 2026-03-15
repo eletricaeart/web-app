@@ -143,25 +143,6 @@ export default function Budgets() {
     <>
       <AppBar title="Orçamentos" />
 
-      <EntityToolbar
-        placeholder="Buscar orçamento..."
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        showAction={true}
-        actionIcon={
-          <EntitySortFilter
-            sortOptions={budgetSort}
-            currentSort={sort}
-            onSortChange={(val) => updatePrefs(val, filter)}
-            filterLabel="Status"
-            filterOptions={[
-              { label: "Todos", value: "all" },
-              { label: "Vencidos", value: "expired" },
-            ]}
-          />
-        }
-      />
-
       {shareData.orc && (
         <BudgetShareMenu
           open={shareData.open}
@@ -173,12 +154,32 @@ export default function Budgets() {
         />
       )}
 
-      <div
+      {/* <div
         ref={hiddenBudgetRef}
         style={{ position: "absolute", left: "-9999px", top: 0 }}
-      />
+      /> */}
 
       <Page tag="budgets" bg="#f5f5f5">
+        <header>
+          <EntityToolbar
+            placeholder="Buscar orçamento..."
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            showAction={true}
+            actionIcon={
+              <EntitySortFilter
+                sortOptions={budgetSort}
+                currentSort={sort}
+                onSortChange={(val) => updatePrefs(val, filter)}
+                filterLabel="Status"
+                filterOptions={[
+                  { label: "Todos", value: "all" },
+                  { label: "Vencidos", value: "expired" },
+                ]}
+              />
+            }
+          />
+        </header>
         <main
           className="flex flex-col px-0 py-4 gap-2"
           style={{ paddingBottom: "190px" }}

@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
     ],
     domains: ["res.cloudinary.com"],
   },
+  devIndicators: false,
+  /* devIndicators: {
+    appIsrStatus: false, // Remove a bolinha de status (Static/Dynamic)
+    buildActivity: false, // Remove o indicador de compilação
+  }, */
 };
 
 export default nextConfig;

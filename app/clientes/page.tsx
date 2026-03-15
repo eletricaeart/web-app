@@ -151,7 +151,7 @@ export default function ClientesLista() {
           />
         </header>
 
-        <View tag="clients-container" className="flex flex-col gap-2">
+        <View tag="clients-container" className="flex flex-col gap-2 py-4">
           {filteredData.map((c) => {
             const currentName = getClientName(c);
 

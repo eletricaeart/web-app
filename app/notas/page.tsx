@@ -56,8 +56,8 @@ export default function NotasLista() {
     <>
       <AppBar title="Notas Técnicas" backAction={() => router.push("/")} />
 
-      <div className="flex items-center bg-[#f5f5f5] pr-4">
-        <div className="flex-1">
+      <Page tag="notes-page" hasBottomNavBar bg="#f5f5f5">
+        <header>
           <EntityToolbar
             placeholder="Buscar notas..."
             searchValue={searchTerm}
@@ -74,11 +74,8 @@ export default function NotasLista() {
               setViewMode((prev) => (prev === "grid" ? "list" : "grid"))
             }
           />
-        </div>
-      </div>
-
-      <Page tag="notes-page" hasBottomNavBar bg="#f5f5f5">
-        <main className="p-6 pb-24 bg-slate-50 bg-[#f5f5f5_!important] grid grid-cols-1 gap-4">
+        </header>
+        <main className="p-4 pb-24 bg-slate-50 bg-[#f5f5f5_!important] grid grid-cols-1 gap-4">
           {/* <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}> */}
           <div
             className={
