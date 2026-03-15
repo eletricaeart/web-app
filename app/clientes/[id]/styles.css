@@ -7,11 +7,11 @@ clients-list {
   padding: 0 1rem 180px;
 }
 .search-bar-container {
-  margin-bottom: 1rem;
+  /* margin-bottom: 1rem; */
   padding: 1rem;
   position: sticky;
   top: 72px;
-  background: #f0f2f5;
+  /* background: #f0f2f5; */
   z-index: 5;
 }
 add-client-page client-card {

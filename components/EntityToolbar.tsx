@@ -25,40 +25,38 @@ export default function EntityToolbar({
   showAction = false,
 }: EntityToolbarProps) {
   return (
-    <View
-      tag="toolbar-container"
-      className="flex items-center bg-[#f5f5f5] pr-4"
-    >
-      <div className="flex-1">
-        <View tag="toolbar" className="search-bar-container">
-          <div className="ifood-search-wrapper">
-            <MagnifyingGlass
-              size={20}
-              weight="duotone"
-              className="ifood-search-icon"
-            />
-            <input
-              type="text"
-              className="search-input"
-              placeholder={placeholder}
-              value={searchValue}
-              onChange={(e) => onSearchChange(e.target.value)}
-              spellCheck="false"
-              autoComplete="off"
-            />
-          </div>
+    <View tag="toolbar" className="flex items-center bg-[#f5f5f5] flex-1">
+      <View
+        tag="toolbar-contents"
+        className="sticky top-0 z-[100] flex flex-1 items-center justify-center gap-3 px-[1rem] py-[12px]"
+      >
+        <View tag="searchbar" className="ifood-search-wrapper shadow-sm">
+          <MagnifyingGlass
+            size={20}
+            weight="duotone"
+            className="ifood-search-icon"
+          />
+          <input
+            type="text"
+            className="search-input"
+            placeholder={placeholder}
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
+            spellCheck="false"
+            autoComplete="off"
+          />
         </View>
-      </div>
 
-      {showAction && (
-        <View
-          tag="btn-action"
-          onClick={onActionClick}
-          className="flex items-center justify-center p-3 bg-white text-slate-600 rounded-2xl shadow-sm active:scale-90 transition-transform"
-        >
-          {actionIcon}
-        </View>
-      )}
+        {showAction && (
+          <View
+            tag="btn-toolbar"
+            onClick={onActionClick}
+            className="flex items-center justify-center text-slate-600 rounded-2xl shadow-sm active:scale-90 transition-transform"
+          >
+            {actionIcon}
+          </View>
+        )}
+      </View>
     </View>
   );
 }

@@ -129,26 +129,28 @@ export default function ClientesLista() {
     <>
       <AppBar title="Clientes" />
 
-      <EntityToolbar
-        placeholder="Buscar cliente..."
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        showAction={true}
-        actionIcon={
-          <EntitySortFilter
-            sortOptions={sortOptions}
-            currentSort={sort}
-            onSortChange={(val) => updatePrefs(val, filter)}
-          />
-        }
-      />
-
       <Page
         tag="clients-list"
         hasBottomNavBar={true}
         bg="#f5f5f5"
         pd="0 0 90px 0"
       >
+        <header>
+          <EntityToolbar
+            placeholder="Buscar cliente..."
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            showAction={true}
+            actionIcon={
+              <EntitySortFilter
+                sortOptions={sortOptions}
+                currentSort={sort}
+                onSortChange={(val) => updatePrefs(val, filter)}
+              />
+            }
+          />
+        </header>
+
         <View tag="clients-container" className="flex flex-col gap-2">
           {filteredData.map((c) => {
             const currentName = getClientName(c);
