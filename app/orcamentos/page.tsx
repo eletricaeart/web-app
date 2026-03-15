@@ -8,7 +8,8 @@ import FAB from "@/components/ui/FAB";
 import AppBar from "@/components/layout/AppBar";
 import BudgetShareMenu from "@/components/orcamentos/BudgetShareMenu";
 import BudgetCard from "@/components/layout/BudgetCard";
-import SearchBar from "@/components/SearchBar";
+import EntityToolbar from "@/components/EntityToolbar";
+import { useSearch } from "@/hooks/useSearch";
 import {
   FilePlus,
   ArrowsCounterClockwise,
@@ -29,6 +30,7 @@ import {
 import Page from "@/components/layout/Page";
 import DeleteBudgetModal from "./components/DeleteBudgetModal";
 import { useDeleteEntity } from "@/hooks/useDeleteEntity";
+import EntitySortFilter from "@/components/EntitySortFilter";
 
 // --- Interfaces para Tipagem Atualizadas ---
 
@@ -64,13 +66,21 @@ export default function Budgets() {
   });
   const hiddenBudgetRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     data: orcamentos,
     save: saveOrcamento,
     pull: syncOrcamentos,
   } = useEASync<Orcamento>("orcamentos");
+
+  // searchbar
+  const budgetSort = [
+    { label: "Data de Emissão", value: "recent" },
+    { label: "Título", value: "name" },
+  ];
+
+  const { searchTerm, setSearchTerm, sort, filter, updatePrefs, filteredData } =
+    useSearch(orcamentos, ["clientName", "documentTitle", "Nome Cliente"]);
 
   // INTEGRANDO O HOOK DE DELEÇÃO
   // não preciso de redirect aqui (onSuccess vazio ou para dar um toast)
@@ -121,13 +131,6 @@ export default function Budgets() {
     },
   ];
 
-  const handleDelete = async (id: string | number, name: string) => {
-    const confirm = window.confirm(`Excluir orçamento de ${name}?`);
-    if (confirm) {
-      await saveOrcamento({ id }, "delete");
-    }
-  };
-
   const handleEdit = (orc: Orcamento) => {
     router.push(`/orcamentos/novo?natabiruta=${CID()}&id=${orc.id}`);
   };
@@ -136,10 +139,23 @@ export default function Budgets() {
     <>
       <AppBar title="Orçamentos" />
 
-      <SearchBar
-        placeholder="Buscar por cliente ou título..."
-        onSearch={(val: string) => setSearchTerm(val)}
-        value={searchTerm}
+      <EntityToolbar
+        placeholder="Buscar orçamento..."
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        showAction={true}
+        actionIcon={
+          <EntitySortFilter
+            sortOptions={budgetSort}
+            currentSort={sort}
+            onSortChange={(val) => updatePrefs(val, filter)}
+            filterLabel="Status"
+            filterOptions={[
+              { label: "Todos", value: "all" },
+              { label: "Vencidos", value: "expired" },
+            ]}
+          />
+        }
       />
 
       {shareData.orc && (
@@ -164,7 +180,7 @@ export default function Budgets() {
           style={{ paddingBottom: "190px" }}
         >
           {filteredOrcamentos.length > 0 ? (
-            filteredOrcamentos.map((orc) => {
+            filteredData.map((orc) => {
               const isTemp = String(orc.id).startsWith("TEMP_");
               const currentClientName = getClientName(orc);
               const currentTitle = getDocTitle(orc);

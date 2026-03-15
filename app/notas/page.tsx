@@ -8,6 +8,8 @@ import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
 import SearchBar from "@/components/SearchBar";
 import FAB from "@/components/ui/FAB";
+import EntityToolbar from "@/components/EntityToolbar";
+import { useSearch } from "@/hooks/useSearch";
 import {
   Notebook,
   Plus,
@@ -38,6 +40,10 @@ export default function NotasLista() {
   const { data: notes } = useEASync<NotaTecnica>("notas");
 
   const [term, setTerm] = useState("");
+  const { searchTerm, setSearchTerm, filteredData } = useSearch(notes, [
+    "title",
+    "clienteNome",
+  ]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid"); // Padrão Grid
 
   const filtered = notes.filter(
@@ -52,20 +58,23 @@ export default function NotasLista() {
 
       <div className="flex items-center bg-[#f5f5f5] pr-4">
         <div className="flex-1">
-          <SearchBar
+          <EntityToolbar
             placeholder="Buscar notas..."
-            onSearch={(val: string) => setTerm(val)}
-            value={term}
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            showAction={true}
+            actionIcon={
+              viewMode === "grid" ? (
+                <Rows size={20} />
+              ) : (
+                <SquaresFour size={20} />
+              )
+            }
+            onActionClick={() =>
+              setViewMode((prev) => (prev === "grid" ? "list" : "grid"))
+            }
           />
         </div>
-
-        <View
-          tag="btn-view-toggle"
-          className="btn-view-toggle"
-          onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-        >
-          {viewMode === "grid" ? <Rows size={20} /> : <SquaresFour size={20} />}
-        </View>
       </div>
 
       <Page tag="notes-page" hasBottomNavBar bg="#f5f5f5">
@@ -78,7 +87,7 @@ export default function NotasLista() {
                 : "notes-list gap-2"
             }
           >
-            {filtered.map((nota) => {
+            {filteredData.map((nota) => {
               const isImportant = nota.important === true;
 
               // ESTILO IMPORTANTE (ESTILO QUICKACTION DA HOME)

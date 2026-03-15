@@ -5,11 +5,8 @@
 - [ ] preencher com mais detalhes a pagina de perfil do cliente
 - [ ] corrigir a sombra na parte de cima do card principal
 - [ ] testar e implementar as funções de criar novos orçamentos e notas pela pagina de perfil do cliente
-- [ ] adicionar um modo de sort na listagem
 
 ### orçamentos
-
-- [ ] adicionar um modo de sort na listagem
 
 ### notas
 

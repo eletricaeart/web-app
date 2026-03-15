@@ -7,7 +7,9 @@ import { useEASync } from "@/hooks/useEASync";
 import FAB from "@/components/ui/FAB";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
-import SearchBar from "@/components/SearchBar";
+// import SearchBar from "@/components/SearchBar";
+import EntityToolbar from "@/components/EntityToolbar";
+import { useSearch } from "@/hooks/useSearch";
 import ClientCard from "@/components/layout/ClientCard";
 import {
   ArrowsClockwise,
@@ -42,6 +44,7 @@ import Page from "@/components/layout/Page";
 import ConfirmModal from "@/components/ModalConfirm";
 import { useDeleteEntity } from "@/hooks/useDeleteEntity";
 import DeleteClientModal from "./components/DeleteClientModal";
+import EntitySortFilter from "@/components/EntitySortFilter";
 
 // Interface alinhada com as novas definições (English/CamelCase)
 interface Cliente {
@@ -70,6 +73,16 @@ export default function ClientesLista() {
     pull: syncClients,
     save: saveClient,
   } = useEASync<Cliente>("clientes");
+
+  // USANDO O HOOK da searchbar
+  const sortOptions = [
+    { label: "Mais recentes", value: "recent" },
+    { label: "Nome (A-Z)", value: "name" },
+    { label: "Mais antigos", value: "oldest" },
+  ];
+
+  const { searchTerm, setSearchTerm, sort, filter, updatePrefs, filteredData } =
+    useSearch(allClients, ["name", "Nome Completo", "document"]);
 
   const [term, setTerm] = useState("");
 
@@ -129,10 +142,18 @@ export default function ClientesLista() {
     <>
       <AppBar title="Clientes" />
 
-      <SearchBar
-        placeholder="Buscar cliente por nome ou documento..."
-        onSearch={(val: string) => setTerm(val)}
-        value={term}
+      <EntityToolbar
+        placeholder="Buscar cliente..."
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        showAction={true}
+        actionIcon={
+          <EntitySortFilter
+            sortOptions={sortOptions}
+            currentSort={sort}
+            onSortChange={(val) => updatePrefs(val, filter)}
+          />
+        }
       />
 
       <Page
@@ -142,7 +163,7 @@ export default function ClientesLista() {
         pd="0 0 90px 0"
       >
         <View tag="clients-container" className="flex flex-col gap-2">
-          {filtered.map((c) => {
+          {filteredData.map((c) => {
             const currentName = getClientName(c);
 
             return (
@@ -236,20 +257,6 @@ export default function ClientesLista() {
         client={itemToDelete}
         onConfirm={confirmDelete}
       />
-      {/* <ConfirmModal
-        isOpen={isDelOpen}
-        onOpenChange={setIsDelOpen}
-        onConfirm={confirmDelete}
-        title="Excluir Registro"
-        description={
-          <>
-            Você está prestes a excluir <b>{clientToDelete?.name}</b>. Esta ação
-            é permanente.
-          </>
-        }
-        confirmText="Sim, Excluir"
-        variant="danger"
-      /> */}
     </>
   );
 }
