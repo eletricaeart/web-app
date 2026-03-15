@@ -26,22 +26,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-/* AlertDialog Shadcn */
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
 /* styles */
 import "./Clientes.css";
 import Page from "@/components/layout/Page";
-import ConfirmModal from "@/components/ModalConfirm";
 import { useDeleteEntity } from "@/hooks/useDeleteEntity";
 import DeleteClientModal from "./components/DeleteClientModal";
 import EntitySortFilter from "@/components/EntitySortFilter";
@@ -82,7 +69,7 @@ export default function ClientesLista() {
   ];
 
   const { searchTerm, setSearchTerm, sort, filter, updatePrefs, filteredData } =
-    useSearch(allClients, ["name", "Nome Completo", "document"]);
+    useSearch(allClients, ["name", "Nome Completo", "document"], "clientes");
 
   const [term, setTerm] = useState("");
 

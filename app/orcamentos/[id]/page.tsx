@@ -17,6 +17,8 @@ import { useEASync } from "@/hooks/useEASync";
 import { useDeleteEntity } from "@/hooks/useDeleteEntity"; // Importe o hook
 import DeleteBudgetModal from "../components/DeleteBudgetModal"; // Importe o modal
 import { Popover, PopoverContent } from "@/components/ui/popover";
+import { futimes } from "node:fs";
+import { toUpperCase } from "zod";
 
 // --- Interfaces para Tipagem Atualizadas (English/CamelCase) ---
 
@@ -145,21 +147,25 @@ export default function Budget() {
           street:
             data.clientAddress?.street ||
             data.cliente?.rua ||
+            (data as any)["street"] ||
             (data as any)["Rua"] ||
             "",
           number:
             data.clientAddress?.number ||
             data.cliente?.num ||
+            (data as any)["number"] ||
             (data as any)["Número"] ||
             "",
           neighborhood:
             data.clientAddress?.neighborhood ||
             data.cliente?.bairro ||
+            (data as any)["neighborhood"] ||
             (data as any)["Bairro"] ||
             "",
           city:
             data.clientAddress?.city ||
             data.cliente?.cidade ||
+            (data as any)["city"] ||
             (data as any)["Cidade/UF"] ||
             "",
         },
@@ -294,21 +300,16 @@ export default function Budget() {
     );
   }
 
-  const address_v1 = `${displayData.address.street ? displayData.address.street + ", " : ""}${
-    displayData.address.number ? displayData.address.number + " - " : ""
-  }${
-    displayData.address.neighborhood
-      ? displayData.address.neighborhood + " - "
-      : ""
-  }${displayData.address.city}`;
-
-  const address_v2 = `${displayData.address.street ? displayData.address.street + ", " : ""}${
-    displayData.address.number ? displayData.address.number + " - " : ""
-  }${
-    displayData.address.neighborhood
-      ? displayData.address.neighborhood + " - "
-      : ""
-  }${displayData.address.city}`;
+  const fullAddress = displayData
+    ? [
+        displayData.address.street,
+        displayData.address.number ? `nº ${displayData.address.number}` : null,
+        displayData.address.neighborhood,
+        displayData.address.city,
+      ]
+        .filter(Boolean)
+        .join(", ")
+    : "Endereço não informado";
 
   return (
     <>
@@ -371,16 +372,7 @@ export default function Budget() {
                       <b>Nome:</b> {displayData.clientName}
                     </View>
                     <View tag="t">
-                      <b>Endereço:</b>{" "}
-                      {`${displayData.address.street ? displayData.address.street + ", " : ""}${
-                        displayData.address.number
-                          ? displayData.address.number + " - "
-                          : ""
-                      }${
-                        displayData.address.neighborhood
-                          ? displayData.address.neighborhood + " - "
-                          : ""
-                      }${displayData.address.city}`}
+                      <b>Endereço:</b> {fullAddress}
                     </View>
                   </View>
                 </View>

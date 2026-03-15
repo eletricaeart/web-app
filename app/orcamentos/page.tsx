@@ -80,7 +80,11 @@ export default function Budgets() {
   ];
 
   const { searchTerm, setSearchTerm, sort, filter, updatePrefs, filteredData } =
-    useSearch(orcamentos, ["clientName", "documentTitle", "Nome Cliente"]);
+    useSearch(
+      orcamentos,
+      ["clientName", "documentTitle", "Nome Cliente"],
+      "orcamentos",
+    );
 
   // INTEGRANDO O HOOK DE DELEÇÃO
   // não preciso de redirect aqui (onSuccess vazio ou para dar um toast)

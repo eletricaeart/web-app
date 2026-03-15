@@ -12,19 +12,16 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
-import { UserPlus, MagnifyingGlass } from "@phosphor-icons/react";
+import { UserPlus, MagnifyingGlass, MapPin } from "@phosphor-icons/react";
 
-/**
- * Interface Atualizada para Nomenclatura em Inglês
- */
 interface ClientData {
   name: string;
-  zip?: string; // CEP
-  street?: string; // Rua
-  number?: string; // Num
-  neighborhood?: string; // Bairro
-  city?: string; // Cidade/UF
-  complement?: string; // Complemento
+  zip?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  complement?: string;
   obs?: string;
   [key: string]: any;
 }
@@ -48,16 +45,27 @@ export default function ClientForm({
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Filtro de busca para o Drawer (Suporte a name ou Nome Completo)
+  // Novo estado para controlar a exibição das sugestões rápidas
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Filtro para o Drawer E para o Autocomplete rápido
   const filteredClients = useMemo(() => {
+    if (!clientData.name && !searchTerm) return [];
+
+    // Se estivermos no modo autocomplete (digitando no input principal)
+    const term = (
+      isDrawerOpen ? searchTerm : clientData.name || ""
+    ).toLowerCase();
+
+    if (!isDrawerOpen && term.length < 2) return []; // Só mostra sugestão após 2 letras
+
     return clientsCache.filter((c) => {
-      const name = c.name || c["Nome Completo"] || "";
-      return name.toLowerCase().includes(searchTerm.toLowerCase());
+      const name = (c.name || c["Nome Completo"] || "").toLowerCase();
+      return name.includes(term);
     });
-  }, [searchTerm, clientsCache]);
+  }, [searchTerm, clientsCache, clientData.name, isDrawerOpen]);
 
   const handleSelectClient = (client: any) => {
-    // Mapeamento Inteligente: Tenta pegar o nome novo, senão o antigo
     onClientChange({
       name: client.name || client["Nome Completo"] || "",
       zip: client.zip || client.cep || client["CEP"] || "",
@@ -70,9 +78,9 @@ export default function ClientForm({
       obs: client.obs || "",
     });
     setIsDrawerOpen(false);
+    setShowSuggestions(false);
   };
 
-  // Busca automática de CEP
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cepValue = e.target.value.replace(/\D/g, "");
     if (cepValue.length === 8) {
@@ -101,17 +109,6 @@ export default function ClientForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { id, value } = e.target;
-    // Mapeia o ID do input para a nova chave em inglês
-    /* const fieldMap: Record<string, keyof ClientData> = {
-      c_name: "name",
-      c_cep: "zip",
-      c_rua: "street",
-      c_num: "number",
-      c_complemento: "complement",
-      c_bairro: "neighborhood",
-      c_cidade: "city",
-      c_obs: "obs",
-    }; */
     const fieldMap: Record<string, string> = {
       c_name: "name",
       c_cep: "zip",
@@ -126,30 +123,16 @@ export default function ClientForm({
     const fieldName = fieldMap[id];
     if (fieldName) {
       onClientChange({ ...clientData, [fieldName]: value });
-    }
-  };
 
-  // Preenchimento automático ao digitar nome idêntico ao cache
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const selected = clientsCache.find(
-      (c) => (c.name || c["Nome Completo"]) === value,
-    );
-    console.warn(
-      clientsCache.find((c) => (c.name || c["Nome Completo"]) === value),
-    );
-
-    if (selected) {
-      handleSelectClient(selected);
-    } else {
-      onClientChange({ ...clientData, name: value });
+      // Se estiver digitando no nome, abre as sugestões
+      if (id === "c_name") setShowSuggestions(true);
     }
   };
 
   return (
-    <View tag="cliente-fieldset">
+    <View tag="cliente-fieldset" className="relative">
       {/* Nome do Cliente / Drawer */}
-      <View tag="client-name_input">
+      <View tag="client-name_input" className="relative">
         <View tag="client-name_label">
           <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <DrawerTrigger asChild>
@@ -158,13 +141,13 @@ export default function ClientForm({
               </View>
             </DrawerTrigger>
             <DrawerContent className="drawer h-[80vh] bg-[rgb(21,25,35)] items-center p-4">
+              {/* ... (Manter conteúdo do Drawer original para busca profunda) ... */}
               <div className="mx-auto w-full max-w-md p-4">
                 <DrawerHeader className="px-0">
                   <DrawerTitle className="text-[#00559C]">
                     Buscar Cliente
                   </DrawerTitle>
                 </DrawerHeader>
-
                 <div className="drawer-searchbar flex items-center gap-2 mb-4">
                   <div className="searchbar relative flex-1">
                     <MagnifyingGlass
@@ -181,39 +164,30 @@ export default function ClientForm({
                   <button
                     type="button"
                     onClick={() => onNewClientClick()}
-                    className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="p-2 bg-blue-600 text-white rounded-md"
                   >
                     <UserPlus size={24} weight="duotone" />
                   </button>
                 </div>
-
                 <View
                   tag="clients-name_card"
                   className="overflow-y-auto max-h-[50vh] space-y-2"
                 >
-                  {filteredClients.map((c, i) => {
-                    const name = c.name || c["Nome Completo"] || "Sem Nome";
-                    const city =
-                      c.city || c.cidade || c["Cidade/UF"] || "Não informada";
-
-                    return (
-                      <React.Fragment key={c.id || i}>
-                        <View
-                          tag="client-name_card"
-                          className="p-3 border rounded-lg active:bg-slate-100 cursor-pointer"
-                          onClick={() => handleSelectClient(c)}
-                        >
-                          <div className="font-bold">{name}</div>
-                          <div className="text-sm text-slate-500">{city}</div>
-                        </View>
-                      </React.Fragment>
-                    );
-                  })}
-                  {filteredClients.length === 0 && (
-                    <div className="text-center py-8 text-slate-400">
-                      Nenhum cliente encontrado
-                    </div>
-                  )}
+                  {filteredClients.map((c, i) => (
+                    <View
+                      key={c.id || i}
+                      tag="client-name_card"
+                      className="p-3 border rounded-lg active:bg-slate-100 cursor-pointer"
+                      onClick={() => handleSelectClient(c)}
+                    >
+                      <div className="font-bold">
+                        {c.name || c["Nome Completo"]}
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        {c.city || c.cidade || "Cidade n/i"}
+                      </div>
+                    </View>
+                  ))}
                 </View>
               </div>
             </DrawerContent>
@@ -222,14 +196,52 @@ export default function ClientForm({
             Nome / Empresa
           </View>
         </View>
+
         <input
           type="text"
           id="c_name"
           className="input"
-          placeholder="Selecione acima ou digite..."
+          placeholder="Digite o nome do cliente..."
           value={clientData.name || ""}
-          onChange={handleNameChange}
+          onChange={handleChange}
+          onFocus={() => setShowSuggestions(true)}
+          autoComplete="off"
         />
+        <View
+          tag="autocomplete-holder"
+          className="relative flex w-full h-[1px]"
+        >
+          {/* --- LISTA DE SUGESTÕES RÁPIDAS (Autocomplete) --- */}
+          {showSuggestions && filteredClients.length > 0 && !isDrawerOpen && (
+            <View
+              tag="autocomplete-suggestions"
+              className="absolute z-[100] w-full bg-white shadow-2xl rounded-xl mt-1 border border-slate-200 max-h-60 overflow-y-auto"
+            >
+              <header className="p-2 text-[10px] font-bold text-indigo-600 bg-indigo-50 tracking-widest uppercase">
+                Clientes encontrados
+              </header>
+              {filteredClients.map((c, i) => (
+                <View
+                  key={c.id || i}
+                  className="p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b border-slate-50 last:border-none"
+                  onClick={() => handleSelectClient(c)}
+                >
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-slate-400">
+                    <UserPlus size={16} weight="duotone" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-slate-800 text-sm truncate">
+                      {c.name || c["Nome Completo"]}
+                    </span>
+                    <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                      <MapPin size={10} /> {c.city || c.cidade || "Cidade n/i"}
+                    </span>
+                  </div>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </View>
 
       {/* ZIP (CEP) */}
@@ -238,7 +250,9 @@ export default function ClientForm({
           <View tag="t">
             CEP{" "}
             {loadingCep && (
-              <span className="text-amber-500 ml-2">Buscando...</span>
+              <span className="text-amber-500 ml-2 italic text-xs">
+                Buscando...
+              </span>
             )}
           </View>
           <input
@@ -301,31 +315,32 @@ export default function ClientForm({
       </View>
 
       {/* Neighborhood and City */}
-      <View tag="bairro-input">
-        <label>
-          <View tag="t">Bairro</View>
-          <input
-            type="text"
-            id="c_bairro"
-            className="input"
-            value={clientData.neighborhood || ""}
-            onChange={handleChange}
-          />
-        </label>
-      </View>
-
-      <View tag="cidade-input">
-        <label>
-          <View tag="t">Cidade/UF</View>
-          <input
-            type="text"
-            id="c_cidade"
-            className="input"
-            value={clientData.city || ""}
-            onChange={handleChange}
-          />
-        </label>
-      </View>
+      <div className="grid grid-cols-2 gap-2">
+        <View tag="bairro-input">
+          <label>
+            <View tag="t">Bairro</View>
+            <input
+              type="text"
+              id="c_bairro"
+              className="input"
+              value={clientData.neighborhood || ""}
+              onChange={handleChange}
+            />
+          </label>
+        </View>
+        <View tag="cidade-input">
+          <label>
+            <View tag="t">Cidade/UF</View>
+            <input
+              type="text"
+              id="c_cidade"
+              className="input"
+              value={clientData.city || ""}
+              onChange={handleChange}
+            />
+          </label>
+        </View>
+      </div>
 
       {/* Observações */}
       {!isOnNewBudget && (
@@ -340,6 +355,14 @@ export default function ClientForm({
             />
           </label>
         </View>
+      )}
+
+      {/* Overlay para fechar sugestões ao clicar fora */}
+      {showSuggestions && filteredClients.length > 0 && (
+        <div
+          className="fixed inset-0 z-[90]"
+          onClick={() => setShowSuggestions(false)}
+        />
       )}
     </View>
   );

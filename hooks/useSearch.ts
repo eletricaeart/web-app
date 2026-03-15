@@ -12,28 +12,38 @@ export function useSearch<T>(
   const [sort, setSort] = useState("recent");
   const [filter, setFilter] = useState("all");
 
+  // Carrega as preferências do LS quando a entidade é definida
   useEffect(() => {
+    if (!entityName) return;
+
     const saved = localStorage.getItem(`ea_prefs_${entityName}`);
     if (saved) {
-      const { sort: s, filter: f } = JSON.parse(saved);
-      if (s) setSort(s);
-      if (f) setFilter(f);
+      try {
+        const { sort: s, filter: f } = JSON.parse(saved);
+        if (s) setSort(s);
+        if (f) setFilter(f);
+      } catch (e) {
+        console.error("Erro ao ler preferências do LS", e);
+      }
     }
   }, [entityName]);
 
+  // Função para atualizar tanto o estado quanto o LS
   const updatePrefs = (newSort: string, newFilter: string) => {
     setSort(newSort);
     setFilter(newFilter);
-    localStorage.setItem(
-      `ea_prefs_${entityName}`,
-      JSON.stringify({ sort: newSort, filter: newFilter }),
-    );
+    if (entityName) {
+      localStorage.setItem(
+        `ea_prefs_${entityName}`,
+        JSON.stringify({ sort: newSort, filter: newFilter }),
+      );
+    }
   };
 
   const filteredData = useMemo(() => {
-    let result = [...data];
+    let result = Array.isArray(data) ? [...data] : [];
 
-    // 1. Filtragem por termo
+    // Filtragem por termo
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase().trim();
       result = result.filter((item: any) =>
@@ -45,7 +55,7 @@ export function useSearch<T>(
       );
     }
 
-    // 2. Lógica de Filtro Customizado (Ex: Por cidade ou status)
+    // Lógica de Filtro Customizado (Ex: Por cidade ou status)
     if (filter !== "all") {
       result = result.filter((item: any) => {
         // Exemplo: Filtrar por cidade em clientes ou status em orçamentos
