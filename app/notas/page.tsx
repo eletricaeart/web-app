@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEASync } from "@/hooks/useEASync";
 import AppBar from "@/components/layout/AppBar";
 import View from "@/components/layout/View";
-import SearchBar from "@/components/SearchBar";
 import FAB from "@/components/ui/FAB";
 import EntityToolbar from "@/components/EntityToolbar";
 import { useSearch } from "@/hooks/useSearch";
