@@ -33,3 +33,16 @@
 ### componentes
 
 - [ ] ajustar os botões da appbar para terem um fundo e dar mais visibilidade para os botões em telas onde a appbar não tiver fundo
+
+---
+# O Plano de Implementação para precificar o orçamento
+--- Para não bagunçar seu código de uma vez, vamos fazer em 3 passos:
+
+### Passo 1: Atualizar o ClauseManager
+- [ ] Vou te ajudar a adicionar um pequeno input de "Valor (R$)" em cada item que você cria. Assim, enquanto você descreve o serviço, já pode colocar o preço ali do lado.
+
+### Passo 2: Criar o "Painel Financeiro" no final da página
+- [ ] Um componente bonito, estilo card, que fica fixo antes do botão "Salvar". Ele vai mostrar o subtotal automático e o campo de desconto.
+
+### Passo 3: Ajustar a Visualização (Página do Orçamento)
+- [ ] Vamos configurar o PDF para que, se houver valores nos itens, ele crie uma coluninha de preços organizada.

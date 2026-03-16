@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { Trash } from "@phosphor-icons/react";
+import { Trash, CurrencyDollar } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import View from "@/components/layout/View";
@@ -16,6 +16,7 @@ interface ClauseItem {
   id: number;
   subtitulo: string;
   content: string;
+  price?: number;
 }
 
 interface Clause {
@@ -58,7 +59,10 @@ export default function ClauseManager({
         if (c.id === clauseId) {
           return {
             ...c,
-            items: [...c.items, { id: Date.now(), subtitulo: "", content: "" }],
+            items: [
+              ...c.items,
+              { id: Date.now(), subtitulo: "", content: "", price: 0 },
+            ],
           };
         }
         return c;
@@ -70,7 +74,7 @@ export default function ClauseManager({
     clauseId: number,
     itemId: number,
     field: keyof ClauseItem,
-    value: string,
+    value: string | number,
   ) => {
     onClausesChange(
       clauses.map((c) => {
@@ -151,6 +155,27 @@ export default function ClauseManager({
                             item.id,
                             "subtitulo",
                             e.target.value,
+                          )
+                        }
+                      />
+                    </label>
+
+                    {/* campo de preço */}
+                    <label>
+                      <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1">
+                        <CurrencyDollar size={14} /> Valor (R$)
+                      </span>
+                      <Input
+                        type="number"
+                        placeholder="0,00"
+                        className="font-bold text-indigo-600"
+                        value={item.price || ""}
+                        onChange={(e) =>
+                          updateItem(
+                            clause.id,
+                            item.id,
+                            "price",
+                            parseFloat(e.target.value) || 0,
                           )
                         }
                       />

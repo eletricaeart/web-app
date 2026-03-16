@@ -160,7 +160,7 @@ export default function Budgets() {
       /> */}
 
       <Page tag="budgets" bg="#f5f5f5">
-        <header>
+        <header className="pt-4">
           <EntityToolbar
             placeholder="Buscar orçamento..."
             searchValue={searchTerm}

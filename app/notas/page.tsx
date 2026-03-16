@@ -57,7 +57,7 @@ export default function NotasLista() {
       <AppBar title="Notas Técnicas" backAction={() => router.push("/")} />
 
       <Page tag="notes-page" hasBottomNavBar bg="#f5f5f5">
-        <header>
+        <header className="pt-4">
           <EntityToolbar
             placeholder="Buscar notas..."
             searchValue={searchTerm}

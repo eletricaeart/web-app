@@ -135,7 +135,7 @@ export default function ClientesLista() {
         bg="#f5f5f5"
         pd="0 0 90px 0"
       >
-        <header>
+        <header className="pt-4">
           <EntityToolbar
             placeholder="Buscar cliente..."
             searchValue={searchTerm}
