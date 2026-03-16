@@ -55,11 +55,11 @@ interface BudgetData {
   subtitle?: string;
   client: {
     name: string;
-    zip: string;
-    street: string;
-    number: string;
-    neighborhood: string;
-    city: string;
+    zip?: string;
+    street?: string;
+    number?: string;
+    neighborhood?: string;
+    city?: string;
     complement?: string;
     obs?: string;
   };
