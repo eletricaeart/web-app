@@ -161,7 +161,7 @@ export default function ClauseManager({
                     </label>
 
                     {/* campo de preço */}
-                    <label>
+                    {/* <label>
                       <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1">
                         <CurrencyDollar size={14} /> Valor (R$)
                       </span>
@@ -179,7 +179,7 @@ export default function ClauseManager({
                           )
                         }
                       />
-                    </label>
+                    </label> */}
 
                     <label className={styles.subclauseHelpTips}>
                       <View

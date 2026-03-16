@@ -48,16 +48,24 @@ export default function ClientForm({
   // Novo estado para controlar a exibição das sugestões rápidas
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Filtro para o Drawer E para o Autocomplete rápido
+  // Filtro inteligente: Se o Drawer estiver aberto, mostra tudo (ou o filtro do drawer).
+  // Se estiver no input principal, só mostra se tiver mais de 2 letras.
   const filteredClients = useMemo(() => {
-    if (!clientData.name && !searchTerm) return [];
-
-    // Se estivermos no modo autocomplete (digitando no input principal)
     const term = (
       isDrawerOpen ? searchTerm : clientData.name || ""
     ).toLowerCase();
 
-    if (!isDrawerOpen && term.length < 2) return []; // Só mostra sugestão após 2 letras
+    // Se o Drawer estiver aberto, filtramos a lista com base no termo de busca do Drawer
+    if (isDrawerOpen) {
+      if (!term) return clientsCache; // Se não digitou nada no drawer, mostra todos
+      return clientsCache.filter((c) => {
+        const name = (c.name || c["Nome Completo"] || "").toLowerCase();
+        return name.includes(term);
+      });
+    }
+
+    // Se estiver no input principal (Autocomplete rápido)
+    if (!isDrawerOpen && term.length < 2) return [];
 
     return clientsCache.filter((c) => {
       const name = (c.name || c["Nome Completo"] || "").toLowerCase();
