@@ -68,6 +68,16 @@ export default function TipTapEditor({
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
+    // onCreate garante que ao criar o editor, ele resete as marcações
+    onCreate: ({ editor }) => {
+      editor.commands.unsetAllMarks();
+    },
+    onFocus: ({ editor }) => {
+      // Se o conteúdo for apenas um parágrafo vazio, garante que não há negrito
+      if (editor.isEmpty) {
+        editor.commands.unsetAllMarks();
+      }
+    },
     editorProps: {
       attributes: {
         class:
@@ -110,7 +120,12 @@ export default function TipTapEditor({
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive("bold")}
         >
-          <TextB size={20} />
+          <TextB
+            size={20}
+            weight={
+              editor.isFocused && editor.isActive("bold") ? "bold" : "regular"
+            }
+          />
         </MenuButton>
 
         <MenuButton
@@ -119,28 +134,48 @@ export default function TipTapEditor({
           }
           active={editor.isActive("heading", { level: 3 })}
         >
-          <TextHOne size={20} />
+          <TextHOne
+            size={20}
+            weight={
+              editor.isFocused && editor.isActive("bold") ? "bold" : "regular"
+            }
+          />
         </MenuButton>
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           active={editor.isActive("orderedList")}
         >
-          <ListNumbers size={20} />
+          <ListNumbers
+            size={20}
+            weight={
+              editor.isFocused && editor.isActive("bold") ? "bold" : "regular"
+            }
+          />
         </MenuButton>
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           active={editor.isActive("bulletList")}
         >
-          <ListBullets size={20} />
+          <ListBullets
+            size={20}
+            weight={
+              editor.isFocused && editor.isActive("bold") ? "bold" : "regular"
+            }
+          />
         </MenuButton>
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           active={editor.isActive("blockquote")}
         >
-          <Quotes size={20} />
+          <Quotes
+            size={20}
+            weight={
+              editor.isFocused && editor.isActive("bold") ? "bold" : "regular"
+            }
+          />
         </MenuButton>
 
         <div className="w-[1px] h-6 bg-slate-200 mx-1" />
@@ -160,15 +195,20 @@ export default function TipTapEditor({
   );
 }
 
-// Mantive a função MenuButton caso você queira usar em uma Toolbar fixa no futuro,
-// mas ela não está mais sendo renderizada no componente principal.
+/**
+ * MenuButton atualizado com cores de fundo e texto dinâmicas
+ * Quando ativo: Fundo azul e ícone branco
+ * Quando inativo: Fundo transparente e ícone cinza/escuro
+ */
 function MenuButton({ onClick, active, children }: any) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors ${
-        active ? "bg-indigo-500 text-white" : "text-white hover:bg-white/10"
+      className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200 ${
+        active
+          ? "bg-[#00559C] text-white shadow-md scale-105" // Cor padrão da sua marca (Azul)
+          : "bg-transparent text-slate-500 hover:bg-slate-100"
       }`}
     >
       {children}

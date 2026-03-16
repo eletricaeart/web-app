@@ -72,11 +72,6 @@ interface BudgetData {
   };
 }
 
-interface DetalheSheet {
-  tipo: "brk" | "tagc" | "t6" | "ul" | "p";
-  conteudo: string | string[];
-}
-
 const extractPricesFromText = (html: string): number => {
   if (!html) return 0;
   const regex = /\[R\$\s?([\d,.]+)\]/g;
@@ -90,7 +85,6 @@ const extractPricesFromText = (html: string): number => {
   return total;
 };
 
-// FUNÇÃO AUXILIAR DE DATA (Movida para fora para ser acessível)
 function formatDateForInput(dateStr: string) {
   if (!dateStr) return new Date().toISOString().split("T")[0];
   if (dateStr.includes("-")) return dateStr.split("T")[0];
@@ -108,11 +102,12 @@ export default function NewBudgetPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const editId = searchParams.get("id");
-  const isEditing = searchParams.get("natabiruta");
+  const isEditing = !!searchParams.get("natabiruta");
 
   const [loading, setLoading] = useState<boolean>(false);
   const [clientsCache, setClientsCache] = useState<any[]>([]);
 
+  // 1. CORREÇÃO: Estado inicial com parágrafo limpo para evitar negrito padrão
   const [budget, setBudget] = useState<BudgetData>({
     id: null,
     documentTitle: "",
@@ -148,16 +143,11 @@ export default function NewBudgetPage() {
     return (
       totalFromInputs +
       totalFromText +
-      (Number(budget.financial.labor) || 0) +
-      (Number(budget.financial.materials) || 0) -
-      (Number(budget.financial.discount) || 0)
+      Number(budget.financial.labor) +
+      Number(budget.financial.materials) -
+      Number(budget.financial.discount)
     );
-  }, [
-    budget.services,
-    budget.financial.labor,
-    budget.financial.materials,
-    budget.financial.discount,
-  ]);
+  }, [budget.services, budget.financial]);
 
   useEffect(() => {
     setBudget((prev) => ({
@@ -171,7 +161,6 @@ export default function NewBudgetPage() {
     return isValid(date) ? date : new Date();
   };
 
-  // EFEITO DE INICIALIZAÇÃO CORRIGIDO
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -219,10 +208,10 @@ export default function NewBudgetPage() {
                 if (d.tipo === "t6") return `<h3>${d.conteudo}</h3>`;
                 if (d.tipo === "ul" && Array.isArray(d.conteudo))
                   return `<ul>${d.conteudo.map((li: string) => `<li>${li}</li>`).join("")}</ul>`;
-                return d.conteudo;
+                return `<p>${d.conteudo}</p>`;
               })
               .join("")
-          : it.content || "",
+          : it.content || "<p></p>",
       })),
     }));
 
@@ -257,29 +246,12 @@ export default function NewBudgetPage() {
     });
   };
 
-  const formatMarkdownForSheets = (text: string): DetalheSheet[] => {
-    const detalhes: DetalheSheet[] = [];
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = text;
-
-    // Lógica simplificada: Se o TipTap enviou HTML, salvamos como parágrafo ou processamos tags
-    // Para manter compatibilidade com sua função antiga:
-    text
-      .split(/<p>|<\/p>|<h3>|<\/h3>|<li>|<\/li>/)
-      .filter(Boolean)
-      .forEach((line) => {
-        const tl = line.trim();
-        if (!tl) return;
-        detalhes.push({ tipo: "p", conteudo: tl });
-      });
-    return detalhes;
-  };
-
   const handleSave = async () => {
     setLoading(true);
     const [y, m, d] = budget.issueDate.split("-");
     const formattedDate = `${d}/${m}/${y}`;
 
+    // 2. CORREÇÃO: Salva o conteúdo como HTML estruturado para o PDF ler fácil amanhã
     const payload = {
       ...budget,
       id: editId || budget.id || `EA-${Date.now()}`,
@@ -290,7 +262,8 @@ export default function NewBudgetPage() {
         itens: c.items.map((it) => ({
           subtitulo: it.subtitulo,
           price: it.price,
-          detalhes: [{ tipo: "p", conteudo: it.content }], // Salvando o HTML bruto para re-leitura fácil
+          // Guardamos o HTML original do TipTap. O PDF amanhã usará uma lib para renderizar isso.
+          detalhes: [{ tipo: "html", conteudo: it.content }],
         })),
       })),
     };
@@ -299,6 +272,8 @@ export default function NewBudgetPage() {
     const result = await eaSyncClient.save("orcamentos", payload, action);
 
     if (result) {
+      localStorage.removeItem("ea_draft_budget");
+      localStorage.removeItem("ea_selected_client");
       router.push("/orcamentos");
     } else {
       alert("Erro ao salvar orçamento.");
@@ -312,7 +287,6 @@ export default function NewBudgetPage() {
         title={isEditing ? `Edição` : `Novo Orçamento`}
         backAction={() => {
           localStorage.removeItem("ea_draft_budget");
-          localStorage.removeItem("ea_selected_client");
           router.back();
         }}
       />
@@ -320,14 +294,13 @@ export default function NewBudgetPage() {
       <View tag="page">
         <View tag="page-content">
           <h3 className="page-subtitle">Dados do orçamento</h3>
-
           <View className="formGroup">
             <label className="label">
               <View tag="t">Título</View>
               <input
                 type="text"
                 className="input"
-                placeholder="Título do Documento"
+                placeholder="Ex: Instalação Residencial"
                 value={budget.documentTitle}
                 onChange={(e) =>
                   setBudget({ ...budget, documentTitle: e.target.value })
@@ -377,11 +350,13 @@ export default function NewBudgetPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {["7 dias", "15 dias", "30 dias", "60 dias"].map((v) => (
-                      <SelectItem key={v} value={v}>
-                        {v}
-                      </SelectItem>
-                    ))}
+                    {["7 dias", "15 dias", "30 dias", "60 dias", "90 dias"].map(
+                      (v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </label>
@@ -417,7 +392,7 @@ export default function NewBudgetPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <label className="flex flex-col gap-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  Adicional Mão de Obra
+                  Mão de Obra Adicional
                 </span>
                 <Input
                   type="number"
@@ -431,6 +406,7 @@ export default function NewBudgetPage() {
                       },
                     })
                   }
+                  placeholder="0,00"
                 />
               </label>
               <label className="flex flex-col gap-1">
@@ -449,6 +425,7 @@ export default function NewBudgetPage() {
                       },
                     })
                   }
+                  placeholder="0,00"
                 />
               </label>
               <label className="flex flex-col gap-1">
@@ -467,6 +444,8 @@ export default function NewBudgetPage() {
                       },
                     })
                   }
+                  placeholder="0,00"
+                  className="text-red-500 font-bold"
                 />
               </label>
             </div>

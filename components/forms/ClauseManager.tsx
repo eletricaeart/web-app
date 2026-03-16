@@ -37,7 +37,7 @@ export default function ClauseManager({
   const addClause = () => {
     const newClause: Clause = {
       id: Date.now(),
-      titulo: "",
+      titulo: "<p></p>", // Começa com parágrafo padrão (texto simples)
       items: [{ id: Date.now() + 1, subtitulo: "", content: "" }],
     };
     onClausesChange([...clauses, newClause]);
@@ -61,7 +61,7 @@ export default function ClauseManager({
             ...c,
             items: [
               ...c.items,
-              { id: Date.now(), subtitulo: "", content: "", price: 0 },
+              { id: Date.now(), subtitulo: "", content: "<p></p>", price: 0 },
             ],
           };
         }
