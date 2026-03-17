@@ -36,3 +36,19 @@ export function CID(): string {
     .toString()
     .replace(/(\d{4})(?=\d)/g, "$1+");
 }
+
+/**
+ * --- formatador de valores em descrição por extensão
+ *  */
+export function valorPorExtenso(valor: number): string {
+  // Uma versão simplificada para o exemplo, podemos usar uma lib como 'extenso' depois
+  const formatador = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+  const valorFormatado = formatador.format(valor);
+
+  // Aqui retornaríamos a string por extenso.
+  // Exemplo manual simplificado:
+  return `${valorFormatado}`;
+}

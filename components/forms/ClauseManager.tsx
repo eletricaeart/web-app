@@ -1,13 +1,29 @@
 // components/forms/ClauseManager.tsx
 "use client";
 
-import React from "react";
-import { Trash, CurrencyDollar } from "@phosphor-icons/react";
+import React, { useState } from "react";
+import {
+  Trash,
+  CurrencyDollar,
+  Plus,
+  PencilSimple,
+  Calculator,
+  ListPlus,
+} from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
+import { Button } from "../ui/button.tsx";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import View from "@/components/layout/View";
 import styles from "./ClauseManager.module.css";
 import Pressable from "../Pressable";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { valorPorExtenso } from "@/utils/helpers";
 
 /**
  * Interfaces para garantir a tipagem estrita do Gerenciador de Cláusulas
@@ -34,11 +50,32 @@ export default function ClauseManager({
   clauses,
   onClausesChange,
 }: ClauseManagerProps) {
+  const [isServiceDrawerOpen, setIsServiceDrawerOpen] = useState(false);
+  const [activeItemRef, setActiveItemRef] = useState<{
+    clauseId: number;
+    itemId: number;
+  } | null>(null);
+
+  // Estado para o formulário do novo serviço dentro do Drawer
+  const [newService, setNewService] = useState({
+    description: "",
+    unitValue: 0,
+    quantity: 1,
+  });
+
   const addClause = () => {
     const newClause: Clause = {
       id: Date.now(),
-      titulo: "<p></p>", // Começa com parágrafo padrão (texto simples)
-      items: [{ id: Date.now() + 1, subtitulo: "", content: "" }],
+      titulo: "", // Começa com parágrafo padrão (texto simples)
+      items: [
+        {
+          id: Date.now() + 1,
+          subtitulo: "",
+          content: "",
+          services: [],
+          price: 0,
+        },
+      ],
     };
     onClausesChange([...clauses, newClause]);
   };
@@ -55,40 +92,73 @@ export default function ClauseManager({
 
   const addItem = (clauseId: number) => {
     onClausesChange(
-      clauses.map((c) => {
-        if (c.id === clauseId) {
-          return {
-            ...c,
-            items: [
-              ...c.items,
-              { id: Date.now(), subtitulo: "", content: "<p></p>", price: 0 },
-            ],
-          };
-        }
-        return c;
-      }),
+      clauses.map((c) =>
+        c.id === clauseId
+          ? {
+              ...c,
+              items: [
+                ...c.items,
+                {
+                  id: Date.now(),
+                  subtitulo: "",
+                  content: "",
+                  services: [],
+                  price: 0,
+                },
+              ],
+            }
+          : c,
+      ),
     );
   };
 
   const updateItem = (
     clauseId: number,
     itemId: number,
-    field: keyof ClauseItem,
-    value: string | number,
+    // field: keyof ClauseItem,
+    field: string,
+    // value: string | number,
+    value: any,
   ) => {
     onClausesChange(
-      clauses.map((c) => {
-        if (c.id === clauseId) {
-          return {
-            ...c,
-            items: c.items.map((it) =>
-              it.id === itemId ? { ...it, [field]: value } : it,
-            ),
-          };
-        }
-        return c;
-      }),
+      clauses.map((c) =>
+        c.id === clauseId
+          ? {
+              ...c,
+              items: c.items.map((it) =>
+                it.id === itemId ? { ...it, [field]: value } : it,
+              ),
+            }
+          : c,
+      ),
     );
+  };
+
+  // LÓGICA DO DRAWER DE SERVIÇOS
+  const handleAddServiceToItem = () => {
+    if (!activeItemRef) return;
+    const { clauseId, itemId } = activeItemRef;
+
+    const service: ServiceItem = {
+      id: Math.random().toString(36),
+      ...newService,
+      totalValue: newService.unitValue * newService.quantity,
+    };
+
+    const currentClause = clauses.find((c) => c.id === clauseId);
+    const currentItem = currentClause?.items.find((i) => i.id === itemId);
+    const updatedServices = [...(currentItem?.services || []), service];
+
+    // Atualiza os serviços e recalcula o preço total da subcláusula
+    const newTotalPrice = updatedServices.reduce(
+      (acc, s) => acc + s.totalValue,
+      0,
+    );
+
+    updateItem(clauseId, itemId, "services", updatedServices);
+    updateItem(clauseId, itemId, "price", newTotalPrice);
+
+    setNewService({ description: "", unitValue: 0, quantity: 1 });
   };
 
   const removeItem = (clauseId: number, itemId: number) => {
@@ -136,9 +206,13 @@ export default function ClauseManager({
           </View>
 
           <View tag="subclause-field">
-            {clause.items.map((item, iIdx) => (
+            {clause.items.map((item) => (
               <React.Fragment key={item.id}>
-                <View tag="subclause" className={styles.subclause}>
+                <View
+                  tag="subclause"
+                  className={styles.subclause}
+                  key={item.id}
+                >
                   <View
                     tag="subclause-content"
                     className={styles.subclauseContent}
@@ -149,7 +223,7 @@ export default function ClauseManager({
                         placeholder="Subtítulo (Ex: Cozinha)"
                         className="subclause-subtitle"
                         value={item.subtitulo}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        onChange={(e) =>
                           updateItem(
                             clause.id,
                             item.id,
@@ -160,27 +234,6 @@ export default function ClauseManager({
                       />
                     </label>
 
-                    {/* campo de preço */}
-                    {/* <label>
-                      <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1">
-                        <CurrencyDollar size={14} /> Valor (R$)
-                      </span>
-                      <Input
-                        type="number"
-                        placeholder="0,00"
-                        className="font-bold text-indigo-600"
-                        value={item.price || ""}
-                        onChange={(e) =>
-                          updateItem(
-                            clause.id,
-                            item.id,
-                            "price",
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                      />
-                    </label> */}
-
                     <label className={styles.subclauseHelpTips}>
                       <View
                         style={{
@@ -189,11 +242,24 @@ export default function ClauseManager({
                         }}
                       >
                         <span className="label-text">Conteúdo</span>
-                        <span className={styles.btn_helpTips}>ajuda</span>
+                        <span
+                          className={styles.btn_helpTips}
+                          style={{ display: "flex", gap: ".5rem" }}
+                          onClick={() => {
+                            setActiveItemRef({
+                              clauseId: clause.id,
+                              itemId: item.id,
+                            });
+                            setIsServiceDrawerOpen(true);
+                          }}
+                        >
+                          <ListPlus size={14} /> + Serviços
+                        </span>
                       </View>
 
                       <TipTapEditor
                         value={item.content}
+                        services={item.services || []}
                         onChange={(val: string) =>
                           updateItem(clause.id, item.id, "content", val)
                         }
@@ -256,6 +322,129 @@ export default function ClauseManager({
           + Adicionar Cláusula
         </Pressable>
       </View>
+
+      {/* DRAWER ÚNICO PARA GERENCIAR SERVIÇOS */}
+      <Drawer open={isServiceDrawerOpen} onOpenChange={setIsServiceDrawerOpen}>
+        <DrawerContent className="bg-slate-50 h-[85vh]">
+          <div className="mx-auto w-full max-w-md p-6">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-indigo-900 flex items-center gap-2">
+                <Calculator weight="duotone" /> Serviços da Etapa
+              </DrawerTitle>
+            </DrawerHeader>
+
+            {/* LISTA DE SERVIÇOS JÁ ADICIONADOS */}
+            <div className="space-y-2 mb-6 max-h-40 overflow-y-auto p-1">
+              {activeItemRef &&
+                clauses
+                  .find((c) => c.id === activeItemRef.clauseId)
+                  ?.items.find((i) => i.id === activeItemRef.itemId)
+                  ?.services?.map((s) => (
+                    <div
+                      key={s.id}
+                      className="bg-white p-3 rounded-xl border flex justify-between items-center shadow-sm"
+                    >
+                      <div>
+                        <div className="font-bold text-sm text-slate-800 truncate w-40">
+                          {s.description}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          {s.quantity}x de R$ {s.unitValue.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-indigo-600">
+                          R$ {s.totalValue.toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => {
+                            /* lógica delete */
+                          }}
+                          className="text-red-400"
+                        >
+                          <Trash size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+            </div>
+
+            {/* FORMULÁRIO DE ADIÇÃO */}
+            <div className="bg-white p-4 rounded-2xl border space-y-4 shadow-inner">
+              <label className="block">
+                <span className="text-xs font-bold text-slate-400">
+                  DESCRIÇÃO
+                </span>
+                <Input
+                  value={newService.description}
+                  onChange={(e) =>
+                    setNewService({
+                      ...newService,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Ex: Instalação de luminária"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <label>
+                  <span className="text-xs font-bold text-slate-400">
+                    VALOR UNIT.
+                  </span>
+                  <Input
+                    type="number"
+                    value={newService.unitValue || ""}
+                    onChange={(e) =>
+                      setNewService({
+                        ...newService,
+                        unitValue: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  <span className="text-xs font-bold text-slate-400">QTD</span>
+                  <Input
+                    type="number"
+                    value={newService.quantity || ""}
+                    onChange={(e) =>
+                      setNewService({
+                        ...newService,
+                        quantity: parseInt(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </label>
+              </div>
+              <Button
+                onClick={handleAddServiceToItem}
+                className="w-full bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Plus className="mr-2" /> ADICIONAR SERVIÇO
+              </Button>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsServiceDrawerOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  // Ao salvar, vamos inserir no editor! (Lógica simplificada aqui)
+                  setIsServiceDrawerOpen(false);
+                }}
+              >
+                Concluir
+              </Button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </View>
   );
 }

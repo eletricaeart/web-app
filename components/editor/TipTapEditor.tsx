@@ -20,6 +20,7 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
+import { valorPorExtenso } from "@/utils/helpers";
 
 import "./TipTapEditor.css";
 
@@ -34,6 +35,7 @@ interface TipTapEditorProps {
 export default function TipTapEditor({
   value,
   onChange,
+  services = [],
   placeholder = "Descreva os detalhes...",
   bg = "#f8fafc",
   radius = "1rem",

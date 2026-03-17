@@ -21,14 +21,13 @@ import { Popover, PopoverContent } from "@/components/ui/popover";
 // --- Interfaces para Tipagem Atualizadas (English/CamelCase) ---
 
 interface DetailContent {
-  tipo: "brk" | "tagc" | "t6" | "ul" | "html" | string;
+  tipo: "brk" | "tagc" | "t6" | "ul" | string;
   conteudo: any;
 }
 
 interface ItemBudget {
   subtitulo: string;
   detalhes: DetailContent[];
-  price?: number;
 }
 
 interface ServiceBudget {
@@ -45,13 +44,6 @@ interface BudgetData {
   expiration?: string;
   subtitle?: string;
   services?: ServiceBudget[];
-  financial?: {
-    // ALTERAÇÃO: Adicionado objeto financial na interface principal
-    labor: number;
-    materials: number;
-    discount: number;
-    total: number;
-  };
   clientAddress?: {
     street?: string;
     number?: string;
@@ -128,14 +120,6 @@ export default function Budget() {
           data.docTitle?.subtitle ||
           (data as any)["Subtítulo"] ||
           "PROPOSTA DE ORÇAMENTO",
-
-        // ALTERAÇÃO: Mapeamento do objeto financeiro global
-        financial: data.financial || {
-          labor: 0,
-          materials: 0,
-          discount: 0,
-          total: 0,
-        },
 
         // --- LÓGICA ROBUSTA PARA OS SERVIÇOS ---
         services: (() => {
@@ -257,30 +241,7 @@ export default function Budget() {
         <View key={idx} tag="subclause">
           <View tag="ui">
             <View tag="subclause-header">
-              {/* style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-              }} // ALTERAÇÃO: Estilo para alinhar preço 
-              > */}
               <View tag="t6">{item.subtitulo}</View>
-
-              {/* ALTERAÇÃO: Exibição do preço individual do item se existir */}
-              {item.price && item.price > 0 && (
-                <span
-                  style={{
-                    fontSize: "0.9rem",
-                    fontWeight: "bold",
-                    color: "#444",
-                  }}
-                >
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(item.price)}
-                </span>
-              )}
-              {/* end */}
             </View>
             <View
               tag="subclause-body"
@@ -434,10 +395,6 @@ export default function Budget() {
                 </View>
               </View>
             ))}
-
-            {/* COMPONENTE: Inclusão do Resumo Financeiro no corpo do documento */}
-            {/* <FinancialTable summary={displayData.financial} /> */}
-
             <FooterContent />
           </View>
         </View>
@@ -462,117 +419,6 @@ export default function Budget() {
       />
     </>
   );
-}
-
-// Novo componente para a tabela de fechamento financeiro
-{
-  /* function FinancialTable({ summary }: { summary: any }) {
-  const rowStyle: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "4px 0",
-    borderBottom: "1px solid #eee",
-  };
-  const labelStyle: React.CSSProperties = {
-    fontWeight: "bold",
-    fontSize: "0.85rem",
-    color: "#666",
-  };
-  const valueStyle: React.CSSProperties = {
-    fontWeight: "bold",
-    fontSize: "0.9rem",
-  };
-
-  return (
-    <View
-      tag="financial-summary"
-      style={{
-        marginTop: "2rem",
-        padding: "1rem",
-        backgroundColor: "#fcfcfc",
-        borderRadius: "8px",
-        border: "1px solid #eee",
-      }}
-    >
-      <header
-        style={{
-          marginBottom: "10px",
-          borderBottom: "2px solid #00559c",
-          paddingBottom: "5px",
-        }}
-      >
-        <View
-          tag="t"
-          style={{
-            color: "#00559c",
-            fontWeight: "900",
-            fontSize: "0.75rem",
-            letterSpacing: "1px",
-          }}
-        >
-          RESUMO DO INVESTIMENTO
-        </View>
-      </header>
-
-      {summary.labor > 0 && (
-        <div style={rowStyle}>
-          <span style={labelStyle}>MÃO DE OBRA ADICIONAL:</span>
-          <span style={valueStyle}>
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(summary.labor)}
-          </span>
-        </div>
-      )}
-
-      {summary.materials > 0 && (
-        <div style={rowStyle}>
-          <span style={labelStyle}>MATERIAIS:</span>
-          <span style={valueStyle}>
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(summary.materials)}
-          </span>
-        </div>
-      )}
-
-      {summary.discount > 0 && (
-        <div style={rowStyle}>
-          <span style={labelStyle}>DESCONTO APLICADO:</span>
-          <span style={{ ...valueStyle, color: "#d32f2f" }}>
-            -
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(summary.discount)}
-          </span>
-        </div>
-      )}
-
-      <div
-        style={{
-          ...rowStyle,
-          borderBottom: "none",
-          marginTop: "10px",
-          paddingTop: "10px",
-          borderTop: "2px solid #333",
-        }}
-      >
-        <span style={{ ...labelStyle, color: "#000", fontSize: "1rem" }}>
-          TOTAL FINAL:
-        </span>
-        <span style={{ ...valueStyle, fontSize: "1.2rem", color: "#00559c" }}>
-          {new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          }).format(summary.total)}
-        </span>
-      </div>
-    </View>
-  );
-} */
 }
 
 function FooterContent() {

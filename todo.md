@@ -1,48 +1,57 @@
-# 📋 Checklist
+🚀 Plano de Voo: Elétrica & Art
+🏁 Fase 1: Finalização do Módulo Financeiro (Prioridade Atual)
+Essencial para o app começar a gerar orçamentos profissionais.
 
-### clientes
+[ ] Visualização de Preços (PDF/Web): Ajustar a página orcamentos/[id] para ler os campos price e o objeto financial.
 
-- [ ] preencher com mais detalhes a pagina de perfil do cliente
-- [ ] corrigir a sombra na parte de cima do card principal
-- [ ] testar e implementar as funções de criar novos orçamentos e notas pela pagina de perfil do cliente
+[ ] Componente de Tabela de Preços: Criar a UI que decide se mostra o preço por item ou apenas o total no final.
 
-### orçamentos
+👥 Fase 2: Gestão de Clientes & CRM
+Melhorando a experiência de quem usa o app no dia a dia.
 
-### notas
+[ ] Perfil Detalhado: Adicionar histórico de orçamentos e notas dentro da página do cliente.
 
-- [ ] implementar a pagina de nova nota
-- [ ] criar a pagina de visualização da nota
+[ ] Atalhos de Criação: Implementar o botão "Novo Orçamento" e "Nova Nota" direto do perfil do cliente (passando os dados via URL/Estado).
 
-### equipe
+[ ] Refino Visual: Corrigir a sombra superior do card principal.
 
-- [ ] criar a pagina de criação de novo membro, o membro será adicionado na aba de usuarios em gs e terá um login baseado na propriedade "role"
-- [ ] implementar a pagina de listagem de membros da equipe com funcionalidades de banimento, deletar, editar, dar permissões e seguir os padrões do que já existe comercialmente por ai na industria
+📝 Fase 3: Notas Técnicas & Documentação
+Expandindo as funcionalidades para além do financeiro.
 
-### login/signup
+[ ] Nova Nota: Criar o formulário (reutilizando o nosso TipTapEditor e ClientForm).
 
-- [ ] criar a pagina e o sistema de resgistrar um login com paginas e rotas especificas, o novo login criado será enviado para o aceite para os usuarios com "role" admin, e só após o aceite o novo login de usuario será cadastrado na aba de usuarios em gs e só funcionará de forma efetiva para se logar ao sistema após o aceite, o registro pode ser feito por formas modernas como cadastrar uma conta atraves do facebook ou google ou email ou telefone
+[ ] View da Nota: Criar a página de leitura e compartilhamento da nota técnica.
 
-### pagina de configurações
+🔐 Fase 4: Autenticação, Equipe & Segurança (O "Cérebro" Administrativo)
+Aqui o app deixa de ser local e vira uma plataforma de empresa.
 
-- [ ] criar a pagina, deve ter opções de modo escuro e modo claro com suport para temas
+[ ] Sistema de Login/Signup: Fluxo de registro com aprovação pendente (Admin precisa dar o "OK").
 
-### mensagens
+[ ] Integração Social: Cadastro via Google/Facebook/E-mail.
 
-- [ ] criar a pagina de mensagem para cada usuario, seguindo o padrão que ha por aí
+[ ] Gestão de Equipe: Página de listagem de membros com controle de cargos (admin, tecnico).
 
-### componentes
+[ ] Permissões (Roles): Bloquear funções específicas (ex: excluir orçamento) apenas para admins.
 
-- [ ] ajustar os botões da appbar para terem um fundo e dar mais visibilidade para os botões em telas onde a appbar não tiver fundo
+⚙️ Fase 5: Configurações & UX Final
+O toque final de profissionalismo.
 
----
-# O Plano de Implementação para precificar o orçamento
---- Para não bagunçar seu código de uma vez, vamos fazer em 3 passos:
+[ ] Temas: Implementar Dark/Light mode com persistência.
 
-### Passo 1: Atualizar o ClauseManager
-- [ ] Vou te ajudar a adicionar um pequeno input de "Valor (R$)" em cada item que você cria. Assim, enquanto você descreve o serviço, já pode colocar o preço ali do lado.
+[ ] AppBar Reutilizável: Ajustar botões para terem fundo em telas claras/transparentes.
 
-### Passo 2: Criar o "Painel Financeiro" no final da página
-- [ ] Um componente bonito, estilo card, que fica fixo antes do botão "Salvar". Ele vai mostrar o subtotal automático e o campo de desconto.
+[ ] Mensagens Internas: Sistema de comunicação entre membros da equipe.
 
-### Passo 3: Ajustar a Visualização (Página do Orçamento)
-- [ ] Vamos configurar o PDF para que, se houver valores nos itens, ele crie uma coluninha de preços organizada.
+🛠️ Passo a Passo para Hoje
+Como ontem terminamos o Passo 1 e o Passo 2 do plano de precificação (inputs e painel financeiro), o nosso próximo passo imediato é:
+
+Próxima Tarefa: Ajustar a Visualização (Página do Orçamento)
+Precisamos fazer com que os valores apareçam no "PDF" (a página de visualização).
+
+O que faremos:
+
+Atualizar o mapeamento de dados na página de visualização para identificar os novos campos.
+
+Criar uma lógica de "Tabela de Itens" onde, se houver preço, ele aparece alinhado à direita.
+
+Exibir o Resumo Financeiro (Subtotal, Desconto e Total) de forma elegante no rodapé do documento.
