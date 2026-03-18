@@ -34,11 +34,20 @@ import { CalendarIcon } from "lucide-react";
 import "./style.css";
 import Pressable from "@/components/Pressable";
 
+interface ServiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitValue: number;
+  totalValue: number;
+}
+
 interface ClauseItem {
   id: number;
   subtitulo: string;
   content: string;
   price?: number;
+  services?: ServiceItem[];
 }
 
 interface Clause {
@@ -125,7 +134,15 @@ export default function NewBudgetPage() {
       {
         id: Date.now(),
         titulo: "",
-        items: [{ id: Date.now() + 1, subtitulo: "", content: "", price: 0 }],
+        items: [
+          {
+            id: Date.now() + 1,
+            subtitulo: "",
+            content: "",
+            price: 0,
+            services: [],
+          },
+        ],
       },
     ],
     financial: { labor: 0, materials: 0, discount: 0, total: 0 },
@@ -134,15 +151,26 @@ export default function NewBudgetPage() {
   const calculatedTotal = useMemo(() => {
     let totalFromInputs = 0;
     let totalFromText = 0;
+    let totalFromServices = 0;
+
     budget.services.forEach((clause) => {
       clause.items.forEach((item) => {
         totalFromInputs += Number(item.price) || 0;
+
         totalFromText += extractPricesFromText(item.content);
+
+        if (item.services && item.services.length > 0) {
+          item.services.forEach((s) => {
+            totalFromServices += Number(s.totalValue) || 0;
+          });
+        }
       });
     });
+
     return (
       totalFromInputs +
       totalFromText +
+      totalFromServices +
       Number(budget.financial.labor) +
       Number(budget.financial.materials) -
       Number(budget.financial.discount)
@@ -262,7 +290,7 @@ export default function NewBudgetPage() {
         itens: c.items.map((it) => ({
           subtitulo: it.subtitulo,
           price: it.price,
-          // Guardamos o HTML original do TipTap. O PDF amanhã usará uma lib para renderizar isso.
+          services: it.services || [],
           detalhes: [{ tipo: "html", conteudo: it.content }],
         })),
       })),

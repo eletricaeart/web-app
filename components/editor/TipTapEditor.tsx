@@ -15,6 +15,8 @@ import {
   TextHOne,
   CurrencyDollar,
   ListBullets,
+  Plus,
+  Calculator,
 } from "@phosphor-icons/react";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
@@ -27,6 +29,7 @@ import "./TipTapEditor.css";
 interface TipTapEditorProps {
   value: string;
   onChange: (val: string) => void;
+  services?: any[];
   placeholder?: string;
   bg?: string;
   radius?: string;
@@ -109,6 +112,33 @@ export default function TipTapEditor({
     }
   };
 
+  // Função para inserir todos os serviços formatados
+  const insertServicesList = () => {
+    if (services.length === 0)
+      return alert("Nenhum serviço adicionado no menu.");
+
+    let htmlContent = "<ul>";
+    services.forEach((s) => {
+      const extenso = valorPorExtenso(s.totalValue);
+      htmlContent += `<li>${s.description} (${s.quantity}x) ........... <strong>R$ ${s.totalValue.toFixed(2)} (${extenso})</strong></li>`;
+    });
+    htmlContent += "</ul>";
+
+    editor.chain().focus().insertContent(htmlContent).run();
+  };
+
+  const insertSubtotal = () => {
+    const total = services.reduce((acc, s) => acc + s.totalValue, 0);
+    const extenso = valorPorExtenso(total);
+    editor
+      .chain()
+      .focus()
+      .insertContent(
+        `<p><strong>TOTAL DA ETAPA: R$ ${total.toFixed(2)} (${extenso})</strong></p>`,
+      )
+      .run();
+  };
+
   return (
     <div
       className="tiptap-container relative border border-slate-100 shadow-inner overflow-hidden"
@@ -182,14 +212,29 @@ export default function TipTapEditor({
 
         <div className="w-[1px] h-6 bg-slate-200 mx-1" />
 
-        <button
-          type="button"
+        <MenuButton
           onClick={addPriceTag}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition-colors"
         >
           <CurrencyDollar size={16} weight="bold" />
           VALOR
-        </button>
+        </MenuButton>
+
+        {/* BOTÃO PARA INSERIR LISTA DE SERVIÇOS NO TEXTO */}
+        <MenuButton
+          onClick={insertServicesList}
+          className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-green-50 text-green-700 text-[10px] font-bold"
+        >
+          <Plus size={14} /> INSERIR LISTA
+        </MenuButton>
+
+        {/* BOTÃO PARA INSERIR TOTAL NO TEXTO */}
+        <MenuButton
+          onClick={insertSubtotal}
+          className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-bold"
+        >
+          <Calculator size={14} /> INSERIR TOTAL
+        </MenuButton>
       </div>
 
       <EditorContent editor={editor} />

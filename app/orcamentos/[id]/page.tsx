@@ -253,20 +253,18 @@ export default function Budget() {
         })
         .join("\n");
 
+      const servicesTotal =
+        item.services?.reduce((acc, s) => acc + s.totalValue, 0) ?? 0;
+
+      const itemPrice = item.price || servicesTotal;
+
       return (
         <View key={idx} tag="subclause">
           <View tag="ui">
             <View tag="subclause-header">
-              {/* style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-              }} // ALTERAÇÃO: Estilo para alinhar preço 
-              > */}
               <View tag="t6">{item.subtitulo}</View>
 
-              {/* ALTERAÇÃO: Exibição do preço individual do item se existir */}
-              {item.price && item.price > 0 && (
+              {itemPrice > 0 && (
                 <span
                   style={{
                     fontSize: "0.9rem",
@@ -277,17 +275,37 @@ export default function Budget() {
                   {new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",
-                  }).format(item.price)}
+                  }).format(itemPrice)}
                 </span>
               )}
-              {/* end */}
             </View>
+
             <View
               tag="subclause-body"
               dangerouslySetInnerHTML={{
                 __html: processTextToHtml(markdownText),
               }}
             />
+
+            {item.services && item.services.length > 0 && (
+              <View
+                style={{
+                  marginTop: "8px",
+                  fontSize: "0.85rem",
+                  color: "#444",
+                }}
+              >
+                {item.services.map((s, i) => (
+                  <div key={i}>
+                    • {s.description} ({s.quantity}x) —{" "}
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(s.totalValue)}
+                  </div>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       );

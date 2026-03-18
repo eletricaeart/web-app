@@ -28,11 +28,20 @@ import { valorPorExtenso } from "@/utils/helpers";
 /**
  * Interfaces para garantir a tipagem estrita do Gerenciador de Cláusulas
  */
+interface ServiceItem {
+  id: string;
+  description: string;
+  unitValue: number;
+  quantity: number;
+  totalValue: number;
+}
+
 interface ClauseItem {
   id: number;
   subtitulo: string;
   content: string;
   price?: number;
+  services?: ServiceItem[];
 }
 
 interface Clause {
@@ -159,6 +168,29 @@ export default function ClauseManager({
     updateItem(clauseId, itemId, "price", newTotalPrice);
 
     setNewService({ description: "", unitValue: 0, quantity: 1 });
+  };
+
+  const removeServiceFromItem = (
+    clauseId: number,
+    itemId: number,
+    serviceId: string,
+  ) => {
+    const clause = clauses.find((c) => c.id === clauseId);
+    const item = clause?.items.find((i) => i.id === itemId);
+
+    if (!item) return;
+
+    const updatedServices = (item.services || []).filter(
+      (s) => s.id !== serviceId,
+    );
+
+    const newTotalPrice = updatedServices.reduce(
+      (acc, s) => acc + s.totalValue,
+      0,
+    );
+
+    updateItem(clauseId, itemId, "services", updatedServices);
+    updateItem(clauseId, itemId, "price", newTotalPrice);
   };
 
   const removeItem = (clauseId: number, itemId: number) => {
@@ -357,9 +389,14 @@ export default function ClauseManager({
                           R$ {s.totalValue.toFixed(2)}
                         </span>
                         <button
-                          onClick={() => {
-                            /* lógica delete */
-                          }}
+                          onClick={() =>
+                            activeItemRef &&
+                            removeServiceFromItem(
+                              activeItemRef.clauseId,
+                              activeItemRef.itemId,
+                              s.id,
+                            )
+                          }
                           className="text-red-400"
                         >
                           <Trash size={18} />
