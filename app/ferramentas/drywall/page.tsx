@@ -306,6 +306,26 @@ export default function DrywallCalculator() {
                   className="bg-white border-slate-200"
                 />
 
+                {/* Opção de Lã para Parede */}
+                {activeType === "wall" && (
+                  <div className="flex items-center justify-between p-3 rounded-xl">
+                    <Label
+                      htmlFor="incluir-la-mode"
+                      className="flex items-center justify-between w-full text-[12px] font-bold text-indigo-700 uppercase cursor-pointer"
+                    >
+                      Incluir Lã de Vidro/Pet
+                      <Switch
+                        id="incluir-la-mode"
+                        checked={activeInsulation}
+                        onCheckedChange={(checked) =>
+                          setActiveInsulation(checked)
+                        }
+                        className="data-[state=checked]:bg-[#00559C] data-[state=unchecked]:bg-slate-300"
+                      />
+                    </Label>
+                  </div>
+                )}
+
                 {/* Medidas Dinâmicas */}
                 <div className="space-y-4">
                   {activeMeasures.map((m, mIdx) => (
@@ -422,33 +442,15 @@ export default function DrywallCalculator() {
                     onClick={addMeasureField}
                     className="w-full text-indigo-600 font-bold text-[12px] uppercase"
                   >
-                    {/* <Plus className="mr-2" />  */} Adicionar Medida
+                    {/* <Plus className="mr-2" />  */}
+                    Adicionar Medida (Irregular)
                   </Button>
                 </div>
 
-                {/* Opção de Lã para Parede */}
-                {activeType === "wall" && (
-                  <div className="flex items-center justify-between p-3 rounded-xl">
-                    <Label
-                      htmlFor="incluir-la-mode"
-                      className="flex items-center justify-between w-full text-[12px] font-bold text-indigo-700 uppercase cursor-pointer"
-                    >
-                      Incluir Lã de Vidro/Pet
-                      <Switch
-                        id="incluir-la-mode"
-                        checked={activeInsulation}
-                        onCheckedChange={(checked) =>
-                          setActiveInsulation(checked)
-                        }
-                        className="data-[state=checked]:bg-[#00559C] data-[state=unchecked]:bg-slate-300"
-                      />
-                    </Label>
-                  </div>
-                )}
-
                 <Button
+                  variant="ghost"
                   onClick={addServiceToTempList}
-                  className="w-full bg-indigo-100 text-indigo-800 font-bold text-[12px] uppercase h-12 rounded-xl border-b-4 border-indigo-300"
+                  className="w-full text-indigo-800 font-bold text-[12px] uppercase h-12"
                 >
                   {/* <Plus className="mr-2" />  */}
                   Adicionar Mais serviço
