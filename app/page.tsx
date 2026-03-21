@@ -14,12 +14,16 @@ import {
   CaretRight,
   UserCircle,
   ChatCircleDots,
+  CalculatorIcon,
+  RulerIcon,
+  WrenchIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
 import BottomNavbar from "@/components/layout/BottomNavbar";
 import View from "@/components/layout/View";
 import Page from "@/components/layout/Page";
+import { Calculator } from "lucide-react";
 
 // Interface para tipar o usuário na Home
 interface UsuarioHome {
@@ -195,6 +199,46 @@ export default function HomePage() {
               />
             </div>
           </div>
+
+          {/* --- ferramentas --- */}
+          <section className="mt-8 px-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">
+              Ferramentas Técnicas
+            </h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* CARD CALCULADORA DRYWALL */}
+              <Link href="/ferramentas/drywall">
+                <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-4 rounded-[2rem] shadow-lg shadow-indigo-200 active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
+                  {/* Círculo de fundo para detalhe visual */}
+                  <div className="absolute -right-2 -top-2 w-16 h-16 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
+
+                  <CalculatorIcon
+                    size={32}
+                    weight="duotone"
+                    className="text-white mb-3"
+                  />
+
+                  <div className="flex flex-col">
+                    <span className="text-white font-black text-sm uppercase tracking-tighter">
+                      Drywall
+                    </span>
+                    <span className="text-indigo-100 text-[10px] font-medium">
+                      Calculadora de Materiais
+                    </span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* CARD FUTURO (Ex: Dimensionamento) - Desativado ou como Placeholder */}
+              <div className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm opacity-60 flex flex-col justify-center items-center italic">
+                <RulerIcon size={24} className="text-slate-300 mb-1" />
+                <span className="text-slate-400 text-[9px] font-bold uppercase">
+                  Em breve...
+                </span>
+              </div>
+            </div>
+          </section>
         </main>
 
         {/* Botão de Sair elegante */}
