@@ -14,6 +14,14 @@
 }
 */
 
+[data-vaul-drawer][data-vaul-drawer-direction="bottom"]::after {
+  top: 100%;
+  bottom: initial;
+  left: 0;
+  right: 0;
+  height: 0% !important;
+}
+
 /* Animação suave para os resultados */
 @keyframes fadeIn {
   from {

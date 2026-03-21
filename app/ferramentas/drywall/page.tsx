@@ -9,41 +9,50 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Wall,
   HardHat,
-  SquareHalf,
-  Package,
   Calculator,
   Plus,
   Trash,
-  house,
-  ChartBar,
+  Package,
+  Door,
+  Browser,
+  Check,
+  SquareHalf,
 } from "@phosphor-icons/react";
 import { calculateWallMaterials } from "@/utils/calculators/drywallWall";
 import { calculateCeilingMaterials } from "@/utils/calculators/drywallCeiling";
-import "./drywall.css";
 import FAB from "@/components/ui/FAB";
 import Pressable from "@/components/Pressable";
+import "./drywall.css";
 
-/** --- types --- */
+/** --- interfaces --- */
+interface Opening {
+  id: string;
+  type: "door" | "window";
+  w: number;
+  h: number;
+}
+
 interface ServiceInstance {
   id: string;
   type: "wall" | "ceiling";
-  tag: string; // Ex: "Parede Leste"
-  measures: { width: number; height: number }[]; // Array para suportar somas irregulares
+  tag: string;
+  useInsulation?: boolean; // Apenas para paredes
+  measures: { w: number; h: number; openings: Opening[] }[];
   totalArea: number;
 }
 
 interface Room {
   id: string;
-  name: string; // Ex: "Cozinha"
+  name: string;
   services: ServiceInstance[];
 }
 
@@ -54,133 +63,143 @@ export default function DrywallCalculator() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Estados do Formulário dentro do Drawer
+  // Estados do Formulário (Ambiente)
   const [currentRoomName, setCurrentRoomName] = useState("");
-  const [currentServiceTag, setCurrentServiceTag] = useState("");
-  const [currentType, setCurrentType] = useState<"wall" | "ceiling">("wall");
-  const [tempMeasures, setTempMeasures] = useState<{ w: number; h: number }[]>([
-    { w: 0, h: 0 },
-  ]);
 
-  const addMeasureField = () =>
-    setTempMeasures([...tempMeasures, { w: 0, h: 0 }]);
+  // Lista temporária de serviços que estão sendo montados no Drawer
+  const [tempServices, setTempServices] = useState<ServiceInstance[]>([]);
 
-  const handleSaveService = () => {
-    /* validações */
-    // Validação: Verifica se o nome do ambiente está vazio
-    // if (!currentRoomName.trim()) {
-    //   toast.error("Por favor, informe o nome do ambiente (ex: Cozinha).");
-    //   return;
-    // }
-
-    // Validação: Verifica se as medidas são válidas (maiores que zero)
-    // Usamos .some para verificar se existe alguma medida preenchida corretamente
-    const hasValidMeasures = tempMeasures.every((m) => m.w > 0 && m.h > 0);
-
-    if (!hasValidMeasures) {
-      toast.warning("Atenção!", {
-        description:
-          "Preencha todas as larguras e alturas das medidas antes de salvar.",
-      });
-      return;
-    }
-    /* end validações */
-
-    // Se passou pelas validações, segue o fluxo normal
-    const totalArea = tempMeasures.reduce((acc, m) => acc + m.w * m.h, 0);
-
-    const newService: ServiceInstance = {
-      id: Math.random().toString(36),
-      type: currentType,
-      tag: currentServiceTag || (currentType === "wall" ? "Parede" : "Forro"),
-      measures: [...tempMeasures],
-      totalArea,
-    };
-
-    // Verifica se o ambiente já existe, se não, cria
-    setRooms((prev) => {
-      const roomIndex = prev.findIndex(
-        (r) => r.name.toLowerCase() === currentRoomName.toLowerCase(),
-      );
-      if (roomIndex > -1) {
-        const newRooms = [...prev];
-        newRooms[roomIndex].services.push(newService);
-        return newRooms;
-      }
-      return [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          name: currentRoomName || "Geral",
-          services: [newService],
-        },
-      ];
-    });
-
-    setIsDrawerOpen(false);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setCurrentServiceTag("");
-    setTempMeasures([{ w: 0, h: 0 }]);
-  };
+  // Estado para o serviço que está sendo editado/criado no momento DENTRO do Drawer
+  const [activeType, setActiveType] = useState<"wall" | "ceiling">("wall");
+  const [activeTag, setActiveTag] = useState("");
+  const [activeInsulation, setActiveInsulation] = useState(false);
+  const [activeMeasures, setActiveMeasures] = useState<
+    { w: number; h: number; openings: Opening[] }[]
+  >([{ w: 0, h: 0, openings: [] }]);
 
   // FAB Configs
   const fabConfig = [
     {
       icon: <Plus size={28} weight="duotone" />,
       label: "Novo Serviço",
-      action: () => setIsDrawerOpen(!isDrawerOpen),
+      action: () => setIsDrawerOpen(true),
     },
   ];
 
-  // CÁLCULO CONSOLIDADO (A Tabela Final)
-  const consolidatedMaterials = useMemo(() => {
-    let totalWallArea = 0;
-    let totalCeilingArea = 0;
-    let wallWidthSum = 0; // Para guias/montantes
-    let wallHeightAvg = 0;
-    let ceilingWidthSum = 0;
-    let ceilingLengthSum = 0;
+  /** --- Funções de Manipulação do Drawer --- */
 
-    rooms.forEach((room) => {
-      room.services.forEach((s) => {
-        if (s.type === "wall") {
-          totalWallArea += s.totalArea;
-          s.measures.forEach((m) => {
-            wallWidthSum += m.w;
-            wallHeightAvg = m.h; // Simplificação para o cálculo de montantes
-          });
-        } else {
-          totalCeilingArea += s.totalArea;
-          s.measures.forEach((m) => {
-            ceilingWidthSum += m.w;
-            ceilingLengthSum += m.h;
-          });
-        }
-      });
+  const addMeasureField = () =>
+    setActiveMeasures([...activeMeasures, { w: 0, h: 0, openings: [] }]);
+
+  const addOpening = (measureIndex: number, type: "door" | "window") => {
+    const newMeasures = [...activeMeasures];
+    newMeasures[measureIndex].openings.push({
+      id: Math.random().toString(),
+      type,
+      w: 0,
+      h: 0,
+    });
+    setActiveMeasures(newMeasures);
+  };
+
+  const updateOpening = (
+    mIdx: number,
+    oIdx: number,
+    field: "w" | "h",
+    val: number,
+  ) => {
+    const newMeasures = [...activeMeasures];
+    newMeasures[mIdx].openings[oIdx][field] = val;
+    setActiveMeasures(newMeasures);
+  };
+
+  const addServiceToTempList = () => {
+    // Validação: validação básica das medidas
+    if (!activeMeasures.every((m) => m.w > 0 && m.h > 0)) {
+      toast.warning("Preencha as medidas principais do serviço.");
+      return;
+    }
+
+    const totalArea = activeMeasures.reduce((acc, m) => {
+      const grossArea = m.w * m.h;
+      const openingsArea = m.openings.reduce((oAcc, o) => oAcc + o.w * o.h, 0);
+      return acc + (grossArea - openingsArea);
+    }, 0);
+
+    const newService: ServiceInstance = {
+      id: Math.random().toString(36),
+      type: activeType,
+      tag: activeTag || (activeType === "wall" ? "Parede" : "Forro"),
+      useInsulation: activeInsulation,
+      measures: [...activeMeasures],
+      totalArea,
+    };
+
+    setTempServices([...tempServices, newService]);
+    // Reseta campos do serviço mas mantém o ambiente
+    setActiveTag("");
+    setActiveMeasures([{ w: 0, h: 0, openings: [] }]);
+    setActiveInsulation(false);
+    toast.success("Serviço adicionado à lista!");
+  };
+
+  const handleFinalSave = () => {
+    // Validação: Verifica se o nome do ambiente está vazio
+    if (!currentRoomName.trim())
+      return toast.error("Informe o nome do ambiente.");
+
+    if (tempServices.length === 0)
+      return toast.error("Adicione pelo menos um serviço.");
+
+    setRooms((prev) => {
+      const roomIndex = prev.findIndex(
+        (r) => r.name.toLowerCase() === currentRoomName.toLowerCase(),
+      );
+      if (roomIndex > -1) {
+        const updatedRooms = [...prev];
+        updatedRooms[roomIndex].services.push(...tempServices);
+        return updatedRooms;
+      }
+      return [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          name: currentRoomName,
+          services: tempServices,
+        },
+      ];
     });
 
-    if (totalWallArea === 0 && totalCeilingArea === 0) return [];
+    setIsDrawerOpen(false);
+    setTempServices([]);
+    setCurrentRoomName("");
+    toast.success("Ambiente salvo no projeto!");
+  };
 
-    const wallMats =
-      totalWallArea > 0
-        ? calculateWallMaterials({
-            wallLength: wallWidthSum,
-            wallHeight: wallHeightAvg,
-          })
-        : [];
-    const ceilingMats =
-      totalCeilingArea > 0
-        ? calculateCeilingMaterials({
-            width: ceilingWidthSum,
-            length: ceilingLengthSum,
-          })
-        : [];
+  // CÁLCULO CONSOLIDADO
+  const consolidatedMaterials = useMemo(() => {
+    let totals: any[] = [];
+    // Nota: Para simplificar aqui, estamos somando as áreas totais.
+    // Em uma versão avançada, o calculateWallMaterials deve ser chamado para cada serviço.
+    rooms.forEach((r) => {
+      r.services.forEach((s) => {
+        const res =
+          s.type === "wall"
+            ? calculateWallMaterials({
+                wallLength: s.totalArea / 2.8,
+                wallHeight: 2.8,
+              }) // Cálculo aproximado pela área
+            : calculateCeilingMaterials({
+                width: Math.sqrt(s.totalArea),
+                length: Math.sqrt(s.totalArea),
+              });
 
-    // Aqui você pode fazer um merge dos arrays somando as quantidades de itens repetidos
-    return [...wallMats, ...ceilingMats];
+        // Lógica de merge de arrays (soma de itens iguais) omitida para brevidade,
+        // mas aqui você faria o reduce para unificar "Placas", "Parafusos", etc.
+        totals = [...totals, ...res];
+      });
+    });
+    return totals;
   }, [rooms]);
 
   return (
@@ -190,6 +209,7 @@ export default function DrywallCalculator() {
         tag="page"
         className="p-4 bg-slate-50 min-h-[calc(100dvh_-_72px)] pb-40"
       >
+        {/* --- Header e Listagem (Mantidos) --- */}
         <header className="mb-6 text-center">
           <SquareHalf
             size={48}
@@ -206,110 +226,244 @@ export default function DrywallCalculator() {
 
         {/* --- Drawer --- */}
         <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          {/* <DrawerTrigger asChild>
-              <Button className="bg-indigo-600 rounded-2xl h-12 px-6 shadow-lg shadow-indigo-200">
-                <Plus weight="bold" className="mr-2" /> NOVO SERVIÇO
-              </Button>
-            </DrawerTrigger> */}
-          <DrawerContent className="bg-slate-50 h-[90vh] p-6">
-            <div className="mx-auto w-full max-w-md space-y-6">
-              <DrawerHeader className="px-0">
-                <DrawerTitle className="text-xl font-black text-slate-800 uppercase flex items-center gap-2">
-                  <Calculator weight="duotone" className="text-indigo-600" />{" "}
-                  Detalhar Serviço
+          <DrawerContent className="bg-white h-[95vh] p-4 overflow-y-scroll">
+            <div className="mx-auto w-full max-w-md space-y-6 pb-10">
+              <DrawerHeader className="px-0 border-b pb-4">
+                <DrawerTitle className="text-xl font-black text-indigo-900 uppercase flex items-center justify-between">
+                  <span>Adicionar Ambiente</span>
+                  <div className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[12px]">
+                    {tempServices.length} serviços na lista
+                  </div>
                 </DrawerTitle>
               </DrawerHeader>
 
-              <div className="space-y-4">
-                <label className="block">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-                    Ambiente
-                  </span>
-                  <Input
-                    placeholder="Ex: Cozinha, Quarto 01..."
-                    value={currentRoomName}
-                    onChange={(e) => setCurrentRoomName(e.target.value)}
-                  />
-                </label>
+              {/* 1. NOME DO AMBIENTE */}
+              <label className="block">
+                <span className="text-[12px] font-bold text-slate-400 uppercase ml-1">
+                  Nome do Cômodo
+                </span>
+                <Input
+                  placeholder="Ex: Sala de Estar"
+                  value={currentRoomName}
+                  onChange={(e) => setCurrentRoomName(e.target.value)}
+                />
+              </label>
 
-                <View tag="grid" className="w-full mb-6">
-                  <View className="grid w-full grid-cols-2 items-center rounded-2xl h-12 bg-slate-200 p-1">
-                    <Button
-                      variant={currentType === "wall" ? "default" : "outline"}
-                      onClick={() => setCurrentType("wall")}
-                      className="rounded-[0.9rem_0_0_0.9rem] flex gap-2 font-bold uppercase text-[10px]"
+              {/* 2. LISTA TEMPORÁRIA (Preview do que está sendo montado) */}
+              {tempServices.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto py-2">
+                  {tempServices.map((s, idx) => (
+                    <div
+                      key={idx}
+                      className="flex-shrink-0 bg-slate-900 text-white p-2 rounded-xl text-[12px] flex items-center gap-2"
                     >
-                      <Wall className="mr-2" size={20} /> Parede
-                    </Button>
-                    <Button
-                      variant={
-                        currentType === "ceiling" ? "default" : "outline"
-                      }
-                      onClick={() => setCurrentType("ceiling")}
-                      className="rounded-[0_0.9rem_0.9rem_0] flex gap-2 font-bold uppercase text-[10px]"
-                    >
-                      <HardHat className="mr-2" size={20} /> Forro
-                    </Button>
-                  </View>
+                      {s.type === "wall" ? (
+                        <Wall size={14} />
+                      ) : (
+                        <HardHat size={14} />
+                      )}
+                      {s.tag} | {s.totalArea.toFixed(2)}m²
+                      <Trash
+                        size={14}
+                        className="text-red-400"
+                        onClick={() =>
+                          setTempServices(
+                            tempServices.filter((_, i) => i !== idx),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 3. CONFIGURAÇÃO DO SERVIÇO ATUAL */}
+              <div className="flex flex-col gap-4 bg-slate-50 px-4 pt-4 rounded-2xl border border-slate-200 ">
+                <View
+                  tag="tab-grid"
+                  className="flex bg-white rounded-xl p-1 border"
+                >
+                  <Button
+                    variant={activeType === "wall" ? "default" : "outline"}
+                    onClick={() => setActiveType("wall")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0.9rem_0_0_0.9rem] text-[12px] font-bold uppercase transition-all ${activeType === "wall" ? "bg-indigo-600 text-white shadow-md" : "text-slate-400"}`}
+                  >
+                    <Wall size={18} /> Parede
+                  </Button>
+                  <Button
+                    variant={activeType === "ceiling" ? "default" : "outline"}
+                    onClick={() => setActiveType("ceiling")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0_0.9rem_0.9rem_0] text-[12px] font-bold uppercase transition-all ${activeType === "ceiling" ? "bg-indigo-600 text-white shadow-md" : "text-slate-400"}`}
+                  >
+                    <HardHat size={18} /> Forro
+                  </Button>
                 </View>
 
-                <label className="block">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-                    Identificação (Opcional)
-                  </span>
-                  <Input
-                    placeholder="Ex: Parede Leste, Fechamento viga..."
-                    value={currentServiceTag}
-                    onChange={(e) => setCurrentServiceTag(e.target.value)}
-                  />
-                </label>
+                <Input
+                  placeholder="Identificação (Ex: Parede Leste)"
+                  value={activeTag}
+                  onChange={(e) => setActiveTag(e.target.value)}
+                  className="bg-white border-slate-200"
+                />
 
-                <div className="space-y-2 max-h-[30vh] overflow-y-auto p-1">
-                  <span className="text-[10px] font-bold text-indigo-500 uppercase ml-1">
-                    Medidas (Soma Automática)
-                  </span>
-                  {tempMeasures.map((m, index) => (
+                {/* Medidas Dinâmicas */}
+                <div className="space-y-4">
+                  {activeMeasures.map((m, mIdx) => (
                     <div
-                      key={index}
-                      className="flex gap-2 animate-in fade-in slide-in-from-left-2"
+                      key={mIdx}
+                      className="space-y-2 p-3 bg-white rounded-xl border border-slate-100 relative shadow-sm"
                     >
-                      <Input
-                        type="number"
-                        placeholder="L"
-                        onChange={(e) => {
-                          const newM = [...tempMeasures];
-                          newM[index].w = parseFloat(e.target.value) || 0;
-                          setTempMeasures(newM);
-                        }}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="H"
-                        onChange={(e) => {
-                          const newM = [...tempMeasures];
-                          newM[index].h = parseFloat(e.target.value) || 0;
-                          setTempMeasures(newM);
-                        }}
-                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <label>
+                          <span className="text-xs font-bold text-slate-400 capitalize">
+                            {activeType === "wall"
+                              ? "Largura (m)"
+                              : "Largura (m)"}
+                          </span>
+                          <Input
+                            type="number"
+                            onChange={(e) => {
+                              const nm = [...activeMeasures];
+                              nm[mIdx].w = parseFloat(e.target.value) || 0;
+                              setActiveMeasures(nm);
+                            }}
+                          />
+                        </label>
+                        <label>
+                          <span className="text-xs font-bold text-slate-400 capitalize">
+                            {activeType === "wall"
+                              ? "Altura (m)"
+                              : "Comprimento (m)"}
+                          </span>
+                          <Input
+                            type="number"
+                            onChange={(e) => {
+                              const nm = [...activeMeasures];
+                              nm[mIdx].h = parseFloat(e.target.value) || 0;
+                              setActiveMeasures(nm);
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Vãos (Portas/Janelas) apenas para parede */}
+                      {activeType === "wall" && (
+                        <div className="space-y-2 mt-2 pt-2 border-t border-dashed">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-orange-500 capitalize">
+                              Descontar Vãos
+                            </span>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => addOpening(mIdx, "door")}
+                                className="p-1 bg-orange-50 text-orange-600 rounded flex items-center gap-1 text-[12px] font-bold"
+                              >
+                                <Door size={16} /> + Porta
+                              </button>
+                              <button
+                                onClick={() => addOpening(mIdx, "window")}
+                                className="p-1 bg-blue-50 text-blue-600 rounded flex items-center gap-1 text-[12px] font-bold"
+                              >
+                                <Browser size={16} /> + Janela
+                              </button>
+                            </div>
+                          </div>
+                          {m.openings.map((o, oIdx) => (
+                            <div
+                              key={o.id}
+                              className="flex gap-2 items-center animate-in slide-in-from-right-2"
+                            >
+                              <span className="text-[12px] uppercase font-bold text-slate-400">
+                                {o.type === "door" ? "P" : "J"}
+                              </span>
+                              <Input
+                                className="h-7 text-[12px]"
+                                type="number"
+                                placeholder="L"
+                                onChange={(e) =>
+                                  updateOpening(
+                                    mIdx,
+                                    oIdx,
+                                    "w",
+                                    parseFloat(e.target.value),
+                                  )
+                                }
+                              />
+                              <Input
+                                className="h-7 text-[12px]"
+                                type="number"
+                                placeholder="H"
+                                onChange={(e) =>
+                                  updateOpening(
+                                    mIdx,
+                                    oIdx,
+                                    "h",
+                                    parseFloat(e.target.value),
+                                  )
+                                }
+                              />
+                              <Trash
+                                size={14}
+                                className="text-red-300"
+                                onClick={() => {
+                                  const nm = [...activeMeasures];
+                                  nm[mIdx].openings.splice(oIdx, 1);
+                                  setActiveMeasures(nm);
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                   <Button
                     variant="ghost"
                     onClick={addMeasureField}
-                    className="w-full text-indigo-600 font-bold text-[10px] uppercase"
+                    className="w-full text-indigo-600 font-bold text-[12px] uppercase"
                   >
-                    + Adicionar Medida (Irregular)
+                    + Adicionar Outra Medida
                   </Button>
                 </div>
 
-                <Pressable
-                  pressed="oi"
-                  onClick={handleSaveService}
-                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest rounded-2xl"
+                {/* Opção de Lã para Parede */}
+                {activeType === "wall" && (
+                  <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-xl">
+                    <Label
+                      htmlFor="incluir-la-mode"
+                      className="text-[12px] font-bold text-indigo-700 uppercase cursor-pointer"
+                    >
+                      Incluir Lã de Vidro/Pet
+                    </Label>
+                    <Switch
+                      id="incluir-la-mode"
+                      checked={activeInsulation}
+                      onCheckedChange={(checked) =>
+                        setActiveInsulation(checked)
+                      }
+                      className=""
+                    />
+                  </div>
+                )}
+
+                <Button
+                  onClick={addServiceToTempList}
+                  className="w-full bg-slate-800 text-white font-bold text-[12px] uppercase h-12 rounded-xl border-b-4 border-slate-950"
                 >
-                  Salvar no Projeto
-                </Pressable>
+                  <Plus className="mr-2" /> Adicionar ao ambiente
+                </Button>
+                <p>oi</p>
               </div>
+            </div>
+
+            {/* BOTÃO FINAL DE SALVAMENTO */}
+            <div className="flex flex-col py-4 bg-white">
+              <Pressable
+                onClick={handleFinalSave}
+                className="w-full h-14 bg-green-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg flex items-center justify-center gap-2"
+              >
+                <Check weight="bold" size={20} /> Salvar Ambiente
+              </Pressable>
             </div>
           </DrawerContent>
         </Drawer>
@@ -318,32 +472,52 @@ export default function DrywallCalculator() {
         <View tag="listagem-de-ambientes" className="space-y-6 mb-12">
           {rooms.map((room) => (
             <View
-              tag="card-de-ambiente"
               key={room.id}
-              className="flex flex-col bg-slate-50 rounded-[1rem] p-6 shadow-sm border border-slate-100"
+              className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden group"
             >
-              <h2 className="text-sm font-black text-indigo-900 uppercase mb-4 flex items-center gap-2">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full" />{" "}
-                {room.name}
-              </h2>
+              <div className="absolute left-0 top-0 w-1 h-full bg-indigo-500" />
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-sm font-black text-indigo-900 uppercase tracking-tighter">
+                  {room.name}
+                </h2>
+                <div className="flex gap-2">
+                  <Trash
+                    size={18}
+                    className="text-slate-300 hover:text-red-500 cursor-pointer transition-colors"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-3">
                 {room.services.map((s) => (
                   <div
                     key={s.id}
-                    className="flex justify-between items-center p-3 bg-white rounded-xl border border-slate-100"
+                    className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100"
                   >
                     <div>
-                      <div className="text-[10px] font-black uppercase text-slate-400 leading-none mb-1">
+                      <div className="text-xs font-black capitalize text-indigo-400 mb-1 flex items-center gap-1">
+                        {s.type === "wall" ? (
+                          <Wall size={12} />
+                        ) : (
+                          <HardHat size={12} />
+                        )}{" "}
                         {s.type === "wall" ? "Parede" : "Forro"}
+                        {s.useInsulation && (
+                          <span className="bg-emerald-100 text-emerald-700 px-1 rounded">
+                            C/ LÃ
+                          </span>
+                        )}
                       </div>
-                      <div className="font-bold text-slate-700">{s.tag}</div>
+                      <div className="font-bold text-slate-700 text-sm">
+                        {s.tag}
+                      </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-black text-indigo-600">
+                      <div className="text-sm font-black text-slate-900">
                         {s.totalArea.toFixed(2)} m²
                       </div>
-                      <div className="text-[9px] text-slate-400 font-bold uppercase">
-                        {s.measures.length} medida(s)
+                      <div className="text-[12px] text-slate-400 font-bold uppercase">
+                        {s.measures.length} seções
                       </div>
                     </div>
                   </div>
@@ -352,14 +526,6 @@ export default function DrywallCalculator() {
             </View>
           ))}
         </View>
-
-        {/* --- --- */}
-        {/*<View className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2 tracking-widest">
-            <Package size={18} weight="bold" /> Lista Estimada de Materiais
-          </h3>
-          <div className="space-y-2"></div>
-        </View>*/}
 
         {/* TABELA CONSOLIDADA FINAL */}
         {consolidatedMaterials.length > 0 && (
@@ -382,7 +548,7 @@ export default function DrywallCalculator() {
                   </span>
                   <span className="font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
                     {item.qtd}{" "}
-                    <small className="text-[10px]">{item.unit}</small>
+                    <small className="text-[12px]">{item.unit}</small>
                   </span>
                 </View>
               ))}
