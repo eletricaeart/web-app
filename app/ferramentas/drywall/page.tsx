@@ -229,7 +229,7 @@ export default function DrywallCalculator() {
           <DrawerContent className="bg-white h-[95vh] p-4 overflow-y-scroll">
             <div className="mx-auto w-full max-w-md space-y-6 pb-10">
               <DrawerHeader className="px-0 border-b pb-4">
-                <DrawerTitle className="text-xl font-black text-indigo-900 uppercase flex items-center justify-between">
+                <DrawerTitle className="flex flex-col text-xl font-black text-indigo-900 uppercase flex items-center justify-between">
                   <span>Adicionar Ambiente</span>
                   <div className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[12px]">
                     {tempServices.length} serviços na lista
@@ -286,14 +286,14 @@ export default function DrywallCalculator() {
                   <Button
                     variant={activeType === "wall" ? "default" : "outline"}
                     onClick={() => setActiveType("wall")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0.9rem_0_0_0.9rem] text-[12px] font-bold uppercase transition-all ${activeType === "wall" ? "bg-indigo-600 text-white shadow-md" : "text-slate-400"}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0.9rem_0_0_0.9rem] text-[12px] font-bold uppercase transition-all ${activeType === "wall" ? "bg-[#00559c] text-white shadow-md" : "text-slate-400"}`}
                   >
                     <Wall size={18} /> Parede
                   </Button>
                   <Button
                     variant={activeType === "ceiling" ? "default" : "outline"}
                     onClick={() => setActiveType("ceiling")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0_0.9rem_0.9rem_0] text-[12px] font-bold uppercase transition-all ${activeType === "ceiling" ? "bg-indigo-600 text-white shadow-md" : "text-slate-400"}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0_0.9rem_0.9rem_0] text-[12px] font-bold uppercase transition-all ${activeType === "ceiling" ? "bg-[#00559c] text-white shadow-md" : "text-slate-400"}`}
                   >
                     <HardHat size={18} /> Forro
                   </Button>
@@ -379,7 +379,7 @@ export default function DrywallCalculator() {
                               <Input
                                 className="h-7 text-[12px]"
                                 type="number"
-                                placeholder="L"
+                                placeholder="largura"
                                 onChange={(e) =>
                                   updateOpening(
                                     mIdx,
@@ -392,7 +392,7 @@ export default function DrywallCalculator() {
                               <Input
                                 className="h-7 text-[12px]"
                                 type="number"
-                                placeholder="H"
+                                placeholder="altura"
                                 onChange={(e) =>
                                   updateOpening(
                                     mIdx,
@@ -422,37 +422,37 @@ export default function DrywallCalculator() {
                     onClick={addMeasureField}
                     className="w-full text-indigo-600 font-bold text-[12px] uppercase"
                   >
-                    + Adicionar Outra Medida
+                    {/* <Plus className="mr-2" />  */} Adicionar Medida
                   </Button>
                 </div>
 
                 {/* Opção de Lã para Parede */}
                 {activeType === "wall" && (
-                  <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-xl">
+                  <div className="flex items-center justify-between p-3 rounded-xl">
                     <Label
                       htmlFor="incluir-la-mode"
-                      className="text-[12px] font-bold text-indigo-700 uppercase cursor-pointer"
+                      className="flex items-center justify-between w-full text-[12px] font-bold text-indigo-700 uppercase cursor-pointer"
                     >
                       Incluir Lã de Vidro/Pet
+                      <Switch
+                        id="incluir-la-mode"
+                        checked={activeInsulation}
+                        onCheckedChange={(checked) =>
+                          setActiveInsulation(checked)
+                        }
+                        className="data-[state=checked]:bg-[#00559C] data-[state=unchecked]:bg-slate-300"
+                      />
                     </Label>
-                    <Switch
-                      id="incluir-la-mode"
-                      checked={activeInsulation}
-                      onCheckedChange={(checked) =>
-                        setActiveInsulation(checked)
-                      }
-                      className=""
-                    />
                   </div>
                 )}
 
                 <Button
                   onClick={addServiceToTempList}
-                  className="w-full bg-slate-800 text-white font-bold text-[12px] uppercase h-12 rounded-xl border-b-4 border-slate-950"
+                  className="w-full bg-indigo-100 text-indigo-800 font-bold text-[12px] uppercase h-12 rounded-xl border-b-4 border-indigo-300"
                 >
-                  <Plus className="mr-2" /> Adicionar ao ambiente
+                  {/* <Plus className="mr-2" />  */}
+                  Adicionar Mais serviço
                 </Button>
-                <p>oi</p>
               </div>
             </div>
 
@@ -462,7 +462,7 @@ export default function DrywallCalculator() {
                 onClick={handleFinalSave}
                 className="w-full h-14 bg-green-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg flex items-center justify-center gap-2"
               >
-                <Check weight="bold" size={20} /> Salvar Ambiente
+                <Check weight="bold" size={20} /> Salvar Os Serviços
               </Pressable>
             </div>
           </DrawerContent>
