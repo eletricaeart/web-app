@@ -229,7 +229,7 @@ export default function DrywallCalculator() {
           <DrawerContent className="bg-white h-[95vh] p-4 overflow-y-scroll">
             <div className="mx-auto w-full max-w-md space-y-6 pb-10">
               <DrawerHeader className="px-0 border-b pb-4">
-                <DrawerTitle className="flex flex-col text-xl font-black text-indigo-900 uppercase flex items-center justify-between">
+                <DrawerTitle className="flex flex-col gap-4 text-xl font-black text-indigo-900 uppercase items-center justify-between">
                   <span>Adicionar Ambiente</span>
                   <div className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[12px]">
                     {tempServices.length} serviços na lista
@@ -311,7 +311,7 @@ export default function DrywallCalculator() {
                   <div className="flex items-center justify-between p-3 rounded-xl">
                     <Label
                       htmlFor="incluir-la-mode"
-                      className="flex items-center justify-between w-full text-[12px] font-bold text-indigo-700 uppercase cursor-pointer"
+                      className="flex items-center justify-between w-full text-[12px] font-bold text-mauve-700 capitalize cursor-pointer"
                     >
                       Incluir Lã de Vidro/Pet
                       <Switch
