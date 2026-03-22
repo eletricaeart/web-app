@@ -29,6 +29,7 @@ interface ItemBudget {
   subtitulo: string;
   detalhes: DetailContent[];
   price?: number;
+  services?: any[];
 }
 
 interface ServiceBudget {
