@@ -11,7 +11,7 @@ import {
   ListPlus,
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
-import { Button } from "../ui/button.tsx";
+import { Button } from "../ui/button";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import View from "@/components/layout/View";
 import styles from "./ClauseManager.module.css";
