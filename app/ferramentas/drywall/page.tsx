@@ -235,7 +235,7 @@ export default function DrywallCalculator() {
 
         {/* --- Drawer --- */}
         <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <DrawerContent className="bg-white fixed bottom-0 left-0 right-0 max-h-[96dvh] h-[95vh] p-4 overflow-y-auto data-[vaul-drawer]:rounded-[2rem_2rem_0_0_!important] data-[vaul-drawer]:[scrollbar-width:_none] z-[999]">
+          <DrawerContent className="bg-white fixed bottom-0 left-0 right-0 max-h-[96dvh] h-[95vh] p-4 overflow-y-auto data-[vaul-drawer]:rounded-[2rem_2rem_0_0_!important] data-[vaul-drawer]:[scrollbar-width:_none] z-[9500]">
             {/* Handle do Drawer (aquela barrinha cinza de puxar) */}
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-slate-300 my-4" />
 
