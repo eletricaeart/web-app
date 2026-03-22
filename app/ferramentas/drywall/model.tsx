@@ -225,8 +225,8 @@ export default function DrywallCalculator() {
         </header>
 
         {/* --- Drawer --- */}
-        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <DrawerContent className="bg-white h-[95vh] p-4 overflow-y-scroll">
+        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} className="">
+          <DrawerContent className="bg-white h-[95vh] p-4 overflow-y-scroll data-[vaul-drawer]:rounded-[2rem_2rem_0_0_!important]">
             <div className="mx-auto w-full max-w-md space-y-6 pb-10">
               <DrawerHeader className="px-0 border-b pb-4">
                 <DrawerTitle className="flex flex-col gap-4 text-xl font-black text-indigo-900 uppercase items-center justify-between">
@@ -328,12 +328,20 @@ export default function DrywallCalculator() {
 
                 {/* Medidas Dinâmicas */}
                 <div className="space-y-4">
+                  <span className="text-[10px] font-bold text-indigo-500 uppercase ml-1">
+                    Medidas (Soma Automática)
+                  </span>
                   {activeMeasures.map((m, mIdx) => (
-                    <div
+                    <View
+                      tag="measure-card"
                       key={mIdx}
-                      className="space-y-2 p-3 bg-white rounded-xl border border-slate-100 relative shadow-sm"
+                      className="flex flex-col space-y-2 p-3 bg-white rounded-xl border border-slate-100 relative shadow-sm"
                     >
-                      <div className="grid grid-cols-2 gap-2">
+                      {/* --- componente inptus de medidas principais --- */}
+                      <View
+                        tag="main-measure-inputs"
+                        className="grid grid-cols-2 gap-2"
+                      >
                         <label>
                           <span className="text-xs font-bold text-slate-400 capitalize">
                             {activeType === "wall"
@@ -342,6 +350,8 @@ export default function DrywallCalculator() {
                           </span>
                           <Input
                             type="number"
+                            placeholder="0.00"
+                            value={m.w || ""}
                             onChange={(e) => {
                               const nm = [...activeMeasures];
                               nm[mIdx].w = parseFloat(e.target.value) || 0;
@@ -357,6 +367,8 @@ export default function DrywallCalculator() {
                           </span>
                           <Input
                             type="number"
+                            placeholder="0.00"
+                            value={m.h || ""}
                             onChange={(e) => {
                               const nm = [...activeMeasures];
                               nm[mIdx].h = parseFloat(e.target.value) || 0;
@@ -364,11 +376,15 @@ export default function DrywallCalculator() {
                             }}
                           />
                         </label>
-                      </div>
+                      </View>
+                      {/* --- end componente inptus de medidas principais --- */}
 
-                      {/* Vãos (Portas/Janelas) apenas para parede */}
-                      {activeType === "wall" && (
-                        <div className="space-y-2 mt-2 pt-2 border-t border-dashed">
+                      {/* Vãos (Portas/Janelas) apenas para parede e no primeiro card de medida */}
+                      {activeType === "wall" && mIdx === 0 && (
+                        <View
+                          tag="add-portas-e-janelas"
+                          className="space-y-2 mt-2 pt-2 border-t border-dashed"
+                        >
                           <div className="flex justify-between items-center">
                             <span className="text-xs font-bold text-orange-500 capitalize">
                               Descontar Vãos
@@ -422,23 +438,49 @@ export default function DrywallCalculator() {
                                   )
                                 }
                               />
-                              <div className="grid items-center justify-center bg-red-600">
+                              <View
+                                tag="oi"
+                                className="grid items-center justify-center bg-red-100 rounded-full p-1"
+                              >
                                 <Trash
                                   size={14}
-                                  className="text-indigo-600"
+                                  weight="duotone"
+                                  className="text-red-600"
                                   onClick={() => {
                                     const nm = [...activeMeasures];
                                     nm[mIdx].openings.splice(oIdx, 1);
                                     setActiveMeasures(nm);
                                   }}
                                 />
-                              </div>
+                              </View>
                             </div>
                           ))}
-                        </div>
+                        </View>
                       )}
-                    </div>
+                      {/* --- end Vãos (Portas/Janelas) --- */}
+
+                      {/* Botão para remover medida irregular (caso não seja a primeira) */}
+                      {mIdx > 0 && (
+                        <button
+                          onClick={() =>
+                            setActiveMeasures(
+                              activeMeasures.filter((_, i) => i !== mIdx),
+                            )
+                          }
+                          className="absolute -top-2 -right-2 bg-red-200 text-white rounded-full p-1 shadow-lg"
+                        >
+                          <Trash
+                            size={14}
+                            weight="bold"
+                            className="text-red-500"
+                          />
+                        </button>
+                      )}
+                      {/* --- end botão para remover medida irregular --- */}
+                    </View>
                   ))}
+
+                  {/* botão para adicionar medidas extras para medição irregular*/}
                   <Button
                     variant="ghost"
                     onClick={addMeasureField}
@@ -447,15 +489,49 @@ export default function DrywallCalculator() {
                     {/* <Plus className="mr-2" />  */}
                     Adicionar Medida (Irregular)
                   </Button>
+
+                  {/* IMPLEMENTAÇÃO TAREFA 2: Visor de Área ao Vivo */}
+                  <div className="bg-indigo-600 p-3 rounded-xl text-white flex justify-between items-center shadow-inner">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase opacity-80">
+                        Área Calculada
+                      </span>
+                      <span className="text-xs italic opacity-70">
+                        (Bruta - Vãos)
+                      </span>
+                    </div>
+                    <div className="text-xl font-black">
+                      {activeMeasures
+                        .reduce((acc, m) => {
+                          const gross = m.w * m.h;
+                          const openings = m.openings.reduce(
+                            (oAcc, o) => oAcc + o.w * o.h,
+                            0,
+                          );
+                          return acc + (gross - openings);
+                        }, 0)
+                        .toFixed(2)}{" "}
+                      m²
+                    </div>
+                  </div>
                 </div>
 
                 <Button
                   variant="ghost"
                   onClick={addServiceToTempList}
-                  className="w-full text-indigo-800 font-bold text-[12px] uppercase h-12"
+                  className="w-full text-indigo-800 font-bold text-[12px] uppercase h-12 border-2 border-dashed border-indigo-100 rounded-xl"
                 >
                   {/* <Plus className="mr-2" />  */}
-                  Adicionar Mais serviço
+                  Salvar O serviço na lista
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={addServiceToTempList}
+                  className="w-full text-indigo-800 font-bold text-[12px] uppercase h-12 border-2 border-dashed border-indigo-100 rounded-xl mb-4"
+                >
+                  {/* <Plus className="mr-2" />  */}
+                  Adicionar Outro serviço
                 </Button>
               </div>
             </div>
