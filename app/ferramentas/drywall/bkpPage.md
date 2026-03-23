@@ -10,18 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  Wall,
-  HardHat,
-  Calculator,
-  Plus,
-  Trash,
-  Package,
-  Door,
-  Browser,
-  Check,
-  SquareHalf,
-  X,
-  PencilSimple,
+Wall,
+HardHat,
+Calculator,
+Plus,
+Trash,
+Package,
+Door,
+Browser,
+Check,
+SquareHalf,
+X,
+PencilSimple,
 } from "@phosphor-icons/react";
 import { calculateWallMaterials } from "@/utils/calculators/drywallWall";
 import { calculateCeilingMaterials } from "@/utils/calculators/drywallCeiling";
@@ -29,112 +29,104 @@ import FAB from "@/components/ui/FAB";
 import Pressable from "@/components/Pressable";
 import "./drywall.css";
 
-/** --- interfaces --- */
+/\*_ --- interfaces --- _/
 interface Opening {
-  id: string;
-  type: "door" | "window";
-  w: number;
-  h: number;
+id: string;
+type: "door" | "window";
+w: number;
+h: number;
 }
 
 interface ServiceInstance {
-  id: string;
-  type: "wall" | "ceiling";
-  tag: string;
-  useInsulation?: boolean;
-  measures: { w: number; h: number; openings: Opening[] }[];
-  totalArea: number;
+id: string;
+type: "wall" | "ceiling";
+tag: string;
+useInsulation?: boolean;
+measures: { w: number; h: number; openings: Opening[] }[];
+totalArea: number;
 }
 
 interface Room {
-  id: string;
-  name: string;
-  services: ServiceInstance[];
+id: string;
+name: string;
+services: ServiceInstance[];
 }
 
 export default function DrywallCalculator() {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+const [rooms, setRooms] = useState<Room[]>([]);
+const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Estados do Formulário (Ambiente)
-  const [currentRoomName, setCurrentRoomName] = useState("");
-  const [tempServices, setTempServices] = useState<ServiceInstance[]>([]);
+// Estados do Formulário (Ambiente)
+const [currentRoomName, setCurrentRoomName] = useState("");
+const [tempServices, setTempServices] = useState<ServiceInstance[]>([]);
 
-  // Estado para Edição
-  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+// Estado para Edição
+const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
-  // Estado para o serviço atual
-  const [activeType, setActiveType] = useState<"wall" | "ceiling">("wall");
-  const [activeTag, setActiveTag] = useState("");
-  const [activeInsulation, setActiveInsulation] = useState(false);
-  const [activeMeasures, setActiveMeasures] = useState<
-    { w: number; h: number; openings: Opening[] }[]
-  >([{ w: 0, h: 0, openings: [] }]);
+// Estado para o serviço atual
+const [activeType, setActiveType] = useState<"wall" | "ceiling">("wall");
+const [activeTag, setActiveTag] = useState("");
+const [activeInsulation, setActiveInsulation] = useState(false);
+const [activeMeasures, setActiveMeasures] = useState<
+{ w: number; h: number; openings: Opening[] }[]
 
-  // FAB Configs
-  const fabConfig = [
-    {
-      icon: <Plus size={28} weight="duotone" />,
-      label: "Novo Serviço",
-      action: () => setIsDrawerOpen(true),
-    },
-  ];
+> ([{ w: 0, h: 0, openings: [] }]);
 
-  /** --- Funções de Manipulação --- */
-  const addMeasureField = () =>
-    setActiveMeasures([...activeMeasures, { w: 0, h: 0, openings: [] }]);
+// FAB Configs
+const fabConfig = [
+{
+icon: <Plus size={28} weight="duotone" />,
+label: "Novo Serviço",
+action: () => setIsDrawerOpen(true),
+},
+];
 
-  const addOpening = (measureIndex: number, type: "door" | "window") => {
-    const newMeasures = [...activeMeasures];
-    newMeasures[0].openings.push({
-      id: Math.random().toString(),
-      type,
-      w: 0,
-      h: 0,
-    });
-    setActiveMeasures(newMeasures);
-  };
+/\*_ --- Funções de Manipulação --- _/
+const addMeasureField = () =>
+setActiveMeasures([...activeMeasures, { w: 0, h: 0, openings: [] }]);
 
-  const updateOpening = (
-    mIdx: number,
-    oIdx: number,
-    field: "w" | "h",
-    val: number,
-  ) => {
-    const newMeasures = [...activeMeasures];
-    newMeasures[mIdx].openings[oIdx][field] = val;
-    setActiveMeasures(newMeasures);
-  };
+const addOpening = (measureIndex: number, type: "door" | "window") => {
+const newMeasures = [...activeMeasures];
+newMeasures[0].openings.push({
+id: Math.random().toString(),
+type,
+w: 0,
+h: 0,
+});
+setActiveMeasures(newMeasures);
+};
 
-  const handleEditTempService = (service: ServiceInstance) => {
-    setEditingServiceId(service.id);
-    setActiveType(service.type);
-    setActiveTag(service.tag);
-    setActiveInsulation(service.useInsulation || false);
-    setActiveMeasures(service.measures);
-  };
+const updateOpening = (
+mIdx: number,
+oIdx: number,
+field: "w" | "h",
+val: number,
+) => {
+const newMeasures = [...activeMeasures];
+newMeasures[mIdx].openings[oIdx][field] = val;
+setActiveMeasures(newMeasures);
+};
 
-  // Função de Edição de Ambiente
-  const handleEditSavedRoom = (room: Room) => {
-    setEditingRoomId(room.id);
-    setCurrentRoomName(room.name);
-    setTempServices(room.services); // Carrega todos os serviços do ambiente para o rascunho
-    setIsDrawerOpen(true); // Abre a View SPA
-  };
+const handleEditTempService = (service: ServiceInstance) => {
+setEditingServiceId(service.id);
+setActiveType(service.type);
+setActiveTag(service.tag);
+setActiveInsulation(service.useInsulation || false);
+setActiveMeasures(service.measures);
+};
 
-  const cancelEditing = () => {
-    setEditingServiceId(null);
-    setActiveTag("");
-    setActiveInsulation(false);
-    setActiveMeasures([{ w: 0, h: 0, openings: [] }]);
-  };
+const cancelEditing = () => {
+setEditingServiceId(null);
+setActiveTag("");
+setActiveInsulation(false);
+setActiveMeasures([{ w: 0, h: 0, openings: [] }]);
+};
 
-  const addServiceToTempList = () => {
-    if (!activeMeasures.every((m) => m.w > 0 && m.h > 0)) {
-      toast.warning("Preencha as medidas principais do serviço.");
-      return;
-    }
+const addServiceToTempList = () => {
+if (!activeMeasures.every((m) => m.w > 0 && m.h > 0)) {
+toast.warning("Preencha as medidas principais do serviço.");
+return;
+}
 
     const totalArea = activeMeasures.reduce((acc, m) => {
       const grossArea = m.w * m.h;
@@ -165,25 +157,16 @@ export default function DrywallCalculator() {
     setActiveTag("");
     setActiveMeasures([{ w: 0, h: 0, openings: [] }]);
     setActiveInsulation(false);
-  };
 
-  const handleFinalSave = () => {
-    if (!currentRoomName.trim())
-      return toast.error("Informe o nome do ambiente.");
-    if (tempServices.length === 0)
-      return toast.error("Adicione pelo menos um serviço.");
+};
+
+const handleFinalSave = () => {
+if (!currentRoomName.trim())
+return toast.error("Informe o nome do ambiente.");
+if (tempServices.length === 0)
+return toast.error("Adicione pelo menos um serviço.");
 
     setRooms((prev) => {
-      // Se estivermos editando um ID existente
-      if (editingRoomId) {
-        return prev.map((r) =>
-          r.id === editingRoomId
-            ? { ...r, name: currentRoomName, services: tempServices }
-            : r,
-        );
-      }
-
-      // Lógica original para novos ambientes ou adição em nomes iguais
       const roomIndex = prev.findIndex(
         (r) => r.name.toLowerCase() === currentRoomName.toLowerCase(),
       );
@@ -205,90 +188,41 @@ export default function DrywallCalculator() {
     setIsDrawerOpen(false);
     setTempServices([]);
     setCurrentRoomName("");
-    setEditingRoomId(null); // Limpa o estado de edição
-    toast.success(editingRoomId ? "Ambiente atualizado!" : "Ambiente salvo!");
-  };
+    toast.success("Ambiente salvo no projeto!");
 
-  // TAREFA 4: CÁLCULO CONSOLIDADO (Soma itens duplicados e unifica a lista)
-  const consolidatedMaterials = useMemo(() => {
-    const totalsMap: Record<
-      string,
-      { item: string; qtd: number; unit: string }
-    > = {};
+};
 
-    rooms.forEach((r) => {
-      r.services.forEach((s) => {
-        let res: any[] = [];
+const consolidatedMaterials = useMemo(() => {
+let totals: any[] = [];
+rooms.forEach((r) => {
+r.services.forEach((s) => {
+const res =
+s.type === "wall"
+? calculateWallMaterials({
+wallLength: s.totalArea / 2.8,
+wallHeight: 2.8,
+})
+: calculateCeilingMaterials({
+width: Math.sqrt(s.totalArea),
+length: Math.sqrt(s.totalArea),
+});
+totals = [...totals, ...res];
+});
+});
+return totals;
+}, [rooms]);
 
-        if (s.type === "wall") {
-          // Para paredes, calculamos com base em cada seção (medida) para maior precisão
-          s.measures.forEach((m) => {
-            const netArea =
-              m.w * m.h - m.openings.reduce((acc, o) => acc + o.w * o.h, 0);
-            // Chamamos o utilitário (ajustando para a interface esperada pelo seu script original)
-            const wallRes = calculateWallMaterials({
-              wallLength: m.w,
-              wallHeight: m.h,
-              openings: m.openings.map((o) => ({ width: o.w, height: o.h })),
-            });
-            res = [...res, ...wallRes];
+const currentLiveArea = useMemo(() => {
+return activeMeasures.reduce((acc, m) => {
+const grossArea = m.w _ m.h;
+const openingsArea = m.openings.reduce((oAcc, o) => oAcc + o.w _ o.h, 0);
+return acc + (grossArea - openingsArea);
+}, 0);
+}, [activeMeasures]);
 
-            // Lógica extra para Lã de Vidro (Tarefa 3 - persistência)
-            if (s.useInsulation) {
-              res.push({
-                item: "Lã de Vidro/Pet (m²)",
-                qtd: Number(netArea.toFixed(2)),
-                unit: "m²",
-              });
-            }
-          });
-        } else {
-          // Para forros
-          s.measures.forEach((m) => {
-            const ceilingRes = calculateCeilingMaterials({
-              width: m.w,
-              length: m.h,
-            });
-            res = [...res, ...ceilingRes];
-          });
-        }
-
-        // Agrupamento e Soma
-        res.forEach((m) => {
-          // Ignoramos o item de "Área Total" da soma de materiais para não poluir a lista técnica
-          if (m.item.toLocaleLowerCase().includes("área total")) return;
-
-          if (totalsMap[m.item]) {
-            totalsMap[m.item].qtd += Number(m.qtd);
-          } else {
-            totalsMap[m.item] = {
-              item: m.item,
-              qtd: Number(m.qtd),
-              unit: m.unit,
-            };
-          }
-        });
-      });
-    });
-
-    // Retorna o mapa como array, formatando as quantidades para 2 casas decimais se não forem inteiros
-    return Object.values(totalsMap).map((m) => ({
-      ...m,
-      qtd: Number.isInteger(m.qtd) ? m.qtd : Number(m.qtd.toFixed(2)),
-    }));
-  }, [rooms]);
-
-  const currentLiveArea = useMemo(() => {
-    return activeMeasures.reduce((acc, m) => {
-      const grossArea = m.w * m.h;
-      const openingsArea = m.openings.reduce((oAcc, o) => oAcc + o.w * o.h, 0);
-      return acc + (grossArea - openingsArea);
-    }, 0);
-  }, [activeMeasures]);
-
-  return (
-    <>
-      <AppBar title="Calculadora Drywall" />
+return (
+<>
+<AppBar title="Calculadora Drywall" />
 
       {/* VIEW PRINCIPAL LISTAGEM */}
       <View
@@ -315,40 +249,19 @@ export default function DrywallCalculator() {
               key={room.id}
               className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden group"
             >
-              {/* Detalhe visual lateral */}
               <div className="absolute left-0 top-0 w-1 h-full bg-indigo-500" />
-
               <div className="flex justify-between items-start mb-4">
                 <h2 className="text-sm font-black text-indigo-900 uppercase tracking-tighter">
                   {room.name}
                 </h2>
-
-                {/* BOTÕES DE AÇÃO DO AMBIENTE (Tarefa 5) */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                    onClick={() => handleEditSavedRoom(room)}
-                  >
-                    <PencilSimple size={18} weight="bold" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                    onClick={() => {
-                      setRooms(rooms.filter((r) => r.id !== room.id));
-                      toast.success(`Ambiente "${room.name}" removido`);
-                    }}
-                  >
-                    <Trash size={18} weight="bold" />
-                  </Button>
-                </div>
+                <Trash
+                  size={18}
+                  className="text-slate-300 hover:text-red-500 cursor-pointer transition-colors"
+                  onClick={() =>
+                    setRooms(rooms.filter((r) => r.id !== room.id))
+                  }
+                />
               </div>
-
-              {/* Serviços dentro deste ambiente */}
               <div className="space-y-3">
                 {room.services.map((s) => (
                   <div
@@ -364,7 +277,7 @@ export default function DrywallCalculator() {
                         )}{" "}
                         {s.type === "wall" ? "Parede" : "Forro"}
                         {s.useInsulation && (
-                          <span className="bg-emerald-100 text-emerald-700 px-1 rounded ml-1 text-[9px]">
+                          <span className="bg-emerald-100 text-emerald-700 px-1 rounded ml-1">
                             C/ LÃ
                           </span>
                         )}
@@ -377,9 +290,8 @@ export default function DrywallCalculator() {
                       <div className="text-sm font-black text-slate-900">
                         {s.totalArea.toFixed(2)} m²
                       </div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase">
-                        {s.measures.length}{" "}
-                        {s.measures.length > 1 ? "seções" : "seção"}
+                      <div className="text-[12px] text-slate-400 font-bold uppercase">
+                        {s.measures.length} seções
                       </div>
                     </div>
                   </div>
@@ -773,5 +685,6 @@ export default function DrywallCalculator() {
 
       {!isDrawerOpen && <FAB actions={fabConfig} hasBottomNav={false} />}
     </>
-  );
+
+);
 }
