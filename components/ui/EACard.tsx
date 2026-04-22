@@ -51,15 +51,18 @@ const EACard: React.FC = () => {
           </a>{" "}
           <br />
           <a
-            href="mailto:rafa.julia.forever@gmail.com"
+            href="eletrica.art.ltda@gmail.com"
             className={"contactLink"}
           >
-            <strong>E-mail </strong> rafa.julia.forever@gmail.com
+            <strong>E-mail </strong> eletrica.art.ltda@gmail.com
           </a>
         </div>
       </div>
     </View>
   );
 };
+
+// eletrica.art.ltda@gmail.com 
+// mailto:rafa.julia.forever@gmail.com 
 
 export default EACard;
