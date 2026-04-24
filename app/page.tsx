@@ -1,10 +1,10 @@
 // app/page.tsx
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
-import { useEASync } from "@/hooks/useEASync";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useEASync } from '@/hooks/useEASync';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   FilePlus,
   Users,
@@ -17,13 +17,13 @@ import {
   CalculatorIcon,
   RulerIcon,
   WrenchIcon,
-} from "@phosphor-icons/react";
-import Link from "next/link";
-import Image from "next/image";
-import BottomNavbar from "@/components/layout/BottomNavbar";
-import View from "@/components/layout/View";
-import Page from "@/components/layout/Page";
-import { Calculator } from "lucide-react";
+} from '@phosphor-icons/react';
+import Link from 'next/link';
+import Image from 'next/image';
+import BottomNavbar from '@/components/layout/BottomNavbar';
+import View from '@/components/layout/View';
+import Page from '@/components/layout/Page';
+import { Calculator } from 'lucide-react';
 
 // Interface para tipar o usuário na Home
 interface UsuarioHome {
@@ -35,14 +35,15 @@ interface UsuarioHome {
 
 export default function HomePage() {
   // Chamadas ao hook para obter os dados reais de cada entidade
-  const { data: users } = useEASync<UsuarioHome>("usuarios");
-  const { data: clients } = useEASync<any>("clientes");
-  const { data: notes } = useEASync<any>("notas");
+  const { data: users } = useEASync<UsuarioHome>('usuarios');
+  const { data: clients } = useEASync<any>('clientes');
+  const { data: notes } = useEASync<any>('notas');
+  const { data: recibos } = useEASync<any>('recibos');
 
   // Fallback seguro para evitar erro de undefined no split do nome
   const currentUser = users[0] || {
-    name: "Usuário Sistema",
-    role: "Colaborador",
+    name: 'Usuário Sistema',
+    role: 'Colaborador',
   };
 
   /**
@@ -53,24 +54,24 @@ export default function HomePage() {
 
     // Listas de frases por período
     const morning = [
-      "Bom dia",
-      "Acordou cedo, hein?",
-      "Ótimo dia para você",
-      "Energia total agora",
+      'Bom dia',
+      'Acordou cedo, hein?',
+      'Ótimo dia para você',
+      'Energia total agora',
     ];
     const afternoon = [
-      "Boa tarde",
-      "Como vai a tarde?",
-      "Produtividade lá em cima",
-      "Bora finalizar o dia",
+      'Boa tarde',
+      'Como vai a tarde?',
+      'Produtividade lá em cima',
+      'Bora finalizar o dia',
     ];
     const evening = [
-      "Boa noite",
-      "Bom descanso",
-      "Trabalhando até tarde?",
-      "Finalizando o expediente",
+      'Boa noite',
+      'Bom descanso',
+      'Trabalhando até tarde?',
+      'Finalizando o expediente',
     ];
-    const generic = ["Olá", "E aí", "Tudo certo", "Que bom te ver"];
+    const generic = ['Olá', 'E aí', 'Tudo certo', 'Que bom te ver'];
 
     // Seleciona a lista baseada na hora
     let selectedList = generic;
@@ -84,25 +85,25 @@ export default function HomePage() {
 
   // gera a saudação
   const greeting = React.useMemo(() => getGreeting(), []);
-  const firstName = (currentUser.name || "Usuário").split(" ")[0];
+  const firstName = (currentUser.name || 'Usuário').split(' ')[0];
 
   /**
    * --- frases para o topo
    *  */
   // Estado para a frase de efeito
-  const [randomPhrase, setRandomPhrase] = useState("Painel Elétrica & Art");
+  const [randomPhrase, setRandomPhrase] = useState('Painel Elétrica & Art');
 
   // Lista de frases de efeito
   const phrases = useMemo(
     () => [
-      "O que vamos fazer hoje na Elétrica & Art?",
-      "Pronto para mais um dia de sucesso?",
-      "Gestão inteligente, resultados brilhantes.",
-      "Sua produtividade começa por aqui.",
-      "Transformando energia em eficiência.",
-      "Acompanhe seus orçamentos em tempo real.",
-      "Organização é a chave para o crescimento.",
-      "Vamos colocar os projetos em dia?",
+      'O que vamos fazer hoje na Elétrica & Art?',
+      'Pronto para mais um dia de sucesso?',
+      'Gestão inteligente, resultados brilhantes.',
+      'Sua produtividade começa por aqui.',
+      'Transformando energia em eficiência.',
+      'Acompanhe seus orçamentos em tempo real.',
+      'Organização é a chave para o crescimento.',
+      'Vamos colocar os projetos em dia?',
     ],
     [],
   );
@@ -169,6 +170,12 @@ export default function HomePage() {
                 icon={<Notebook size={28} weight="duotone" />}
                 title="Notas"
                 count={`${notes.length} registros`}
+              />
+              <MenuCard
+                href="/recibos"
+                icon={<Notebook size={28} weight="duotone" />}
+                title="Recibos"
+                count={`${recibos.length} registros`}
               />
               {/* CARD DA EQUIPE (USUÁRIOS) */}
               <MenuCard
