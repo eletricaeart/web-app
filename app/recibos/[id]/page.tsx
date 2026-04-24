@@ -16,15 +16,14 @@ export default function ReceiptView() {
   const { data: recibos } = useEASync<any>('recibos');
   const receipt = recibos.find((r) => String(r.id) === String(id));
   const receiptRef = useRef(null);
-  const [issueDate, setIssueDate] = useState(null);
+  const [issueDate, setIssueDate] = useState<string>('');
 
   useEffect(() => {
-    async function load() {
+    if (receipt && receipt.issueDate) {
       const date = new Date(receipt.issueDate).toLocaleDateString('pt-BR');
       setIssueDate(date);
     }
-    load();
-  }, []);
+  }, [receipt]);
 
   if (!receipt) return <div className="p-10 text-center">Carregando...</div>;
 
