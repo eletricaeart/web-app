@@ -18,15 +18,15 @@ export default function ReceiptView() {
   const receiptRef = useRef(null);
   const [issueDate, setIssueDate] = useState(null);
 
-  if (!receipt) return <div className="p-10 text-center">Carregando...</div>;
-
   useEffect(() => {
     async function load() {
-      const issueDate = new Date(receipt.issueDate).toLocaleDateString('pt-BR');
-      setIssueDate(issueDate);
+      const date = new Date(receipt.issueDate).toLocaleDateString('pt-BR');
+      setIssueDate(date);
     }
     load();
   }, []);
+
+  if (!receipt) return <div className="p-10 text-center">Carregando...</div>;
 
   return (
     <>
