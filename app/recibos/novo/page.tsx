@@ -17,6 +17,27 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+interface ReceiptClient {
+  name: string;
+  zip?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  complement?: string;
+  obs?: string;
+}
+
+interface ReceiptData {
+  id: string | null;
+  receiptNumber: string;
+  amount: string;
+  paymentMethod: string;
+  description: string;
+  issueDate: string;
+  client: ReceiptClient; // Use a interface aqui
+}
+
 export default function NewReceipt() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -52,7 +73,9 @@ export default function NewReceipt() {
         <h3 className="page-subtitle">Dados do Cliente</h3>
         <ClientForm
           clientData={receipt.client}
-          onClientChange={(c) => setReceipt({ ...receipt, client: c })}
+          onClientChange={(c: ReceiptClient) =>
+            setReceipt({ ...receipt, client: c })
+          }
           onNewClientClick={() => router.push('/clientes/novo')}
         />
 
@@ -87,7 +110,6 @@ export default function NewReceipt() {
               </SelectItem>
             </SelectContent>
           </Select>
-
           <label className="text-xs font-bold text-slate-400 uppercase">
             Referente a:
           </label>
