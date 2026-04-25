@@ -44,14 +44,14 @@ export default function NewReceipt() {
   const editId = searchParams.get('id');
   const [loading, setLoading] = useState(false);
 
-  const [receipt, setReceipt] = useState({
+  const [receipt, setReceipt] = useState<ReceiptData>({
     id: null,
     receiptNumber: `${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     amount: '',
     paymentMethod: 'pix',
     description: '',
     issueDate: new Date().toISOString().split('T')[0],
-    client: { name: '', street: '', city: '' },
+    client: { name: '' },
   });
 
   const handleSave = async () => {
