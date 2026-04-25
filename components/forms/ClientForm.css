@@ -158,21 +158,21 @@ grid-duo {
   flex-flow: row;
   gap: 0.5rem;
 }
-label > t {
-  display: grid;
-  font-weight: bold;
-  color: #333;
-  font-size: 0.8rem;
-  gap: 0;
-  padding: 0.5rem 0;
-  font-family: "Poppins", sans-serif !important;
-}
+/* label > t { */
+/*   display: grid; */
+/*   font-weight: bold; */
+/*   color: #333; */
+/*   font-size: 0.8rem; */
+/*   gap: 0; */
+/*   padding: 0.5rem 0; */
+/*   font-family: "Poppins", sans-serif !important; */
+/* } */
 
 input,
 select,
 button,
 btn {
-  font-family: "Poppins", sans-serif !important;
+  font-family: 'Poppins', sans-serif !important;
   height: 56px;
   width: 100%;
   flex: 1;
@@ -194,8 +194,8 @@ input:focus-visible {
   box-shadow: #0000 0 0 0 0;
 }
 
-[nodeName$="-fieldset"],
-[attribute$="-fieldset"],
+[nodeName$='-fieldset'],
+[attribute$='-fieldset'],
 cep-fieldset {
   background: #ffab00;
 }

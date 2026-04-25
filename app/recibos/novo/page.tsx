@@ -53,6 +53,7 @@ export default function NewReceipt() {
         <ClientForm
           clientData={receipt.client}
           onClientChange={(c) => setReceipt({ ...receipt, client: c })}
+          onNewClientClick={() => router.push('/clientes/novo')}
         />
 
         <h3 className="page-subtitle mt-6">Detalhes do Pagamento</h3>

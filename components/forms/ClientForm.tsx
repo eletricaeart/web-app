@@ -1,18 +1,18 @@
 // components/forms/ClientForm.tsx
-"use client";
+'use client';
 
-import React, { useState, useMemo } from "react";
-import "./ClientForm.css";
-import View from "../layout/View";
+import React, { useState, useMemo } from 'react';
+import './ClientForm.css';
+import View from '../layout/View';
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import { UserPlus, MagnifyingGlass, MapPin } from "@phosphor-icons/react";
+} from '@/components/ui/drawer';
+import { Input } from '@/components/ui/input';
+import { UserPlus, MagnifyingGlass, MapPin } from '@phosphor-icons/react';
 
 interface ClientData {
   name: string;
@@ -42,7 +42,7 @@ export default function ClientForm({
   isOnNewBudget = false,
 }: ClientFormProps) {
   const [loadingCep, setLoadingCep] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Novo estado para controlar a exibição das sugestões rápidas
@@ -52,14 +52,14 @@ export default function ClientForm({
   // Se estiver no input principal, só mostra se tiver mais de 2 letras.
   const filteredClients = useMemo(() => {
     const term = (
-      isDrawerOpen ? searchTerm : clientData.name || ""
+      isDrawerOpen ? searchTerm : clientData.name || ''
     ).toLowerCase();
 
     // Se o Drawer estiver aberto, filtramos a lista com base no termo de busca do Drawer
     if (isDrawerOpen) {
       if (!term) return clientsCache; // Se não digitou nada no drawer, mostra todos
       return clientsCache.filter((c) => {
-        const name = (c.name || c["Nome Completo"] || "").toLowerCase();
+        const name = (c.name || c['Nome Completo'] || '').toLowerCase();
         return name.includes(term);
       });
     }
@@ -68,29 +68,29 @@ export default function ClientForm({
     if (!isDrawerOpen && term.length < 2) return [];
 
     return clientsCache.filter((c) => {
-      const name = (c.name || c["Nome Completo"] || "").toLowerCase();
+      const name = (c.name || c['Nome Completo'] || '').toLowerCase();
       return name.includes(term);
     });
   }, [searchTerm, clientsCache, clientData.name, isDrawerOpen]);
 
   const handleSelectClient = (client: any) => {
     onClientChange({
-      name: client.name || client["Nome Completo"] || "",
-      zip: client.zip || client.cep || client["CEP"] || "",
-      street: client.street || client.rua || client["Rua"] || "",
-      number: client.number || client.num || client["Número"] || "",
+      name: client.name || client['Nome Completo'] || '',
+      zip: client.zip || client.cep || client['CEP'] || '',
+      street: client.street || client.rua || client['Rua'] || '',
+      number: client.number || client.num || client['Número'] || '',
       neighborhood:
-        client.neighborhood || client.bairro || client["Bairro"] || "",
-      city: client.city || client.cidade || client["Cidade/UF"] || "",
-      complement: client.complement || client.complemento || "",
-      obs: client.obs || "",
+        client.neighborhood || client.bairro || client['Bairro'] || '',
+      city: client.city || client.cidade || client['Cidade/UF'] || '',
+      complement: client.complement || client.complemento || '',
+      obs: client.obs || '',
     });
     setIsDrawerOpen(false);
     setShowSuggestions(false);
   };
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    const cepValue = e.target.value.replace(/\D/g, "");
+    const cepValue = e.target.value.replace(/\D/g, '');
     if (cepValue.length === 8) {
       setLoadingCep(true);
       try {
@@ -106,7 +106,7 @@ export default function ClientForm({
           });
         }
       } catch (err) {
-        console.error("Erro ao buscar CEP:", err);
+        console.error('Erro ao buscar CEP:', err);
       } finally {
         setLoadingCep(false);
       }
@@ -118,14 +118,14 @@ export default function ClientForm({
   ) => {
     const { id, value } = e.target;
     const fieldMap: Record<string, string> = {
-      c_name: "name",
-      c_cep: "zip",
-      c_rua: "street",
-      c_num: "number",
-      c_complemento: "complement",
-      c_bairro: "neighborhood",
-      c_cidade: "city",
-      c_obs: "obs",
+      c_name: 'name',
+      c_cep: 'zip',
+      c_rua: 'street',
+      c_num: 'number',
+      c_complemento: 'complement',
+      c_bairro: 'neighborhood',
+      c_cidade: 'city',
+      c_obs: 'obs',
     };
 
     const fieldName = fieldMap[id];
@@ -133,7 +133,7 @@ export default function ClientForm({
       onClientChange({ ...clientData, [fieldName]: value });
 
       // Se estiver digitando no nome, abre as sugestões
-      if (id === "c_name") setShowSuggestions(true);
+      if (id === 'c_name') setShowSuggestions(true);
     }
   };
 
@@ -189,10 +189,10 @@ export default function ClientForm({
                       onClick={() => handleSelectClient(c)}
                     >
                       <div className="font-bold">
-                        {c.name || c["Nome Completo"]}
+                        {c.name || c['Nome Completo']}
                       </div>
                       <div className="text-sm text-slate-500">
-                        {c.city || c.cidade || "Cidade n/i"}
+                        {c.city || c.cidade || 'Cidade n/i'}
                       </div>
                     </View>
                   ))}
@@ -200,7 +200,7 @@ export default function ClientForm({
               </div>
             </DrawerContent>
           </Drawer>
-          <View tag="t" className="label-text">
+          <View tag="t" className="text-slate-400 text-xs font-bold uppercase">
             Nome / Empresa
           </View>
         </View>
@@ -210,7 +210,7 @@ export default function ClientForm({
           id="c_name"
           className="input"
           placeholder="Digite o nome do cliente..."
-          value={clientData.name || ""}
+          value={clientData.name || ''}
           onChange={handleChange}
           onFocus={() => setShowSuggestions(true)}
           autoComplete="off"
@@ -239,10 +239,10 @@ export default function ClientForm({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-bold text-slate-800 text-sm truncate">
-                      {c.name || c["Nome Completo"]}
+                      {c.name || c['Nome Completo']}
                     </span>
                     <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                      <MapPin size={10} /> {c.city || c.cidade || "Cidade n/i"}
+                      <MapPin size={10} /> {c.city || c.cidade || 'Cidade n/i'}
                     </span>
                   </div>
                 </View>
@@ -256,7 +256,7 @@ export default function ClientForm({
       <View tag="cep-input">
         <label>
           <View tag="t">
-            CEP{" "}
+            CEP{' '}
             {loadingCep && (
               <span className="text-amber-500 ml-2 italic text-xs">
                 Buscando...
@@ -269,7 +269,7 @@ export default function ClientForm({
             className="input"
             placeholder="00000-000"
             maxLength={9}
-            value={clientData.zip || ""}
+            value={clientData.zip || ''}
             onChange={handleChange}
             onBlur={handleCepBlur}
           />
@@ -279,7 +279,7 @@ export default function ClientForm({
       {/* Street and Number */}
       <View
         tag="logradouro_numero-inputs"
-        style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "10px" }}
+        style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}
       >
         <View tag="logradouro-input">
           <label>
@@ -288,7 +288,7 @@ export default function ClientForm({
               type="text"
               id="c_rua"
               className="input"
-              value={clientData.street || ""}
+              value={clientData.street || ''}
               onChange={handleChange}
             />
           </label>
@@ -300,7 +300,7 @@ export default function ClientForm({
               type="text"
               id="c_num"
               className="input"
-              value={clientData.number || ""}
+              value={clientData.number || ''}
               onChange={handleChange}
             />
           </label>
@@ -315,7 +315,7 @@ export default function ClientForm({
             type="text"
             id="c_complemento"
             className="input"
-            value={clientData.complement || ""}
+            value={clientData.complement || ''}
             onChange={handleChange}
             placeholder="Apto..."
           />
@@ -331,7 +331,7 @@ export default function ClientForm({
               type="text"
               id="c_bairro"
               className="input"
-              value={clientData.neighborhood || ""}
+              value={clientData.neighborhood || ''}
               onChange={handleChange}
             />
           </label>
@@ -343,7 +343,7 @@ export default function ClientForm({
               type="text"
               id="c_cidade"
               className="input"
-              value={clientData.city || ""}
+              value={clientData.city || ''}
               onChange={handleChange}
             />
           </label>
@@ -357,8 +357,8 @@ export default function ClientForm({
             <View tag="t">Observações Internas</View>
             <textarea
               id="c_obs"
-              className="input w-full p-2 rounded-md border h-20"
-              value={clientData.obs || ""}
+              className="input w-full p-2 rounded-md border h-20 bg-[#f5f5f5] border-none"
+              value={clientData.obs || ''}
               onChange={handleChange}
             />
           </label>
