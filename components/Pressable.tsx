@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import View from "./layout/View";
-import "./Pressable.css";
+import React, { useState } from 'react';
+import View from './layout/View';
+import './Pressable.css';
 
 /**
  * Interface para as propriedades do componente Pressable.
@@ -23,6 +23,7 @@ interface PressableProps {
   /** Classes adicionais do Tailwind */
   className?: string;
   style?: React.CSSProperties;
+  disabled?: boolean;
   /** Tag personalizada para o componente View interno */
   tag?: string;
   children?: React.ReactNode;
@@ -41,13 +42,14 @@ interface PressableProps {
 export default function Pressable({
   label,
   pressed,
-  bg = "bg-transparent",
+  bg = 'bg-transparent',
   color,
-  rounded = "rounded-md",
-  m = "0",
+  rounded = 'rounded-md',
+  m = '0',
   onClick,
-  className = "",
-  tag = "pressable",
+  className = '',
+  tag = 'pressable',
+  disabled,
   children,
   style,
 }: PressableProps) {
@@ -62,12 +64,12 @@ export default function Pressable({
     <View
       tag={tag}
       className={`
-        ${"pressable"} 
+        ${'pressable'} 
       `}
       style={
         {
           // Permite cores hexadecimais se não forem classes Tailwind
-          background: !bg.startsWith("bg-") ? bg : undefined,
+          background: !bg.startsWith('bg-') ? bg : undefined,
           padding: m,
         } as React.CSSProperties
       }
@@ -75,15 +77,17 @@ export default function Pressable({
       <View
         tag="pressable-btn"
         // type="button"
-        onClick={onClick}
+        onClick={!disabled ? onClick : undefined}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         onTouchStart={handleMouseDown}
         onTouchEnd={handleMouseUp}
+        disabled={disabled} // Se for um elemento <button> nativo
         // className="pressable-btn w-full h-full bg-transparent border-none cursor-pointer flex items-center justify-center p-4 font-medium"
         className={`
-        ${"pressable-btn"}
+          ${disabled ? 'opacity-5' : 'opacity-100'}
+        ${'pressable-btn'}
         ${bg} 
         ${rounded} 
         ${className}
@@ -91,9 +95,9 @@ export default function Pressable({
         style={
           ({
             // Permite cores hexadecimais se não forem classes Tailwind
-            bg: !bg.startsWith("bg-") ? bg : undefined,
+            bg: !bg.startsWith('bg-') ? bg : undefined,
             color: color,
-            rounded: !rounded.startsWith("rounded") ? rounded : undefined,
+            rounded: !rounded.startsWith('rounded') ? rounded : undefined,
           } as React.CSSProperties,
           { ...style })
         }

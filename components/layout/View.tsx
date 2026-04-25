@@ -1,4 +1,4 @@
-import React, { ElementType, forwardRef, ReactNode } from "react";
+import React, { ElementType, forwardRef, ReactNode } from 'react';
 
 // Definimos as nossas props customizadas
 export interface ViewProps {
@@ -10,6 +10,7 @@ export interface ViewProps {
   h?: string | number;
   m?: string | number;
   pd?: string | number;
+  disabled?: boolean;
   children?: ReactNode;
   className?: string;
 }
@@ -31,6 +32,7 @@ function ViewComponent(
     h,
     m,
     pd,
+    disabled,
     children,
     className,
     style: styleProp,
@@ -39,16 +41,17 @@ function ViewComponent(
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
   // Mantemos a sua lógica de Tag dinâmica
-  const Tag = (tag || "div") as any;
+  const Tag = (tag || 'div') as any;
 
   const style: React.CSSProperties = {
     ...(bg && { background: bg }),
-    ...(flex && { display: "flex" }),
-    ...(grid && { display: "grid" }),
+    ...(flex && { display: 'flex' }),
+    ...(grid && { display: 'grid' }),
     ...(w && { width: w }),
     ...(h && { height: h }),
     ...(m && { margin: m }),
     ...(pd && { padding: pd }),
+    ...(disabled && { opacity: 1 }),
     ...styleProp,
   };
 
@@ -61,6 +64,6 @@ function ViewComponent(
 
 const View = forwardRef(ViewComponent);
 // Importante para o Next.js não reclamar no build
-View.displayName = "View";
+View.displayName = 'View';
 
 export default View;
