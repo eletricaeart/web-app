@@ -1,0 +1,22 @@
+/* Budget.css */
+clause,
+clause-header,
+clause-content,
+subclause,
+subclause-header,
+subclause-body {
+  display: flex;
+  flex-direction: column;
+}
+/* novo acima*/
+[tag='subclause-body'] ul {
+  list-style-type: disc !important;
+  margin-left: 1.5rem !important;
+  margin-bottom: 1rem !important;
+  display: block !important;
+}
+
+[tag='subclause-body'] li {
+  display: list-item !important;
+  margin-bottom: 0.25rem !important;
+}

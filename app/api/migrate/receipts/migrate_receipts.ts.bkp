@@ -1,0 +1,51 @@
+// app/api/migrate/receipts/route.ts
+import { NextResponse } from 'next/server';
+import * as dbGS from '@/lib/sheets/db';
+import { createClient } from '@/lib/supabase/server';
+
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+
+    const oldReceipts = await dbGS.getAll('recibos');
+    const { data: newClients } = await supabase
+      .from('clientes')
+      .select('id, name');
+
+    const results = { success: 0, errors: 0 };
+
+    for (const old of oldReceipts) {
+      const clientName = old.clientName || old['Nome Cliente'];
+      const matchedClient = newClients?.find(
+        (c) => c.name.toLowerCase() === String(clientName).toLowerCase(),
+      );
+
+      const { error } = await supabase.from('recibos').insert([
+        {
+          owner_id: user.id,
+          client_id: matchedClient?.id || null,
+          client_name_manual: clientName,
+          receipt_number: old.receiptNumber || old['Número'] || '000',
+          amount: parseFloat(old.amount || old['Valor'] || 0),
+          payment_method: old.paymentMethod || old['Forma'] || 'pix',
+          description: old.description || old['Referente'] || '',
+          issue_date: old.issueDate || new Date(),
+        },
+      ]);
+
+      if (error) results.errors++;
+      else results.success++;
+    }
+
+    return NextResponse.json(results);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// Acesse http://localhost:3000/api/migrate/receipts para rodar.

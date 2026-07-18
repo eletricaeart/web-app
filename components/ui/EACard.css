@@ -1,0 +1,109 @@
+ea-card,
+.ea_card {
+  /* Definimos o card como um container de tamanho */
+  container-type: inline-size;
+
+  /* font-size: 2.5vw; */
+  display: grid !important;
+  grid-template-columns: 0.35fr 0.65fr;
+  width: 100%;
+  /* height: 36.3vw; */
+  aspect-ratio: 3.8 / 1;
+  padding: 1vw;
+  padding: 2cqw; /* Padding proporcional à largura do card */
+
+  inset: 0;
+  color: #f5f5f5;
+  filter: var(--appbar-filter-shadow);
+
+  margin: 0;
+
+  background-image: url('https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png');
+  background-color: #0009;
+  background-size: cover;
+  border-radius: 1rem;
+}
+.card {
+  background: var(--sv-sombra-azul);
+  color: #f5f5f5;
+  font-size: 2.5vw;
+  display: grid;
+  grid-template-columns: 0.35fr 0.65fr;
+  width: 100%;
+  aspect-ratio: 3.8 / 1;
+  padding: 1vw;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif !important;
+  border-radius: 1rem;
+  /* background-image: url("/public/pix/bgs/bg4.png"); */
+  /* background-image: url("/public/pix/bgs/bg3.png"); */
+  /* background-image: url("https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png"); */
+  background-size: cover;
+  background-blend-mode: overlay;
+}
+
+.logoArea {
+  display: flex;
+  height: 100%;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+
+  padding: 1cqw;
+}
+
+.logoImg {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 100vw;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 2.25vw;
+  font-size: clamp(8px, 2.25vw, 16px) !important;
+  /* A MÁGICA: Fonte baseada na largura do card (cqw) */
+  /* 4cqw costuma ser o 'sweet spot' para esse layout 3.8/1 */
+  font-size: clamp(10px, 4cqw, 18px) !important;
+  font-size: clamp(8px, 2.5cqw, 34px) !important;
+
+  height: 95%;
+  aspect-ratio: 1.8 / 1;
+}
+
+.nameImg {
+  width: 100%;
+  margin-bottom: 0.2em;
+}
+
+.nameImg {
+  /* Logo do nome também proporcional ao card */
+  width: 80cqw;
+  max-width: 90%;
+  margin-bottom: 0.5cqw;
+}
+
+.description t5,
+.description t {
+  display: block;
+  line-height: 1.2;
+
+  white-space: nowrap; /* Evita quebra feia se o container for pequeno */
+}
+
+.contactLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media print {
+  .card {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

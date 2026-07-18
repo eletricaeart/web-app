@@ -1,0 +1,65 @@
+// app/api/migrate/clients/route.ts
+import { NextResponse } from 'next/server';
+import * as dbGS from '@/lib/sheets/db'; // Seu banco antigo
+import { createClient } from '@/lib/supabase/server';
+
+export async function GET() {
+  try {
+    const supabase = await createClient();
+
+    // 1. Pegar o usuário logado (você) para ser o dono dos dados
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+
+    // 2. Ler todos os clientes do Google Sheets
+    const oldClients = await dbGS.getAll('clientes');
+    console.log(`Encontrados ${oldClients.length} clientes no GS.`);
+
+    const migrationResults = {
+      success: 0,
+      errors: 0,
+      details: [] as string[],
+    };
+
+    // 3. Mapear e Inserir no Supabase
+    for (const old of oldClients) {
+      const { data, error } = await supabase.from('clientes').insert([
+        {
+          owner_id: user.id,
+          name: old.name || old['Nome Completo'] || 'Sem Nome',
+          document: old.document || old.doc || old['CPF / CNPJ'] || '',
+          gender: old.gender || old['Gênero'] || 'masc',
+          whatsapp: old.whatsapp || old['WhatsApp'] || '',
+          email: old.email || old['E-mail'] || '',
+          zip: old.zip || old.cep || old['CEP'] || '',
+          street: old.street || old.rua || old['Rua'] || '',
+          number: old.number || old.num || old['Nº'] || '',
+          complement: old.complement || old.complemento || '',
+          neighborhood: old.neighborhood || old.bairro || old['Bairro'] || '',
+          city: old.city || old.cidade || old['Cidade'] || '',
+          obs: old.obs || old['Observações'] || '',
+          photo_url: old.photo || old['foto'] || '',
+        },
+      ]);
+
+      if (error) {
+        migrationResults.errors++;
+        migrationResults.details.push(
+          `Erro no cliente ${old.name}: ${error.message}`,
+        );
+      } else {
+        migrationResults.success++;
+      }
+    }
+
+    return NextResponse.json(migrationResults);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+
+// open: http://localhost:3000/api/migrate/clients

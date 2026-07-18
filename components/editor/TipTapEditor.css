@@ -1,0 +1,113 @@
+/* TipTapEditor.css */
+
+.tiptap-container {
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease-in-out;
+}
+
+/* --- TOOLBAR ADAPTATIVA --- */
+.tiptap-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: #ffffff;
+  border-bottom: 1px solid #eef2f6;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.tiptap-toolbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* No Mobile: Toolbar grudada no teclado ou no fundo */
+@media (max-width: 768px) {
+  .tiptap-toolbar {
+    order: 2; /* Joga a barra para baixo no mobile para facilitar o toque */
+    border-bottom: none;
+    border-top: 1px solid #eef2f6;
+    position: sticky;
+    bottom: 0;
+    top: auto;
+    padding: 10px 8px;
+  }
+}
+
+/* --- ESTILIZAÇÃO INTERNA DO EDITOR --- */
+.tiptap.ProseMirror {
+  padding: 1rem;
+  min-height: 150px;
+  outline: none !important;
+  color: #334155;
+}
+
+.tiptap.ProseMirror:focus-visible {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* Placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+/* --- TEXTO E BLOCOS (SEU PADRÃO) --- */
+.tiptap-container blockquote {
+  border-left: #29f 4px solid;
+  border-radius: 4px 12px 12px 4px;
+  padding: 10px 1rem;
+  margin: 1rem 0;
+  color: #475569;
+  font-style: italic;
+  background-color: rgba(34, 153, 255, 0.08); /* Seu #27f3 */
+}
+
+.tiptap-container ul,
+.tiptap-container ol {
+  padding: 0.5rem 0 1rem 2rem;
+  color: #2299ff; /* Seu #27f */
+  font-weight: 500;
+}
+
+.tiptap-container li p {
+  margin: 0;
+  color: #334155;
+}
+
+.tiptap-container h3 {
+  color: #1e293b;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-top: 1rem;
+}
+
+/* Destaque para o valor financeiro inserido no texto */
+.tiptap-container strong {
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* Estilo para as tabelas */
+.tiptap-container table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.tiptap-container th,
+.tiptap-container td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}

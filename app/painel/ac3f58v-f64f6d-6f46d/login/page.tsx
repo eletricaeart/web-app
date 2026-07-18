@@ -1,0 +1,173 @@
+/** app/login/page.tsx */
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  Lightning,
+  EnvelopeSimple,
+  Lock,
+  CircleNotch,
+} from '@phosphor-icons/react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import EAText from '@/components/EAText';
+import Image from 'next/image';
+import logoEA from '@/public/pix/ea/EA-logo.png';
+import titleEA from '@/public/pix/ea/ea-Name.png';
+
+/**
+ * --- [ default ]
+ *  */
+export default function LoginPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Falha no acesso');
+      }
+
+      toast.success('Acesso autorizado!', {
+        description: 'Bem-vindo ao sistema Elétrica & Art.',
+      });
+
+      router.push('/painel');
+      router.refresh(); // Força o Next a revalidar o middleware
+    } catch (err) {
+      // Correção de tipagem para o erro (evitando 'any')
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error('Erro de Login', { description: errorMessage });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="relative flex min-h-svh items-center justify-center p-6 bg-slate-50 overflow-hidden">
+      {/* Blobs de fundo */}
+      <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-indigo-900 blur-[80px] rounded-full" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-indigo-600 blur-[80px] rounded-full" />
+
+      <Card className="w-full max-w-md border-none shadow-2xl rounded-3xl z-10 bg-white/90 backdrop-blur-md">
+        <CardHeader className="text-center space-y-2">
+          {/* <div className="mx-auto w-14 h-14 bg-indigo-950 rounded-2xl flex items-center justify-center shadow-lg mb-2"> */}
+          <div className="mx-auto w-[120px] h-[120px] bg-transparent rounded-full flex items-center justify-center shadow-lg mb-2">
+            {/* <Lightning size={28} weight="duotone" className="text-white" /> */}
+            <Image
+              src={logoEA}
+              alt="Logo Elétrica & Art"
+              width={150} // Defina a largura desejada
+              height={150} // Defina a altura desejada
+              priority // Adicione isso se a logo aparecer no topo da página (LCP)
+            />
+          </div>
+          <CardTitle className="flex flex-row gap-2 items-center justify-center text-2xl font-extrabold tracking-tight text-slate-800">
+            {/* Elétrica & Art */}
+            <Image
+              src={titleEA}
+              alt="Title EA"
+              width={250}
+              height={250}
+              priority
+              style={{ filter: 'drop-shadow(#0005 0 5px 0px 5px)' }}
+            />
+          </CardTitle>
+          <CardDescription className="text-slate-500">
+            Gestão de Orçamentos e Clientes
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                E-mail
+                <div className="flex items-center bg-[#f5f5f5] rounded-xl px-4">
+                  <EnvelopeSimple className=" text-slate-500" size={20} />
+                  <Input
+                    type="email"
+                    placeholder="rafael@eletrica.com"
+                    // className="pl-10 h-12 bg-[#ffab0000_!important] border-none rounded-xl focus-visible:ring-[#0000]"
+                    className="pl-10 h-12 bg-[#ffab00] text-amber-300 focus-visible:bg-transparent border-none rounded-xl"
+                    style={style.input}
+                    value={email}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setEmail(e.target.value)
+                    }
+                    required
+                  />
+                </div>
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                Senha
+                <div className="flex items-center bg-[#f5f5f5] rounded-xl px-4">
+                  <Lock className=" text-slate-400" size={20} />
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10 h-12 bg-amber-400 border-none rounded-xl focus-visible:ring-[#0000]"
+                    value={password}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setPassword(e.target.value)
+                    }
+                    required
+                  />
+                </div>
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 bg-[#00559c_!important] hover:bg-indigo-900 text-[#fff_!important] rounded-xl font-bold shadow-lg transition-all active:scale-[0.98]"
+              disabled={loading}
+            >
+              {loading ? (
+                <CircleNotch className="animate-spin" size={20} />
+              ) : (
+                'ACESSAR PAINEL'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <footer className="absolute bottom-6 text-blue-950 text-xs">
+        &copy; 2026 Elétrica & Art &bull; Praia Grande/SP
+      </footer>
+    </div>
+  );
+}
+
+const style = {
+  input: {
+    boxShadow: '#0000 0 0 0 0 !important',
+    Background: '#0000 !important',
+    border: '#0000 0px solid !important',
+    color: '#27f !important',
+    outline: 'none',
+  },
+};

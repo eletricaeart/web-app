@@ -1,0 +1,27 @@
+.ea-text-container {
+  display: inline-block;
+  position: relative;
+  --shadow-color: #fff;
+  --shadow-stroke: 10px;
+  --shadow-text-color: #212329;
+  --text-color: #ffab00;
+}
+
+.ea-text-main {
+  position: relative;
+  display: grid;
+  color: var(--text-color);
+  font-weight: bold;
+  z-index: 1;
+}
+
+.ea-text-main::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--shadow-text-color);
+  -webkit-text-stroke: var(--shadow-stroke) var(--shadow-color);
+  filter: drop-shadow(0px 4px rgba(0, 0, 0, 0.3));
+  z-index: -1;
+}

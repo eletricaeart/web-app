@@ -1,0 +1,17 @@
+{
+  "name": "Elétrica & Art",
+  "short_name": "eletrica e art",
+  "description": "Gestão de Orçamentos e Clientes - Elétrica & Art",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#212329",
+  "theme_color": "#00559c",
+  "icons": [
+    {
+      "src": "/pix/ea/file.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

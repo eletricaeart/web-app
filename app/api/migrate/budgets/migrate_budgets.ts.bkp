@@ -1,0 +1,92 @@
+// app/api/migrate/budgets/route.ts
+import { NextResponse } from 'next/server';
+import * as dbGS from '@/lib/sheets/db';
+import { createClient } from '@/lib/supabase/server';
+
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+
+    // 1. Pega os orçamentos antigos do GS
+    const oldBudgets = await dbGS.getAll('orcamentos');
+
+    // 2. Pega os clientes novos do Supabase para fazer o vínculo (Join manual)
+    const { data: newClients } = await supabase
+      .from('clientes')
+      .select('id, name');
+
+    const results = { success: 0, errors: 0, details: [] as string[] };
+
+    for (const old of oldBudgets) {
+      // Tenta encontrar o ID do cliente novo pelo nome
+      const oldClientName =
+        old.clientName || old.cliente?.name || old['Nome Cliente'];
+      const matchedClient = newClients?.find(
+        (c) => c.name.toLowerCase() === String(oldClientName).toLowerCase(),
+      );
+
+      // Normaliza a estrutura de serviços e financeiro para JSONB
+      const services =
+        old.services ||
+        old.servicos ||
+        (old['Serviços JSON'] ? JSON.parse(old['Serviços JSON']) : []);
+      const financial = old.financial || {
+        labor: old['Mão de Obra'] || 0,
+        materials: old['Materiais'] || 0,
+        discount: old['Desconto'] || 0,
+        total: old['Total'] || 0,
+      };
+
+      const { error } = await supabase.from('orcamentos').insert([
+        {
+          owner_id: user.id,
+          client_id: matchedClient?.id || null, // Vincula se achar, senão fica nulo
+          client_name_manual: oldClientName,
+          document_title:
+            old.documentTitle ||
+            old.docTitle?.text ||
+            old['Título Doc'] ||
+            'Orçamento sem título',
+          subtitle:
+            old.subtitle ||
+            old.docTitle?.subtitle ||
+            old['Subtítulo'] ||
+            'PROPOSTA DE ORÇAMENTO',
+          issue_date: old.issueDate ? parseDate(old.issueDate) : new Date(),
+          expiration: old.expiration || old.docTitle?.validade || '15 dias',
+          services_json: services,
+          financial_json: financial,
+          access_password: old.accessPassword || '0000', // Mantém a antiga ou gera uma
+        },
+      ]);
+
+      if (error) {
+        results.errors++;
+        results.details.push(`Erro no orç. ${oldClientName}: ${error.message}`);
+      } else {
+        results.success++;
+      }
+    }
+
+    return NextResponse.json(results);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// Helper para converter data DD/MM/YYYY para objeto Date
+function parseDate(dateStr: string) {
+  if (!dateStr || typeof dateStr !== 'string') return new Date();
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+  }
+  return new Date(dateStr);
+}
+
+// open: http://localhost:3000/api/migrate/budgets
