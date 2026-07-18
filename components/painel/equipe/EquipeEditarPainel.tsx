@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
+import { usePainelAuth } from '@/components/painel/auth/PainelAuthContext';
 import AppBar from '@/components/layout/AppBar';
 import View from '@/components/layout/View';
 import AvatarUpload from '@/components/forms/AvatarUpload';
@@ -32,8 +33,8 @@ export default function EquipeEditarPainel() {
   const { data: users, save: saveUser } =
     useEASyncSupabase<MembroEquipe>('profiles');
 
+  const { userId } = usePainelAuth();
   const [loading, setLoading] = useState(false);
-  const [myId, setMyId] = useState<string | null>(null); // Estado para seu ID
   const [formData, setFormData] = useState<MembroEquipe>({
     id: '',
     name: '',
@@ -46,18 +47,7 @@ export default function EquipeEditarPainel() {
     gender: 'masc',
   });
 
-  // 1. Pega seu ID para saber para onde redirecionar depois
-  useEffect(() => {
-    async function getMe() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) setMyId(user.id);
-    }
-    getMe();
-  }, []);
-
-  // 2. Carrega os dados no formulário assim que a lista de perfis carregar
+  // 1. Carrega os dados no formulário assim que a lista de perfis carregar
   useEffect(() => {
     if (editId && users.length > 0) {
       const found = users.find((u) => String(u.id) === String(editId));
@@ -71,10 +61,7 @@ export default function EquipeEditarPainel() {
     if (!formData.name) return toast.error('O nome é obrigatório.');
     setLoading(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const finalId = editId || user?.id;
+    const finalId = editId || userId;
 
     // Montamos o payload garantindo que os nomes batam com as colunas do banco
     const payload = {
@@ -95,7 +82,7 @@ export default function EquipeEditarPainel() {
 
     if (res) {
       toast.success('Perfil atualizado com sucesso!');
-      if (finalId === user?.id) {
+      if (finalId === userId) {
         router.replace('perfil');
       } else {
         router.replace('equipe');

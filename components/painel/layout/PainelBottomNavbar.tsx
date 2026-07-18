@@ -1,8 +1,7 @@
 // components/painel/layout/PainelBottomNavbar.tsx
-/* PainelBottomNavbar.tsx */
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import {
   House,
@@ -10,68 +9,80 @@ import {
   FileText,
   Notebook,
   UserCircle,
-  Icon, // Importamos o tipo Icon para garantir a tipagem correta
+  Icon,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import './painelBottomNavbar.css';
 
-// Interface para definir a estrutura dos itens de navegação
 interface NavItem {
   label: string;
   section: string;
-  icon: Icon; // Tipagem oficial do Phosphor Icons
+  icon: Icon;
 }
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Home', section: 'home', icon: House },
+  { label: 'Clientes', section: 'clientes', icon: Users },
+  { label: 'Orçamentos', section: 'orcamentos', icon: FileText },
+  { label: 'Notas', section: 'notas', icon: Notebook },
+  { label: 'Perfil', section: 'perfil', icon: UserCircle },
+];
 
 export default function PainelBottomNavbar() {
   const router = usePainelRouter();
+  const [pressedIndex, setPressedIndex] = useState<number | null>(null);
 
-  const navItems: NavItem[] = [
-    { label: 'Home', section: 'home', icon: House },
-    { label: 'Clientes', section: 'clientes', icon: Users },
-    { label: 'Orçamentos', section: 'orcamentos', icon: FileText },
-    { label: 'Notas', section: 'notas', icon: Notebook },
-    { label: 'Perfil', section: 'perfil', icon: UserCircle },
-  ];
+  const activeIndex = NAV_ITEMS.findIndex(
+    (item) =>
+      router.section === item.section ||
+      router.section.startsWith(`${item.section}.`),
+  );
+
+  const handleTap = (section: string, index: number) => {
+    setPressedIndex(index);
+    router.push(section);
+    window.setTimeout(() => setPressedIndex(null), 260);
+  };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 flex justify-between items-center shadow-[0_3px_8px_0px_#0003] py-4 px-2">
-      {navItems.map((item) => {
-        // Lógica de ativação: seção atual bate com a seção do item,
-        // ou é uma sub-seção dela (ex: "clientes.novo" também ativa "Clientes")
-        const isActive =
-          router.section === item.section ||
-          router.section.startsWith(`${item.section}.`);
+    <nav className="painel-navdock">
+      <div
+        className="painel-navdock-track"
+        style={{ '--nav-count': NAV_ITEMS.length } as React.CSSProperties}
+      >
+        {activeIndex !== -1 && (
+          <span
+            className="painel-navdock-indicator"
+            style={
+              {
+                '--nav-index': activeIndex,
+              } as React.CSSProperties
+            }
+          />
+        )}
 
-        const NavIcon = item.icon;
+        {NAV_ITEMS.map((item, index) => {
+          const isActive = index === activeIndex;
+          const NavIcon = item.icon;
 
-        return (
-          <div
-            key={item.section}
-            onClick={() => router.push(item.section)}
-            className="flex flex-col items-center gap-1 group w-full cursor-pointer"
-          >
+          return (
             <div
+              key={item.section}
+              onClick={() => handleTap(item.section, index)}
               className={cn(
-                'p-2 rounded-2xl ease-in duration-[.2s]',
-                isActive
-                  ? 'bg-[#00559C] rounded-[5rem] w-full grid items-center justify-center text-white shadow-lg shadow-indigo-200 -translate-y-1'
-                  : 'text-slate-400 group-active:scale-90',
+                'painel-navdock-item',
+                isActive && 'is-active',
+                pressedIndex === index && 'is-pressed',
               )}
             >
-              <NavIcon size={24} weight={isActive ? 'fill' : 'regular'} />
+              <span className="painel-navdock-icon">
+                <NavIcon size={22} weight={isActive ? 'fill' : 'regular'} />
+              </span>
+              <span className="painel-navdock-label">{item.label}</span>
             </div>
-            <span
-              className={cn(
-                'text-[10px] font-bold transition-all',
-                isActive
-                  ? 'text-indigo-950 opacity-100'
-                  : 'text-slate-400 opacity-70',
-              )}
-            >
-              {item.label}
-            </span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </nav>
   );
 }

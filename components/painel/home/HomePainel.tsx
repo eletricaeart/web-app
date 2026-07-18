@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
+import { usePainelAuth } from '@/components/painel/auth/PainelAuthContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,50 +15,21 @@ import {
   Lightning,
   CaretRight,
   UserCircle,
-  ChatCircleDots,
   CalculatorIcon,
-  RulerIcon,
 } from '@phosphor-icons/react';
 import Image from 'next/image';
 import Page from '@/components/layout/Page';
-import { createClient } from '@/lib/supabase/client';
-
-// Interface atualizada
-interface UsuarioHome {
-  id: string;
-  name: string;
-  role: string;
-  photo_url?: string;
-}
 
 export default function HomePainel() {
   const router = usePainelRouter();
-  const supabase = createClient();
+  const { profile, signOut } = usePainelAuth();
 
-  // Chamadas ao hook Supabase para contadores reais
-  const { data: profiles } = useEASyncSupabase<UsuarioHome>('profiles');
+  const { data: profiles } = useEASyncSupabase<any>('profiles');
   const { data: clients } = useEASyncSupabase<any>('clientes');
   const { data: notes } = useEASyncSupabase<any>('notas');
   const { data: orcamentos } = useEASyncSupabase<any>('orcamentos');
   const { data: recibos } = useEASyncSupabase<any>('recibos');
 
-  const [currentUser, setCurrentUser] = useState<UsuarioHome | null>(null);
-
-  // Identifica o usuário logado para mostrar o Perfil correto no topo
-  useEffect(() => {
-    async function identify() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user && profiles.length > 0) {
-        const me = profiles.find((p) => String(p.id) === String(user.id));
-        if (me) setCurrentUser(me);
-      }
-    }
-    identify();
-  }, [profiles, supabase.auth]);
-
-  // Lógica de Saudação (Mantida)
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'Bom dia';
@@ -65,11 +37,8 @@ export default function HomePainel() {
     return 'Boa noite';
   }, []);
 
-  const firstName = currentUser?.name
-    ? currentUser.name.split(' ')[0]
-    : 'Profissional';
+  const firstName = profile?.name ? profile.name.split(' ')[0] : 'Profissional';
 
-  // Lógica da Frase do Dia Persistente (Salva no LocalStorage por 24h)
   const [randomPhrase, setRandomPhrase] = useState('Gestão inteligente.');
 
   useEffect(() => {
@@ -83,7 +52,7 @@ export default function HomePainel() {
       'Vamos colocar os projetos em dia?',
     ];
 
-    const today = new Date().toDateString(); // Ex: "Tue May 19 2026"
+    const today = new Date().toDateString();
     const savedData = localStorage.getItem('ea_daily_phrase');
 
     if (savedData) {
@@ -94,7 +63,6 @@ export default function HomePainel() {
       }
     }
 
-    // Se não tem ou o dia mudou, escolhe nova e salva
     const newPhrase = phrases[Math.floor(Math.random() * phrases.length)];
     setRandomPhrase(newPhrase);
     localStorage.setItem(
@@ -119,9 +87,9 @@ export default function HomePainel() {
               onClick={() => router.push('perfil')}
             >
               <div className="w-12 h-12 bg-indigo-950 rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white relative">
-                {currentUser?.photo_url ? (
+                {profile?.photo_url ? (
                   <Image
-                    src={currentUser.photo_url}
+                    src={profile.photo_url}
                     alt="Perfil"
                     fill
                     className="object-cover"
@@ -220,10 +188,7 @@ export default function HomePainel() {
           <Button
             variant="ghost"
             className="w-full justify-start text-red-500 hover:bg-red-50 gap-3 h-14 rounded-2xl"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = '/login';
-            }}
+            onClick={signOut}
           >
             <SignOut size={24} />
             <span className="font-bold">Sair do Sistema</span>
@@ -234,7 +199,6 @@ export default function HomePainel() {
   );
 }
 
-// Interfaces e Componentes Auxiliares (QuickAction e MenuCard mantidos conforme original)
 interface QuickActionProps {
   onClick: () => void;
   icon: React.ReactNode;

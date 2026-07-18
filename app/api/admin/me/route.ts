@@ -13,15 +13,16 @@ export async function GET() {
     return NextResponse.json({ isAdmin: false }, { status: 401 });
   }
 
-  // Usa a Service Role Key porque admin_users não tem policy nenhuma
   const adminClient = createAdminClient();
   const { data: adminRecord } = await adminClient
     .from('admin_users')
-    .select('role, can_manage_admins, can_manage_finance, can_manage_content')
+    .select(
+      'role, can_manage_admins, can_manage_finance, can_manage_content, is_active',
+    )
     .eq('id', user.id)
     .maybeSingle();
 
-  if (!adminRecord) {
+  if (!adminRecord || !adminRecord.is_active) {
     return NextResponse.json({ isAdmin: false }, { status: 403 });
   }
 

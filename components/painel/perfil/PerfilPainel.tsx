@@ -1,9 +1,9 @@
 // components/painel/perfil/PerfilPainel.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
-import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
+import { usePainelAuth } from '@/components/painel/auth/PainelAuthContext';
 import AppBar from '@/components/layout/AppBar';
 import View from '@/components/layout/View';
 import Divider from '@/components/Divider';
@@ -13,56 +13,16 @@ import {
   EnvelopeSimple,
   Briefcase,
   IdentificationCard,
-  CheckCircle,
   SignOut,
-  Pen,
-  Clock,
+  GearSix,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/client';
 
 export default function PerfilPainel() {
   const router = usePainelRouter();
-  const supabase = createClient();
+  const { profile, loading, signOut } = usePainelAuth();
 
-  const { data: profiles, loading: loadingProfiles } =
-    useEASyncSupabase<any>('profiles');
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    async function loadIdentity() {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-
-      if (authUser) {
-        // DIAGNÓSTICO NO CONSOLE DO NAVEGADOR
-        console.log('Sessão Auth ID:', authUser.id);
-        console.log('Dados vindos do hook profiles:', profiles);
-
-        const dbProfile = profiles.find(
-          (p: any) => String(p.id) === String(authUser.id),
-        );
-
-        if (dbProfile) {
-          console.log('✅ Perfil encontrado no banco:', dbProfile);
-          setUser(dbProfile);
-        } else if (!loadingProfiles) {
-          console.log('❌ Perfil NÃO encontrado na lista do banco.');
-          setUser({
-            id: authUser.id,
-            name: authUser.email?.split('@')[0] || 'Usuário',
-            email: authUser.email,
-            role: 'Membro (Fallback)',
-          });
-        }
-      }
-    }
-    loadIdentity();
-  }, [profiles, loadingProfiles]);
-
-  // Estrutura Visual Mantida Fielmente
-  if (!user)
+  if (loading || !profile)
     return (
       <View tag="page" className="p-10 text-center">
         Buscando identidade...
@@ -75,13 +35,8 @@ export default function PerfilPainel() {
         title="Meu Perfil"
         backAction={() => router.push('home')}
         options={
-          <View
-            tag="appbar-btn"
-            onClick={() =>
-              router.push('equipe.editar', { id: String(user?.id) })
-            }
-          >
-            <Pen size={24} color="white" weight="bold" />
+          <View tag="appbar-btn" onClick={() => router.push('configuracoes')}>
+            <GearSix size={24} color="white" weight="bold" />
           </View>
         }
       />
@@ -90,18 +45,17 @@ export default function PerfilPainel() {
         <div className="bg-indigo-950 pt-6 pb-12 flex flex-col items-center">
           <div className="w-28 h-28 rounded-full border-4 border-white shadow-2xl overflow-hidden relative">
             <Image
-              src={user?.photo_url || '/pix/avatar/default_avatar_masc.webp'}
-              alt={user?.name || 'Usuário'}
+              src={profile.photo_url || '/pix/avatar/default_avatar_masc.webp'}
+              alt={profile.name || 'Usuário'}
               fill
               className="object-cover"
             />
           </div>
-          {/* AQUI APARECERÁ O NOME DA TABELA PROFILES */}
           <h2 className="text-white text-2xl font-bold mt-4 uppercase">
-            {user?.name || 'CEO'}
+            {profile.name || 'CEO'}
           </h2>
           <span className="text-indigo-300 text-sm font-medium">
-            {user?.role}
+            {profile.role}
           </span>
         </div>
 
@@ -116,7 +70,7 @@ export default function PerfilPainel() {
                   Especialidade
                 </p>
                 <p className="text-slate-800 font-semibold">
-                  {user?.specialty || 'Não informado'}
+                  {profile.specialty || 'Não informado'}
                 </p>
               </div>
               <Divider color="#f1f5f9" />
@@ -125,7 +79,7 @@ export default function PerfilPainel() {
                   Bio
                 </p>
                 <p className="text-slate-600 text-sm leading-relaxed mt-1">
-                  {user?.about || 'Nenhuma descrição.'}
+                  {profile.about || 'Nenhuma descrição.'}
                 </p>
               </div>
             </div>
@@ -141,7 +95,7 @@ export default function PerfilPainel() {
                   <WhatsappLogo size={20} className="text-green-600" />
                 </div>
                 <span className="text-slate-700 font-medium">
-                  {user?.whatsapp || 'Não informado'}
+                  {profile.whatsapp || 'Não informado'}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -149,7 +103,7 @@ export default function PerfilPainel() {
                   <EnvelopeSimple size={20} className="text-blue-600" />
                 </div>
                 <span className="text-slate-700 font-medium">
-                  {user?.email}
+                  {profile.email}
                 </span>
               </div>
             </div>
@@ -159,10 +113,7 @@ export default function PerfilPainel() {
             <Button
               variant="ghost"
               className="w-full justify-center text-red-500 hover:text-red-600 hover:bg-red-50 h-14 rounded-2xl border border-red-100"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                window.location.href = '/login';
-              }}
+              onClick={signOut}
             >
               <SignOut size={24} weight="bold" />
               <span className="font-bold uppercase tracking-wider text-xs">

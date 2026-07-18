@@ -20,6 +20,7 @@ import OrcamentoNovoPainel from '@/components/painel/orcamentos/OrcamentoNovoPai
 import OrcamentoVerPainel from '@/components/painel/orcamentos/OrcamentoVerPainel';
 import DrywallPainel from '@/components/painel/ferramentas/DrywallPainel';
 import AdminsPainel from '@/components/painel/admins/AdminsPainel';
+import ConfiguracoesPainel from '@/components/painel/configuracoes/ConfiguracoesPainel';
 
 /**
  * Tabela de seções do painel.
@@ -46,6 +47,7 @@ const routes: Record<string, React.ComponentType> = {
   'orcamentos.ver': OrcamentoVerPainel,
   'ferramentas.drywall': DrywallPainel,
   admins: AdminsPainel,
+  configuracoes: ConfiguracoesPainel,
   // ...
 };
 
