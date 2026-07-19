@@ -52,13 +52,14 @@ const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
 const BOOT_LINES = [
   'INICIALIZANDO SISTEMA ELÉTRICA & ART...',
   'CARREGANDO PERFIL: RAFAEL — RESPONSÁVEL TÉCNICO',
+  'NORMAS TÉCNICAS ATIVADAS: NBR 5410 / NBR 15575',
   'REGIÃO DETECTADA: LITORAL SP',
   'CONEXÃO ESTABELECIDA.',
 ];
 
 const STATUS_ITEMS = [
   { label: 'RESPONSÁVEL', value: 'RAFAEL' },
-  { label: 'ESPECIALIDADES', value: '03' },
+  { label: 'PADRÃO TÉCNICO', value: 'ABNT / NBR' },
   { label: 'REGIÃO', value: 'LITORAL SP' },
   { label: 'DISPONIBILIDADE', value: 'SOB CONSULTA' },
 ];
@@ -201,13 +202,13 @@ export default function PublicHomeClient() {
           <div className="eahud-hero-inner">
             <div className="eahud-tag eahud-tag-red">
               <Crosshair size={14} weight="bold" />
-              INITIATING_PROTOCOL
+              HIGH_PERFORMANCE_PROTOCOL
             </div>
 
             <h1 className="eahud-title">
-              Operação
+              Engenharia
               <br />
-              <span className="eahud-title-highlight">de Risco Zero.</span>
+              <span className="eahud-title-highlight">e Alta Precisão.</span>
             </h1>
 
             <p className="eahud-lead">{t('home.hero.subtitle')}</p>
@@ -215,6 +216,8 @@ export default function PublicHomeClient() {
             <div className="eahud-actions">
               <a
                 href="#identidade"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="eahud-btn eahud-btn-primary eahud-btn-red"
               >
                 {t('home.hero.cta')}
