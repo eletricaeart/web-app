@@ -9,7 +9,7 @@
   --hud-emerald: #10b981;
   --hud-text-dim: #6b7280;
 
-  font-family: var(--font-rajdhani), sans-serif;
+  /* font-family: var(--font-rajdhani), sans-serif; */
   background: var(--hud-bg);
   color: #f3f4f6;
   position: relative;
@@ -318,7 +318,8 @@
 }
 
 .eahud-title {
-  font-family: var(--font-orbitron), sans-serif;
+  /* font-family: var(--font-orbitron), sans-serif; */
+  font-family: var(--font-google-sans-flex), sans-serif;
   font-weight: 900;
   font-size: clamp(2.6rem, 8vw, 6rem);
   line-height: 0.95;
@@ -328,7 +329,6 @@
   margin: 0 0 24px;
 }
 .eahud-title-highlight {
-  font-family: var(--font-orbitron), sans-serif;
   color: transparent;
   background: linear-gradient(90deg, var(--hud-cyan), #2563eb);
   background-clip: text;

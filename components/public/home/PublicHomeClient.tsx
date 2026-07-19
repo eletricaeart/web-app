@@ -204,7 +204,7 @@ export default function PublicHomeClient() {
               INITIATING_PROTOCOL
             </div>
 
-            <h1 className="eahud-title font-sans">
+            <h1 className="eahud-title">
               Operação
               <br />
               <span className="eahud-title-highlight">de Risco Zero.</span>
@@ -311,7 +311,7 @@ export default function PublicHomeClient() {
                   <span>COMMUNICATION_LINK_ESTABLISHED</span>
                 </div>
 
-                <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight text-white leading-tight">
+                <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight text-white leading-tight font-sans">
                   "Eu sou o Rafael.
                   <br />
                   <span className="text-[#00e5ff]">Prazer em conhecer.</span>"
@@ -358,7 +358,7 @@ export default function PublicHomeClient() {
         >
           <div className="max-w-7xl mx-auto">
             <div className="mb-16">
-              <h2 className="text-4xl font-black uppercase tracking-widest text-white">
+              <h2 className="text-4xl font-black uppercase tracking-widest text-white font-sans">
                 Especialidades <span className="text-[#ff4655]">Táticas</span>
               </h2>
               <div className="mt-3 text-gray-500 font-mono text-sm tracking-widest">
@@ -375,10 +375,10 @@ export default function PublicHomeClient() {
                 <div className="w-16 h-16 bg-[#00e5ff]/10 flex items-center justify-center rounded-lg border border-[#00e5ff]/20 mb-8 group-hover:bg-[#00e5ff] group-hover:text-black transition-colors">
                   <Lightning className="w-8 h-8 text-[#00e5ff] group-hover:text-black transition-colors" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white">
+                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans">
                   Elétrica
                 </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium">
+                <p className="text-gray-400 text-base leading-relaxed font-medium font-sans">
                   Instalações, manutenções, quadros de força e projetos
                   luminotécnicos de alta performance para residências e
                   empresas.
@@ -394,10 +394,10 @@ export default function PublicHomeClient() {
                 <div className="w-16 h-16 bg-[#ff4655]/10 flex items-center justify-center rounded-lg border border-[#ff4655]/20 mb-8 group-hover:bg-[#ff4655] group-hover:text-white transition-colors">
                   <PaintRoller className="w-8 h-8 text-[#ff4655] group-hover:text-white transition-colors" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white">
+                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans">
                   Pintura
                 </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium">
+                <p className="text-gray-400 text-base leading-relaxed font-medium font-sans">
                   Acabamento premium, texturas avançadas e proteção de
                   superfícies. Detalhes minuciosos para um resultado impecável.
                 </p>
@@ -412,10 +412,10 @@ export default function PublicHomeClient() {
                 <div className="w-16 h-16 bg-emerald-500/10 flex items-center justify-center rounded-lg border border-emerald-500/20 mb-8 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                   <Wall className="w-8 h-8 text-emerald-500 group-hover:text-white transition-colors" />
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white">
+                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans">
                   Drywall
                 </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium">
+                <p className="text-gray-400 text-base leading-relaxed font-medium font-sans">
                   Modulação de espaços, forros acústicos e estruturas de gesso
                   com precisão milimétrica e rápida execução.
                 </p>
