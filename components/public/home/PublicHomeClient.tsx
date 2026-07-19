@@ -66,22 +66,19 @@ const STATUS_ITEMS = [
 const SPECIALTIES = [
   {
     icon: Lightning,
-    accent: 'blue',
-    cor: '#00e5ff',
+    accent: '#00e5ff',
     title: 'Elétrica',
     desc: 'Instalações, manutenções, quadros de força e projetos luminotécnicos de alta performance para residências e empresas.',
   },
   {
     icon: PaintRoller,
-    accent: 'red',
-    cor: '#ff4655',
+    accent: '#ff4655',
     title: 'Pintura',
     desc: 'Acabamento premium, texturas avançadas e efeitos decorativos como mármore. Detalhes minuciosos para um resultado impecável.',
   },
   {
     icon: Wall,
-    accent: 'emerald',
-    cor: '#00bc7d',
+    accent: '#00bc7d',
     title: 'Drywall',
     desc: 'Forros, sancas e divisórias com precisão milimétrica, modulação de espaços e execução rápida.',
   },
@@ -372,44 +369,223 @@ export default function PublicHomeClient() {
             <div className="grid md:grid-cols-3 gap-8">
               {
                 /* SERVIÇOS */
-                SPECIALTIES.map(
-                  ({ icon: Icon, accent, cor, title, desc }, i) => (
+                SPECIALTIES.map(({ icon: Icon, accent, title, desc }, i) => (
+                  <div
+                    key={title}
+                    style={{ '--cor': accent }}
+                    className={`group relative bg-[#171a21] border border-white/5 p-10 hover:border-[var(--cor)] transition-colors duration-300`}
+                  >
                     <div
-                      className={`group relative bg-[#171a21] border border-white/5 p-10 hover:border-${accent}-500 transition-colors duration-300`}
+                      className={`absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[var(--cor)]/20 transition-colors`}
                     >
-                      <div
-                        className={`absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-${accent}-500/20 transition-colors`}
-                      >
-                        {`0${i + 1}`}
-                      </div>
-                      <div
-                        className={`w-16 h-16 bg-${accent}-500/10 flex items-center justify-center rounded-lg border border-${accent}-500/20 mb-8 group-hover:bg-${accent}-500 group-hover:text-white transition-colors`}
-                      >
-                        <Icon
-                          className={`w-8 h-8 text-${accent}-500 group-hover:text-white transition-colors`}
-                        />
-                      </div>
-                      <h3
-                        className={`text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans`}
-                      >
-                        {title}
-                      </h3>
-                      <p
-                        className={`text-gray-400 text-base leading-relaxed font-medium font-sans`}
-                      >
-                        {desc}
-                      </p>
-                      <div
-                        className={`mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-emerald-500 transition-all duration-500`}
-                      ></div>
+                      {`0${i + 1}`}
                     </div>
-                  ),
-                )
+                    <div
+                      className={`w-16 h-16 bg-[var(--cor)]/10 flex items-center justify-center rounded-lg border border-[var(--cor)]/20 mb-8 group-hover:bg-[var(--cor)] group-hover:text-white transition-colors`}
+                    >
+                      <Icon
+                        className={`w-8 h-8 text-[var(--cor)] group-hover:text-white transition-colors`}
+                      />
+                    </div>
+                    <h3
+                      className={`text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans`}
+                    >
+                      {title}
+                    </h3>
+                    <p
+                      className={`text-gray-400 text-base leading-relaxed font-medium font-sans`}
+                    >
+                      {desc}
+                    </p>
+                    <div
+                      className={`mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[var(--cor)] transition-all duration-500`}
+                    ></div>
+                  </div>
+                ))
               }
             </div>
           </div>
         </section>
+
+        {/* SECTION: PROTOCOLOS DE SEGURANÇA (WHY CHOOSE US) */}
+        <section className="py-24 px-6 bg-[#0a0a0c] relative border-t border-white/5">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <div className="space-y-8">
+                <h2 className="text-4xl font-black uppercase tracking-widest text-white">
+                  Protocolos de{' '}
+                  <span className="text-emerald-500">Segurança</span>
+                </h2>
+                <div className="text-gray-500 font-mono text-sm tracking-widest">
+                  // DIRETRIZES_DE_EXECUÇÃO
+                </div>
+
+                <div className="space-y-6 text-gray-400">
+                  <p className="text-lg font-medium leading-relaxed">
+                    Não abrimos mão da integridade. Cada projeto executado segue
+                    normas rígidas de segurança para proteger você, seu
+                    patrimônio e nossa equipe.
+                  </p>
+
+                  <ul className="space-y-4 font-mono text-sm">
+                    <li className="flex items-start gap-4 p-4 bg-emerald-500/5 border border-emerald-500/20">
+                      <ShieldCheck className="w-6 h-6 text-emerald-500 shrink-0" />
+                      <div>
+                        <strong className="block text-white uppercase tracking-widest mb-1">
+                          Norma NBR 5410
+                        </strong>
+                        Toda infraestrutura elétrica atende rigorosamente as
+                        normas técnicas vigentes.
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-4 p-4 bg-[#00e5ff]/5 border border-[#00e5ff]/20">
+                      <Crosshair className="w-6 h-6 text-[#00e5ff] shrink-0" />
+                      <div>
+                        <strong className="block text-white uppercase tracking-widest mb-1">
+                          Materiais Homologados
+                        </strong>
+                        Utilizamos apenas insumos de alta durabilidade,
+                        garantindo a integridade estrutural.
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-4 p-4 bg-[#ff4655]/5 border border-[#ff4655]/20">
+                      <Lightning className="w-6 h-6 text-[#ff4655] shrink-0" />
+                      <div>
+                        <strong className="block text-white uppercase tracking-widest mb-1">
+                          Execução Tática
+                        </strong>
+                        Planejamento minucioso para reduzir prazos e eliminar
+                        retrabalhos.
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="relative aspect-square border border-white/10 bg-[#111318] p-8 hidden lg:flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                <div className="relative z-10 w-64 h-64 rounded-full border border-emerald-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.1)]">
+                  <div className="w-48 h-48 rounded-full border border-emerald-500/50 flex items-center justify-center animate-[spin_10s_linear_infinite]">
+                    <div className="w-full h-full rounded-full border-t border-emerald-500"></div>
+                  </div>
+                  <ShieldCheck className="absolute w-24 h-24 text-emerald-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION: REGISTROS TÁTICOS / PORTFÓLIO YOUTUBE */}
+        <section
+          id="portfolio"
+          className="py-24 px-6 relative border-t border-white/5 bg-[#0f1115]"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div>
+                <h2 className="text-4xl font-black uppercase tracking-widest text-white">
+                  Registros <span className="text-[#00e5ff]">Táticos</span>
+                </h2>
+                <div className="mt-3 text-gray-500 font-mono text-sm tracking-widest">
+                  // MISSÕES_ANTERIORES // YOUTUBE_ARCHIVE
+                </div>
+              </div>
+              <a
+                href="https://youtube.com/@EletricaeArt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 border border-white/20 px-6 py-3 hover:bg-white hover:text-black transition-colors font-mono text-sm uppercase font-bold tracking-widest"
+              >
+                Acessar Arquivo <CaretRight className="w-4 h-4" />
+              </a>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  id: '1',
+                  title: 'Manutenção de Quadro de Distribuição',
+                  tag: 'ELÉTRICA',
+                  url: 'https://youtube.com/@EletricaeArt',
+                },
+                {
+                  id: '2',
+                  title: 'Estruturação Drywall com Sanca Invertida',
+                  tag: 'DRYWALL',
+                  url: 'https://youtube.com/@EletricaeArt',
+                },
+                {
+                  id: '3',
+                  title: 'Acabamento Fino e Efeito Mármore',
+                  tag: 'PINTURA',
+                  url: 'https://youtube.com/@EletricaeArt',
+                },
+              ].map((video) => (
+                <a
+                  href={video.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  key={video.id}
+                  className="group relative aspect-video bg-[#111318] border border-white/10 overflow-hidden hover:border-[#00e5ff] transition-colors cursor-pointer block"
+                >
+                  {/* Placeholder frame for video thumbnail */}
+                  <div className="absolute inset-0 bg-black/50 group-hover:bg-black/20 transition-colors z-0"></div>
+
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="w-16 h-16 rounded-full bg-red-600/80 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 group-hover:bg-red-600 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                      <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
+                    </div>
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/80 to-transparent z-10">
+                    <div className="font-mono text-xs text-[#00e5ff] tracking-widest mb-1">
+                      LOG_ID: {Math.floor(Math.random() * 9000) + 1000} //{' '}
+                      {video.tag}
+                    </div>
+                    <div className="font-bold text-white text-sm uppercase tracking-wide">
+                      {video.title}
+                    </div>
+                  </div>
+
+                  <div className="absolute top-4 right-4 flex gap-1 z-10">
+                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+                    <span className="font-mono text-[10px] text-red-500 tracking-widest uppercase font-bold">
+                      REC
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
+
+      {/* WHATSAPP FLOAT BUTTON */}
+      <a
+        href="https://wa.me/5513997685853"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 right-8 z-50 group flex items-center"
+      >
+        <div className="absolute inset-0 bg-[#25D366] rounded-full animate-ping opacity-20 group-hover:opacity-0 transition-opacity duration-300"></div>
+        <div className="relative flex items-center bg-[#0a0a0c] border border-[#25D366] rounded-full p-3 hover:bg-[#25D366] transition-all duration-300 shadow-[0_0_15px_rgba(37,211,102,0.3)] group-hover:shadow-[0_0_25px_rgba(37,211,102,0.6)] cursor-pointer overflow-hidden">
+          <div className="text-[#25D366] group-hover:text-black transition-colors z-10 flex-shrink-0">
+            <svg
+              className="w-8 h-8"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+            </svg>
+          </div>
+          <div className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-in-out whitespace-nowrap">
+            <span className="pl-3 pr-2 text-black font-bold uppercase tracking-widest text-sm">
+              Falar com Rafael
+            </span>
+          </div>
+        </div>
+      </a>
 
       {/* --- RODAPÉ --- */}
       <footer className="eahud-footer">
@@ -429,6 +605,29 @@ export default function PublicHomeClient() {
           </span>
         </div>
       </footer>
+
+      {/* Estilos Globais Injetados para Animações e Fundos */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar {
+          width: 8px;
+          background: #0a0a0c;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #333;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #ff4655;
+        }
+      `,
+        }}
+      />
     </div>
   );
 }

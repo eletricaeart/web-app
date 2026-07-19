@@ -17,17 +17,33 @@ import {
 import './publicLanding.css';
 import Link from 'next/link';
 
-// const orbitron = Orbitron({
-//   subsets: ['latin'],
-//   weight: ['700', '800', '900'],
-//   variable: '--font-orbitron',
-// });
-//
-// const rajdhani = Rajdhani({
-//   subsets: ['latin'],
-//   weight: ['500', '600', '700'],
-//   variable: '--font-rajdhani',
-// });
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  weight: ['700', '800', '900'],
+  variable: '--font-orbitron',
+});
+
+const rajdhani = Rajdhani({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-rajdhani',
+});
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
+
+const godOfThunder = localFont({
+  src: '../../../app/fonts/GodOfThunder.ttf', // caminho para o arquivo
+  variable: '--font-thunder', // Nome da variável CSS
+  display: 'swap',
+});
 
 const WHATSAPP_NUMBER = '5513997685853';
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
@@ -49,19 +65,19 @@ const STATUS_ITEMS = [
 const SPECIALTIES = [
   {
     icon: Lightning,
-    accent: 'cyan',
+    accent: '#00e5ff',
     title: 'Elétrica',
     desc: 'Instalações, manutenções, quadros de força e projetos luminotécnicos de alta performance para residências e empresas.',
   },
   {
     icon: PaintRoller,
-    accent: 'red',
+    accent: '#ff4655',
     title: 'Pintura',
     desc: 'Acabamento premium, texturas avançadas e efeitos decorativos como mármore. Detalhes minuciosos para um resultado impecável.',
   },
   {
     icon: Wall,
-    accent: 'emerald',
+    accent: '#00bc7d',
     title: 'Drywall',
     desc: 'Forros, sancas e divisórias com precisão milimétrica, modulação de espaços e execução rápida.',
   },
@@ -98,14 +114,13 @@ function useBootSequence() {
   return { phase, skip };
 }
 
-export default function PublicLandingClient() {
+export default function PublicHomeClient() {
   const { t, language, setLanguage } = useLanguage();
   const { phase, skip } = useBootSequence();
 
   return (
     <div
-      // className={`eahud ${orbitron.variable} ${rajdhani.variable} ${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
-      className={`${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
+      className={`eahud ${orbitron.variable} ${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} ${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
     >
       {phase !== 'done' && (
         <div
@@ -295,7 +310,7 @@ export default function PublicLandingClient() {
                   <span>COMMUNICATION_LINK_ESTABLISHED</span>
                 </div>
 
-                <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight text-white leading-tight">
+                <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight text-white leading-tight font-sans">
                   "Eu sou o Rafael.
                   <br />
                   <span className="text-[#00e5ff]">Prazer em conhecer.</span>"
@@ -342,7 +357,7 @@ export default function PublicLandingClient() {
         >
           <div className="max-w-7xl mx-auto">
             <div className="mb-16">
-              <h2 className="text-4xl font-black uppercase tracking-widest text-white">
+              <h2 className="text-4xl font-black uppercase tracking-widest text-white font-sans">
                 Especialidades <span className="text-[#ff4655]">Táticas</span>
               </h2>
               <div className="mt-3 text-gray-500 font-mono text-sm tracking-widest">
@@ -351,60 +366,42 @@ export default function PublicLandingClient() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {/* SERVIÇO 1 */}
-              <div className="group relative bg-[#171a21] border border-white/5 p-10 hover:border-[#00e5ff] transition-colors duration-300">
-                <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[#00e5ff]/20 transition-colors">
-                  01
-                </div>
-                <div className="w-16 h-16 bg-[#00e5ff]/10 flex items-center justify-center rounded-lg border border-[#00e5ff]/20 mb-8 group-hover:bg-[#00e5ff] group-hover:text-black transition-colors">
-                  <Lightning className="w-8 h-8 text-[#00e5ff] group-hover:text-black transition-colors" />
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white">
-                  Elétrica
-                </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium">
-                  Instalações, manutenções, quadros de força e projetos
-                  luminotécnicos de alta performance para residências e
-                  empresas.
-                </p>
-                <div className="mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[#00e5ff] transition-all duration-500"></div>
-              </div>
-
-              {/* SERVIÇO 2 */}
-              <div className="group relative bg-[#171a21] border border-white/5 p-10 hover:border-[#ff4655] transition-colors duration-300">
-                <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[#ff4655]/20 transition-colors">
-                  02
-                </div>
-                <div className="w-16 h-16 bg-[#ff4655]/10 flex items-center justify-center rounded-lg border border-[#ff4655]/20 mb-8 group-hover:bg-[#ff4655] group-hover:text-white transition-colors">
-                  <PaintRoller className="w-8 h-8 text-[#ff4655] group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white">
-                  Pintura
-                </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium">
-                  Acabamento premium, texturas avançadas e proteção de
-                  superfícies. Detalhes minuciosos para um resultado impecável.
-                </p>
-                <div className="mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[#ff4655] transition-all duration-500"></div>
-              </div>
-
-              {/* SERVIÇO 3 */}
-              <div className="group relative bg-[#171a21] border border-white/5 p-10 hover:border-emerald-500 transition-colors duration-300">
-                <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-emerald-500/20 transition-colors">
-                  03
-                </div>
-                <div className="w-16 h-16 bg-emerald-500/10 flex items-center justify-center rounded-lg border border-emerald-500/20 mb-8 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                  <Wall className="w-8 h-8 text-emerald-500 group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white">
-                  Drywall
-                </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium">
-                  Modulação de espaços, forros acústicos e estruturas de gesso
-                  com precisão milimétrica e rápida execução.
-                </p>
-                <div className="mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-emerald-500 transition-all duration-500"></div>
-              </div>
+              {
+                /* SERVIÇOS */
+                SPECIALTIES.map(({ icon: Icon, accent, title, desc }, i) => (
+                  <div
+                    key={title}
+                    style={{ '--cor': accent }}
+                    className={`group relative bg-[#171a21] border border-white/5 p-10 hover:border-[var(--cor)] transition-colors duration-300`}
+                  >
+                    <div
+                      className={`absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[var(--cor)]/20 transition-colors`}
+                    >
+                      {`0${i + 1}`}
+                    </div>
+                    <div
+                      className={`w-16 h-16 bg-[var(--cor)]/10 flex items-center justify-center rounded-lg border border-[var(--cor)]/20 mb-8 group-hover:bg-[var(--cor)] group-hover:text-white transition-colors`}
+                    >
+                      <Icon
+                        className={`w-8 h-8 text-[var(--cor)] group-hover:text-white transition-colors`}
+                      />
+                    </div>
+                    <h3
+                      className={`text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans`}
+                    >
+                      {title}
+                    </h3>
+                    <p
+                      className={`text-gray-400 text-base leading-relaxed font-medium font-sans`}
+                    >
+                      {desc}
+                    </p>
+                    <div
+                      className={`mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[var(--cor)] transition-all duration-500`}
+                    ></div>
+                  </div>
+                ))
+              }
             </div>
           </div>
         </section>
