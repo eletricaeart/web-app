@@ -3,7 +3,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Orbitron, Rajdhani } from 'next/font/google';
+import { Orbitron, Rajdhani, Geist, Geist_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import { useLanguage } from '@/providers/LanguageProvider';
 import {
   Globe,
@@ -27,6 +28,22 @@ const rajdhani = Rajdhani({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
   variable: '--font-rajdhani',
+});
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
+
+const godOfThunder = localFont({
+  src: '../../../app/fonts/GodOfThunder.ttf', // caminho para o arquivo
+  variable: '--font-thunder', // Nome da variável CSS
+  display: 'swap',
 });
 
 const WHATSAPP_NUMBER = '5513997685853';
@@ -104,7 +121,7 @@ export default function PublicHomeClient() {
 
   return (
     <div
-      className={`eahud ${orbitron.variable} ${rajdhani.variable} ${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
+      className={`eahud ${orbitron.variable} ${geistSans.variable} ${geistMono.variable} ${godOfThunder.variable} ${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
     >
       {phase !== 'done' && (
         <div
@@ -187,7 +204,7 @@ export default function PublicHomeClient() {
               INITIATING_PROTOCOL
             </div>
 
-            <h1 className="eahud-title">
+            <h1 className="eahud-title font-sans">
               Operação
               <br />
               <span className="eahud-title-highlight">de Risco Zero.</span>

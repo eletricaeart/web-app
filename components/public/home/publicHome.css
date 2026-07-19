@@ -328,6 +328,7 @@
   margin: 0 0 24px;
 }
 .eahud-title-highlight {
+  font-family: var(--font-orbitron), sans-serif;
   color: transparent;
   background: linear-gradient(90deg, var(--hud-cyan), #2563eb);
   background-clip: text;

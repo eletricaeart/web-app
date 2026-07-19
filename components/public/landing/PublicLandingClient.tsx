@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Orbitron, Rajdhani } from 'next/font/google';
+// import { Orbitron, Rajdhani } from 'next/font/google';
 import { useLanguage } from '@/providers/LanguageProvider';
 import {
   Globe,
@@ -17,17 +17,17 @@ import {
 import './publicLanding.css';
 import Link from 'next/link';
 
-const orbitron = Orbitron({
-  subsets: ['latin'],
-  weight: ['700', '800', '900'],
-  variable: '--font-orbitron',
-});
-
-const rajdhani = Rajdhani({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-rajdhani',
-});
+// const orbitron = Orbitron({
+//   subsets: ['latin'],
+//   weight: ['700', '800', '900'],
+//   variable: '--font-orbitron',
+// });
+//
+// const rajdhani = Rajdhani({
+//   subsets: ['latin'],
+//   weight: ['500', '600', '700'],
+//   variable: '--font-rajdhani',
+// });
 
 const WHATSAPP_NUMBER = '5513997685853';
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
@@ -104,7 +104,8 @@ export default function PublicLandingClient() {
 
   return (
     <div
-      className={`eahud ${orbitron.variable} ${rajdhani.variable} ${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
+      // className={`eahud ${orbitron.variable} ${rajdhani.variable} ${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
+      className={`${phase !== 'done' ? '' : 'min-h-screen bg-[#0a0a0c] text-gray-100 font-sans selection:bg-[#ff4655] selection:text-white overflow-x-hidden'}`}
     >
       {phase !== 'done' && (
         <div
