@@ -318,8 +318,7 @@
 }
 
 .eahud-title {
-  /* font-family: var(--font-orbitron), sans-serif; */
-  font-family: var(--font-google-sans-flex), sans-serif;
+  font-family: var(--font-orbitron), sans-serif !important;
   font-weight: 900;
   font-size: clamp(2.6rem, 8vw, 6rem);
   line-height: 0.95;

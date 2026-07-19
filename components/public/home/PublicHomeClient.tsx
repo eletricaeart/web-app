@@ -57,7 +57,7 @@ const BOOT_LINES = [
 ];
 
 const STATUS_ITEMS = [
-  { label: 'RESPONSÁVEL', value: 'RAFAEL' },
+  { label: 'RESPONSÁVEL TÉCNICO', value: 'RAFAEL' },
   { label: 'ESPECIALIDADES', value: '03' },
   { label: 'REGIÃO', value: 'LITORAL SP' },
   { label: 'DISPONIBILIDADE', value: 'SOB CONSULTA' },
