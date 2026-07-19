@@ -375,7 +375,7 @@ export default function PublicHomeClient() {
                 SPECIALTIES.map(({ icon: Icon, accent, title, desc }, i) => (
                   <div
                     key={title}
-                    style={{ '--cor': accent }}
+                    style={{ '--cor': accent } as React.CSSProperties}
                     className={`group relative bg-[#171a21] border border-white/5 p-10 hover:border-[var(--cor)] transition-colors duration-300`}
                   >
                     <div
