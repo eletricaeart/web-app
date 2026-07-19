@@ -57,30 +57,31 @@ const BOOT_LINES = [
 ];
 
 const STATUS_ITEMS = [
-  { label: 'RESPONSÁVEL TÉCNICO', value: 'RAFAEL' },
-  { label: 'ESPECIALIDADES', value: '03' },
+  { label: 'RESPONSÁVEL', value: 'RAFAEL' },
+  { label: 'PADRÃO TÉCNICO', value: 'ABNT / NBR' },
   { label: 'REGIÃO', value: 'LITORAL SP' },
   { label: 'DISPONIBILIDADE', value: 'SOB CONSULTA' },
 ];
 
+// DOCUMENTAÇÃO: Descrições focadas em benefícios, valor agregado e rigor técnico
 const SPECIALTIES = [
   {
     icon: Lightning,
     accent: '#00e5ff',
-    title: 'Elétrica',
-    desc: 'Instalações, manutenções, quadros de força e projetos luminotécnicos de alta performance para residências e empresas.',
+    title: 'Engenharia Elétrica',
+    desc: 'Projetos luminotécnicos modernos, montagem de quadros de força redimensionados e manutenções preventivas seguindo estritamente a norma NBR 5410.',
   },
   {
     icon: PaintRoller,
     accent: '#ff4655',
-    title: 'Pintura',
-    desc: 'Acabamento premium, texturas avançadas e efeitos decorativos como mármore. Detalhes minuciosos para um resultado impecável.',
+    title: 'Pintura de Alto Padrão',
+    desc: 'Acabamento premium decorativo, aplicação de texturas avançadas (Efeito Mármore e Cimento Queimado) com proteção contra umidade local do litoral.',
   },
   {
     icon: Wall,
     accent: '#00bc7d',
-    title: 'Drywall',
-    desc: 'Forros, sancas e divisórias com precisão milimétrica, modulação de espaços e execução rápida.',
+    title: 'Sistemas em Drywall',
+    desc: 'Construção a seco de divisórias acústicas, forros estruturados e sancas invertidas planejadas com marcação e alinhamento a laser computadorizado.',
   },
 ];
 
@@ -146,7 +147,7 @@ export default function PublicHomeClient() {
 
       <div className="eahud-grid" aria-hidden="true" />
 
-      {/* Barra de Navegação HUD */}
+      {/* --- BARRA DE NAVEGAÇÃO HUD --- */}
       <header className="fixed top-0 w-full z-50 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/5 uppercase text-xs font-bold tracking-[0.2em]">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-20">
           <div className="flex items-center gap-4">
@@ -174,8 +175,7 @@ export default function PublicHomeClient() {
               onClick={() => setLanguage(language === 'pt' ? 'en' : 'pt')}
               className="flex items-center gap-2 text-gray-400 hover:text-[#00e5ff] transition-colors"
             >
-              <Globe className="w-4 h-4" />
-              {language}
+              <Globe className="w-4 h-4" /> {language}
             </button>
             <Link
               href="/login"
@@ -195,29 +195,34 @@ export default function PublicHomeClient() {
       </header>
 
       <main className="relative pt-20 pb-20 z-10">
-        {/* --- HERO --- */}
+        {/* --- HERO SECTION --- */}
         <section className="relative pt-20 pb-20 z-10">
           <div className="eahud-hero-glow" aria-hidden="true" />
           <div className="eahud-hero-inner">
             <div className="eahud-tag eahud-tag-red">
-              <Crosshair size={14} weight="bold" />
-              INITIATING_PROTOCOL
+              <Crosshair size={14} weight="bold" /> HIGH_PERFORMANCE_PROTOCOL
             </div>
 
             <h1 className="eahud-title">
-              Operação
+              Engenharia
               <br />
-              <span className="eahud-title-highlight">de Risco Zero.</span>
+              <span className="eahud-title-highlight">e Alta Precisão.</span>
             </h1>
 
-            <p className="eahud-lead">{t('home.hero.subtitle')}</p>
+            <p className="eahud-lead">
+              Instalações elétricas complexas, sistemas estruturados em drywall
+              e acabamentos de pintura premium. Execução rigorosa sem surpresas
+              ou desperdícios.
+            </p>
 
             <div className="eahud-actions">
               <a
-                href="#identidade"
-                className="eahud-btn eahud-btn-primary eahud-btn-red"
+                href={WHATSAPP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="eahud-btn eahud-btn-primary eahud-btn-red font-black"
               >
-                {t('home.hero.cta')}
+                Solicitar Orçamento Técnico{' '}
                 <CaretRight size={18} weight="bold" />
               </a>
             </div>
@@ -233,7 +238,7 @@ export default function PublicHomeClient() {
           </div>
         </section>
 
-        {/* --- DIVISOR TECH/MARQUEE --- */}
+        {/* --- MARQUEE INFORMATIVO COMPORTAMENTAL --- */}
         <div className="w-full border-y border-white/10 bg-white/[0.02] py-4 overflow-hidden flex whitespace-nowrap text-xs font-mono text-gray-500 tracking-[0.4em] uppercase">
           <div className="eahud-marquee-track">
             {Array.from({ length: 2 }).map((_, i) => (
@@ -242,26 +247,25 @@ export default function PublicHomeClient() {
                 key={i}
                 aria-hidden={i === 1}
               >
-                <span>// ALTA TENSÃO</span>{' '}
+                <span>// ENGENHARIA DE PRECISÃO</span>{' '}
                 <span className="text-[#00e5ff]">&#x25A0;</span>
-                <span>ENGENHARIA DE PRECISÃO</span>{' '}
+                <span>PADRÃO NORMATIVO NBR</span>{' '}
                 <span className="text-[#00e5ff]">&#x25A0;</span>
                 <span>INTEGRIDADE ESTRUTURAL</span>{' '}
                 <span className="text-[#00e5ff]">&#x25A0;</span>
-                <span>EXECUÇÃO TÁTICA</span>{' '}
+                <span>ACABAMENTO INDUSTRIAL</span>{' '}
                 <span className="text-[#00e5ff]">&#x25A0;</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* --- IDENTIDADE / APRESENTAÇÃO DO RAFAEL --- */}
+        {/* --- APRESENTAÇÃO INSTITUCIONAL DO RAFAEL --- */}
         <section id="about" className="py-32 px-6 relative font-sans">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
-              {/* IMAGEM COM HUD */}
+              {/* RETRATO CORPORATIVO ESTILO HUD */}
               <div className="relative group max-w-md mx-auto w-full">
-                {/* Elementos Decorativos de Mira/HUD */}
                 <div className="absolute -top-6 -left-6 w-16 h-16 border-t-4 border-l-4 border-[#00e5ff] transition-all duration-500 group-hover:-top-8 group-hover:-left-8 z-20"></div>
                 <div className="absolute -bottom-6 -right-6 w-16 h-16 border-b-4 border-r-4 border-[#00e5ff] transition-all duration-500 group-hover:-bottom-8 group-hover:-right-8 z-20"></div>
                 <div className="absolute top-1/2 left-0 w-2 h-10 bg-[#00e5ff] -translate-y-1/2 -translate-x-full opacity-0 group-hover:opacity-100 transition-opacity z-20"></div>
@@ -279,61 +283,61 @@ export default function PublicHomeClient() {
                     alt="Rafael, responsável técnico da Elétrica & Art"
                     fill
                     sizes="(max-width: 768px) 88vw, 420px"
-                    className="w-[120%] h-auto object-cover object-bottom group-hover:grayscale-0 transition-all duration-700 opacity-90 group-hover:scale-105"
+                    className="w-[120%] h-auto object-cover object-bottom transition-all duration-700 opacity-90 group-hover:scale-105"
                     priority
                   />
 
-                  {/* Overlay do HUD Inferior */}
                   <div className="absolute bottom-6 left-6 z-20 font-mono text-sm space-y-1 backdrop-blur-md bg-black/40 p-4 border border-white/10">
                     <div className="text-[#00e5ff] font-black text-lg tracking-widest">
-                      ID: RAFAEL
+                      RESPONSÁVEL TÉCNICO
                     </div>
                     <div className="text-gray-300 text-xs tracking-widest">
-                      CLASSE: TECH_LEAD
+                      QUALIFICAÇÃO: ESPECIALISTA
                     </div>
                     <div className="text-gray-300 text-xs tracking-widest flex items-center gap-2 mt-2">
-                      STATUS:{' '}
+                      OPERACIONAL:{' '}
                       <span className="text-green-500 flex items-center gap-1">
                         <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>{' '}
-                        READY
+                        ATIVO
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* TEXTO DE INTRODUÇÃO DIRETA */}
+              {/* CONTEÚDO PERSUASIVO DA AUTORIDADE */}
               <div className="space-y-8 relative">
                 <div className="absolute -left-12 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent hidden lg:block"></div>
-
                 <div className="flex items-center gap-4 text-gray-500 font-mono text-xs tracking-widest bg-white/5 w-fit px-4 py-2 rounded-full border border-white/10">
-                  <ShieldCheck className="w-4 h-4 text-[#00e5ff]" />
-                  <span>COMMUNICATION_LINK_ESTABLISHED</span>
+                  <ShieldCheck className="w-4 h-4 text-[#00e5ff]" />{' '}
+                  <span>CERTIFIED_TECHNICAL_STANDARDS</span>
                 </div>
 
                 <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight text-white leading-tight font-sans">
-                  "Eu sou o Rafael.
+                  "Compromisso com a
                   <br />
-                  <span className="text-[#00e5ff]">Prazer em conhecer.</span>"
+                  <span className="text-[#00e5ff]">Excelência Estrutural.</span>
+                  "
                 </h2>
 
                 <div className="space-y-6 text-gray-400 text-lg leading-relaxed font-medium">
                   <p>
                     Como responsável técnico da{' '}
-                    <strong className="text-white">Elétrica & Art</strong>, meu
-                    objetivo não é apenas entregar uma obra, é executar uma
-                    missão com precisão tática.
+                    <strong className="text-white">Elétrica & Art</strong>,
+                    lidero uma equipe comprometida com a entrega geométrica,
+                    segura e limpa do seu projeto.
                   </p>
                   <p>
-                    Seja em instalações elétricas de alta complexidade, pintura
-                    de acabamento fino ou estruturas em drywall, minha equipe e
-                    eu operamos sob os mais altos padrões de qualidade, estética
-                    e segurança.
+                    Unimos o domínio prático em soluções residenciais premium
+                    com o uso rigoroso das normas regulamentadoras de segurança.
+                    O seu investimento é traduzido em durabilidade e valorização
+                    do seu imóvel.
                   </p>
                   <div className="p-6 bg-[#00e5ff]/10 border border-[#00e5ff]/20 text-white">
                     <p className="font-bold tracking-wide uppercase">
-                      Você tem um projeto? Nós temos a execução.{' '}
-                      <br className="hidden sm:block" /> Vamos fechar negócio?
+                      Planejamento detalhado, execução limpa e garantia
+                      contratual. <br className="hidden sm:block" /> Vamos
+                      iniciar o seu projeto?
                     </p>
                   </div>
                 </div>
@@ -343,7 +347,7 @@ export default function PublicHomeClient() {
                     href="#services"
                     className="inline-flex items-center gap-3 border-b-2 border-[#00e5ff] text-[#00e5ff] pb-2 font-mono text-sm hover:text-white hover:border-white transition-colors uppercase font-bold tracking-widest"
                   >
-                    Ver Especialidades <CaretRight className="w-4 h-4" />
+                    Soluções Técnicas <CaretRight className="w-4 h-4" />
                   </a>
                 </div>
               </div>
@@ -351,7 +355,7 @@ export default function PublicHomeClient() {
           </div>
         </section>
 
-        {/* --- ESPECIALIDADES --- */}
+        {/* --- SOLUÇÕES DE ENGENHARIA --- */}
         <section
           id="services"
           className="py-24 px-6 bg-[#0f1115] relative border-t border-white/5"
@@ -359,72 +363,58 @@ export default function PublicHomeClient() {
           <div className="max-w-7xl mx-auto">
             <div className="mb-16">
               <h2 className="text-4xl font-black uppercase tracking-widest text-white font-sans">
-                Especialidades <span className="text-[#ff4655]">Táticas</span>
+                Nossos Serviços{' '}
+                <span className="text-[#ff4655]">Especializados</span>
               </h2>
               <div className="mt-3 text-gray-500 font-mono text-sm tracking-widest">
-                // SELECT_YOUR_LOADOUT
+                // DETAILED_CAPABILITIES
               </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {
-                /* SERVIÇOS */
-                SPECIALTIES.map(({ icon: Icon, accent, title, desc }, i) => (
-                  <div
-                    key={title}
-                    style={{ '--cor': accent } as React.CSSProperties}
-                    className={`group relative bg-[#171a21] border border-white/5 p-10 hover:border-[var(--cor)] transition-colors duration-300`}
-                  >
-                    <div
-                      className={`absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[var(--cor)]/20 transition-colors`}
-                    >
-                      {`0${i + 1}`}
-                    </div>
-                    <div
-                      className={`w-16 h-16 bg-[var(--cor)]/10 flex items-center justify-center rounded-lg border border-[var(--cor)]/20 mb-8 group-hover:bg-[var(--cor)] group-hover:text-white transition-colors`}
-                    >
-                      <Icon
-                        className={`w-8 h-8 text-[var(--cor)] group-hover:text-white transition-colors`}
-                      />
-                    </div>
-                    <h3
-                      className={`text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans`}
-                    >
-                      {title}
-                    </h3>
-                    <p
-                      className={`text-gray-400 text-base leading-relaxed font-medium font-sans`}
-                    >
-                      {desc}
-                    </p>
-                    <div
-                      className={`mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[var(--cor)] transition-all duration-500`}
-                    ></div>
+              {SPECIALTIES.map(({ icon: Icon, accent, title, desc }, i) => (
+                <div
+                  key={title}
+                  style={{ '--cor': accent } as React.CSSProperties}
+                  className="group relative bg-[#171a21] border border-white/5 p-10 hover:border-[var(--cor)] transition-colors duration-300"
+                >
+                  <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[var(--cor)]/20 transition-colors">
+                    {`0${i + 1}`}
                   </div>
-                ))
-              }
+                  <div className="w-16 h-16 bg-[var(--cor)]/10 flex items-center justify-center rounded-lg border border-[var(--cor)]/20 mb-8 group-hover:bg-[var(--cor)] group-hover:text-white transition-colors">
+                    <Icon className="w-8 h-8 text-[var(--cor)] group-hover:text-white transition-colors" />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans">
+                    {title}
+                  </h3>
+                  <p className="text-gray-400 text-base leading-relaxed font-medium font-sans">
+                    {desc}
+                  </p>
+                  <div className="mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[var(--cor)] transition-all duration-500"></div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* SECTION: PROTOCOLOS DE SEGURANÇA (WHY CHOOSE US) */}
+        {/* --- PROTOCOLOS DE SEGURANÇA --- */}
         <section className="py-24 px-6 bg-[#0a0a0c] relative border-t border-white/5">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="space-y-8">
                 <h2 className="text-4xl font-black uppercase tracking-widest text-white">
                   Protocolos de{' '}
-                  <span className="text-emerald-500">Segurança</span>
+                  <span className="text-emerald-500">Qualidade</span>
                 </h2>
                 <div className="text-gray-500 font-mono text-sm tracking-widest">
-                  // DIRETRIZES_DE_EXECUÇÃO
+                  // TECHNICAL_COMPLIANCE
                 </div>
 
                 <div className="space-y-6 text-gray-400">
                   <p className="text-lg font-medium leading-relaxed">
-                    Não abrimos mão da integridade. Cada projeto executado segue
-                    normas rígidas de segurança para proteger você, seu
-                    patrimônio e nossa equipe.
+                    Trabalhamos fundamentados em processos previsíveis,
+                    garantindo que a execução ocorra dentro do cronograma
+                    estipulado e em total conformidade legal.
                   </p>
 
                   <ul className="space-y-4 font-mono text-sm">
@@ -432,30 +422,32 @@ export default function PublicHomeClient() {
                       <ShieldCheck className="w-6 h-6 text-emerald-500 shrink-0" />
                       <div>
                         <strong className="block text-white uppercase tracking-widest mb-1">
-                          Norma NBR 5410
+                          Normatização Técnica (NBR)
                         </strong>
-                        Toda infraestrutura elétrica atende rigorosamente as
-                        normas técnicas vigentes.
+                        Projetos dimensionados milimetricamente para evitar
+                        sobrecargas, curtos-circuitos ou desperdício de insumos
+                        estruturais.
                       </div>
                     </li>
                     <li className="flex items-start gap-4 p-4 bg-[#00e5ff]/5 border border-[#00e5ff]/20">
                       <Crosshair className="w-6 h-6 text-[#00e5ff] shrink-0" />
                       <div>
                         <strong className="block text-white uppercase tracking-widest mb-1">
-                          Materiais Homologados
+                          Materiais Premium
                         </strong>
-                        Utilizamos apenas insumos de alta durabilidade,
-                        garantindo a integridade estrutural.
+                        Utilização estrita de condutores, placas e tintas
+                        homologadas com selos de garantia e laudos de qualidade
+                        fabril.
                       </div>
                     </li>
                     <li className="flex items-start gap-4 p-4 bg-[#ff4655]/5 border border-[#ff4655]/20">
                       <Lightning className="w-6 h-6 text-[#ff4655] shrink-0" />
                       <div>
                         <strong className="block text-white uppercase tracking-widest mb-1">
-                          Execução Tática
+                          Cronograma Rígido
                         </strong>
-                        Planejamento minucioso para reduzir prazos e eliminar
-                        retrabalhos.
+                        Acompanhamento técnico diário da obra para mitigar
+                        aditamentos de prazo e garantir entrega limpa no prazo.
                       </div>
                     </li>
                   </ul>
@@ -475,7 +467,7 @@ export default function PublicHomeClient() {
           </div>
         </section>
 
-        {/* SECTION: REGISTROS TÁTICOS / PORTFÓLIO YOUTUBE */}
+        {/* --- PORTFÓLIO E PROVAS DE EXECUÇÃO --- */}
         <section
           id="portfolio"
           className="py-24 px-6 relative border-t border-white/5 bg-[#0f1115]"
@@ -484,10 +476,10 @@ export default function PublicHomeClient() {
             <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div>
                 <h2 className="text-4xl font-black uppercase tracking-widest text-white">
-                  Registros <span className="text-[#00e5ff]">Táticos</span>
+                  Portfólio em <span className="text-[#00e5ff]">Vídeo</span>
                 </h2>
                 <div className="mt-3 text-gray-500 font-mono text-sm tracking-widest">
-                  // MISSÕES_ANTERIORES // YOUTUBE_ARCHIVE
+                  // VERIFIED_PROJECT_ARCHIVE
                 </div>
               </div>
               <a
@@ -496,7 +488,7 @@ export default function PublicHomeClient() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 border border-white/20 px-6 py-3 hover:bg-white hover:text-black transition-colors font-mono text-sm uppercase font-bold tracking-widest"
               >
-                Acessar Arquivo <CaretRight className="w-4 h-4" />
+                Acessar Canal Técnico <CaretRight className="w-4 h-4" />
               </a>
             </div>
 
@@ -504,23 +496,23 @@ export default function PublicHomeClient() {
               {[
                 {
                   id: '1',
-                  title: 'Manutenção de Quadro de Distribuição',
+                  title: 'Manutenção de Quadro de Distribuição Trifásico',
                   tag: 'ELÉTRICA',
                   url: 'https://youtube.com/@EletricaeArt',
                 },
                 {
                   id: '2',
-                  title: 'Estruturação Drywall com Sanca Invertida',
+                  title: 'Estruturação de Divisórias Acústicas e Forro Drywall',
                   tag: 'DRYWALL',
                   url: 'https://youtube.com/@EletricaeArt',
                 },
                 {
                   id: '3',
-                  title: 'Acabamento Fino e Efeito Mármore',
+                  title: 'Acabamento Fino e Efeitos Decorativos Premium',
                   tag: 'PINTURA',
                   url: 'https://youtube.com/@EletricaeArt',
                 },
-              ].map((video) => (
+              ].map((video, idx) => (
                 <a
                   href={video.url}
                   target="_blank"
@@ -528,30 +520,19 @@ export default function PublicHomeClient() {
                   key={video.id}
                   className="group relative aspect-video bg-[#111318] border border-white/10 overflow-hidden hover:border-[#00e5ff] transition-colors cursor-pointer block"
                 >
-                  {/* Placeholder frame for video thumbnail */}
                   <div className="absolute inset-0 bg-black/50 group-hover:bg-black/20 transition-colors z-0"></div>
-
                   <div className="absolute inset-0 flex items-center justify-center z-10">
                     <div className="w-16 h-16 rounded-full bg-red-600/80 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 group-hover:bg-red-600 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)]">
                       <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
                     </div>
                   </div>
-
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/80 to-transparent z-10">
                     <div className="font-mono text-xs text-[#00e5ff] tracking-widest mb-1">
-                      LOG_ID: {Math.floor(Math.random() * 9000) + 1000} //{' '}
-                      {video.tag}
+                      PROJ_LOG_{1000 + idx} // {video.tag}
                     </div>
                     <div className="font-bold text-white text-sm uppercase tracking-wide">
                       {video.title}
                     </div>
-                  </div>
-
-                  <div className="absolute top-4 right-4 flex gap-1 z-10">
-                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-                    <span className="font-mono text-[10px] text-red-500 tracking-widest uppercase font-bold">
-                      REC
-                    </span>
                   </div>
                 </a>
               ))}
@@ -560,9 +541,9 @@ export default function PublicHomeClient() {
         </section>
       </main>
 
-      {/* WHATSAPP FLOAT BUTTON */}
+      {/* --- BOTÃO FLUTUANTE DINÂMICO DO WHATSAPP --- */}
       <a
-        href="https://wa.me/5513997685853"
+        href={WHATSAPP_LINK}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-8 right-8 z-50 group flex items-center"
@@ -606,25 +587,14 @@ export default function PublicHomeClient() {
         </div>
       </footer>
 
-      {/* Estilos Globais Injetados para Animações e Fundos */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         html { scroll-behavior: smooth; }
-        ::-webkit-scrollbar {
-          width: 8px;
-          background: #0a0a0c;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #333;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #ff4655;
-        }
+        ::-webkit-scrollbar { width: 8px; background: #0a0a0c; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff4655; }
       `,
         }}
       />
