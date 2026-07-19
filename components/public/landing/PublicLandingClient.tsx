@@ -292,6 +292,9 @@ export default function PublicHomeClient() {
                     <div className="text-[#00e5ff] font-black text-lg tracking-widest">
                       RESPONSÁVEL TÉCNICO
                     </div>
+                    <div className="text-blue-600 text-xl tracking-widest font-black">
+                      RAFAEL ÂNGELO
+                    </div>
                     <div className="text-gray-300 text-xs tracking-widest">
                       QUALIFICAÇÃO: ESPECIALISTA
                     </div>
