@@ -66,19 +66,22 @@ const STATUS_ITEMS = [
 const SPECIALTIES = [
   {
     icon: Lightning,
-    accent: 'cyan',
+    accent: 'blue',
+    cor: '#00e5ff',
     title: 'Elétrica',
     desc: 'Instalações, manutenções, quadros de força e projetos luminotécnicos de alta performance para residências e empresas.',
   },
   {
     icon: PaintRoller,
     accent: 'red',
+    cor: '#ff4655',
     title: 'Pintura',
     desc: 'Acabamento premium, texturas avançadas e efeitos decorativos como mármore. Detalhes minuciosos para um resultado impecável.',
   },
   {
     icon: Wall,
     accent: 'emerald',
+    cor: '#00bc7d',
     title: 'Drywall',
     desc: 'Forros, sancas e divisórias com precisão milimétrica, modulação de espaços e execução rápida.',
   },
@@ -367,60 +370,42 @@ export default function PublicHomeClient() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {/* SERVIÇO 1 */}
-              <div className="group relative bg-[#171a21] border border-white/5 p-10 hover:border-[#00e5ff] transition-colors duration-300">
-                <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[#00e5ff]/20 transition-colors">
-                  01
-                </div>
-                <div className="w-16 h-16 bg-[#00e5ff]/10 flex items-center justify-center rounded-lg border border-[#00e5ff]/20 mb-8 group-hover:bg-[#00e5ff] group-hover:text-black transition-colors">
-                  <Lightning className="w-8 h-8 text-[#00e5ff] group-hover:text-black transition-colors" />
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans">
-                  Elétrica
-                </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium font-sans">
-                  Instalações, manutenções, quadros de força e projetos
-                  luminotécnicos de alta performance para residências e
-                  empresas.
-                </p>
-                <div className="mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[#00e5ff] transition-all duration-500"></div>
-              </div>
-
-              {/* SERVIÇO 2 */}
-              <div className="group relative bg-[#171a21] border border-white/5 p-10 hover:border-[#ff4655] transition-colors duration-300">
-                <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-[#ff4655]/20 transition-colors">
-                  02
-                </div>
-                <div className="w-16 h-16 bg-[#ff4655]/10 flex items-center justify-center rounded-lg border border-[#ff4655]/20 mb-8 group-hover:bg-[#ff4655] group-hover:text-white transition-colors">
-                  <PaintRoller className="w-8 h-8 text-[#ff4655] group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans">
-                  Pintura
-                </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium font-sans">
-                  Acabamento premium, texturas avançadas e proteção de
-                  superfícies. Detalhes minuciosos para um resultado impecável.
-                </p>
-                <div className="mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-[#ff4655] transition-all duration-500"></div>
-              </div>
-
-              {/* SERVIÇO 3 */}
-              <div className="group relative bg-[#171a21] border border-white/5 p-10 hover:border-emerald-500 transition-colors duration-300">
-                <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-emerald-500/20 transition-colors">
-                  03
-                </div>
-                <div className="w-16 h-16 bg-emerald-500/10 flex items-center justify-center rounded-lg border border-emerald-500/20 mb-8 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                  <Wall className="w-8 h-8 text-emerald-500 group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans">
-                  Drywall
-                </h3>
-                <p className="text-gray-400 text-base leading-relaxed font-medium font-sans">
-                  Modulação de espaços, forros acústicos e estruturas de gesso
-                  com precisão milimétrica e rápida execução.
-                </p>
-                <div className="mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-emerald-500 transition-all duration-500"></div>
-              </div>
+              {
+                /* SERVIÇOS */
+                SPECIALTIES.map(
+                  ({ icon: Icon, accent, cor, title, desc }, i) => (
+                    <div
+                      className={`group relative bg-[#171a21] border border-white/5 p-10 hover:border-${accent}-500 transition-colors duration-300`}
+                    >
+                      <div
+                        className={`absolute top-0 right-0 p-4 font-mono text-4xl font-black text-white/5 group-hover:text-${accent}-500/20 transition-colors`}
+                      >
+                        {`0${i + 1}`}
+                      </div>
+                      <div
+                        className={`w-16 h-16 bg-${accent}-500/10 flex items-center justify-center rounded-lg border border-${accent}-500/20 mb-8 group-hover:bg-${accent}-500 group-hover:text-white transition-colors`}
+                      >
+                        <Icon
+                          className={`w-8 h-8 text-${accent}-500 group-hover:text-white transition-colors`}
+                        />
+                      </div>
+                      <h3
+                        className={`text-2xl font-black uppercase tracking-widest mb-4 text-white font-sans`}
+                      >
+                        {title}
+                      </h3>
+                      <p
+                        className={`text-gray-400 text-base leading-relaxed font-medium font-sans`}
+                      >
+                        {desc}
+                      </p>
+                      <div
+                        className={`mt-8 h-1 w-12 bg-white/20 group-hover:w-full group-hover:bg-emerald-500 transition-all duration-500`}
+                      ></div>
+                    </div>
+                  ),
+                )
+              }
             </div>
           </div>
         </section>

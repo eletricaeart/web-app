@@ -67,12 +67,12 @@ export default function EquipeEditarPainel() {
     const payload = {
       id: finalId,
       name: formData.name,
-      email: formData.email || email, // Agora a coluna existe!
+      email: formData.email || email,
       role: formData.role,
       specialty: formData.specialty,
       whatsapp: formData.whatsapp,
       about: formData.about,
-      photo_url: formData.photo_url, // Use sempre photo_url (padrão Supabase)
+      photo_url: formData.photo_url,
       gender: formData.gender,
       updated_at: new Date().toISOString(),
     };
