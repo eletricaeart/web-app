@@ -14,9 +14,11 @@ import {
   IdentificationCardIcon,
   MapPinPlus,
   UserList,
+  Tag,
 } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import AvatarUpload from '@/components/forms/AvatarUpload';
+import { CLIENT_CATEGORIES, CLIENT_LEAD_SOURCES } from '@/lib/clientMeta';
 
 /* shadcn components */
 import {
@@ -31,22 +33,23 @@ import '@/app/clientes/Clientes.css';
 import '@/app/clientes/novo/styles.css';
 import Pressable from '@/components/Pressable';
 
-// Interface Atualizada para Nomenclatura em Inglês (CamelCase)
 interface Cliente {
   id: string;
-  name: string; // "Nome Completo"
-  gender: string; // "Gênero"
-  document: string; // "CPF / CNPJ"
-  whatsapp: string; // "WhatsApp"
-  email: string; // "E-mail"
-  zip: string; // "CEP"
-  street: string; // "Rua"
-  number: string; // "Nº"
-  complement: string; // "Comp."
-  neighborhood: string; // "Bairro"
-  city: string; // "Cidade"
-  obs: string; // "Observações"
-  photo: string; // "photo"
+  name: string;
+  gender: string;
+  document: string;
+  whatsapp: string;
+  email: string;
+  zip: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  obs: string;
+  photo: string;
+  category?: string;
+  lead_source?: string;
 }
 
 export default function ClienteNovoPainel() {
@@ -59,7 +62,6 @@ export default function ClienteNovoPainel() {
   const [loading, setLoading] = useState(false);
   const [fetchingCep, setFetchingCep] = useState(false);
 
-  // Estado inicial com chaves limpas
   const [formData, setFormData] = useState<Cliente>({
     id: '',
     name: '',
@@ -75,14 +77,14 @@ export default function ClienteNovoPainel() {
     city: '',
     obs: '',
     photo: '',
+    category: '',
+    lead_source: '',
   });
 
-  // Carrega dados se for Edição (Suporte a nomes antigos e novos)
   useEffect(() => {
     if (editId && clients.length > 0) {
       const target = clients.find((c) => String(c.id) === String(editId));
       if (target) {
-        // Criamos uma referência 'any' para o TS não reclamar das chaves antigas
         const oldData = target as any;
 
         setFormData({
@@ -92,14 +94,16 @@ export default function ClienteNovoPainel() {
           document: target.document || oldData.doc || '',
           whatsapp: target.whatsapp || '',
           email: target.email || '',
-          zip: target.zip || oldData.cep || '', // <--- Corrigido aqui
-          street: target.street || oldData.rua || '', // <--- Corrigido aqui
-          number: target.number || oldData.num || '', // <--- Corrigido aqui
+          zip: target.zip || oldData.cep || '',
+          street: target.street || oldData.rua || '',
+          number: target.number || oldData.num || '',
           complement: target.complement || oldData.complemento || '',
           neighborhood: target.neighborhood || oldData.bairro || '',
           city: target.city || oldData.cidade || '',
           obs: target.obs || '',
           photo: target.photo || '',
+          category: target.category || '',
+          lead_source: target.lead_source || '',
         });
       }
     }
@@ -141,16 +145,14 @@ export default function ClienteNovoPainel() {
 
     const action = editId ? 'update' : 'create';
 
-    // Mapeamos para os nomes exatos das colunas do Supabase
     const payload = {
       ...formData,
-      photo_url: formData.photo, // No SQL usamos photo_url
+      photo_url: formData.photo,
     };
-    delete (payload as any).photo; // Limpa a chave antiga se existir
+    delete (payload as any).photo;
 
-    const res = await saveClient(payload, action);
+    await saveClient(payload, action);
 
-    // O Hook agora gerencia o feedback e o cache local
     router.replace('clientes');
     setLoading(false);
   };
@@ -216,6 +218,59 @@ export default function ClienteNovoPainel() {
                     onChange={handleChange}
                     placeholder="000.000.000-00"
                   />
+                </label>
+              </div>
+            </View>
+          </View>
+
+          {/* --- NOVO: PERFIL DO CLIENTE (categoria + origem) --- */}
+          <View tag="card-client">
+            <View tag="card-header">
+              <Tag size={18} weight="duotone" />
+              PERFIL DO CLIENTE
+            </View>
+            <View tag="card-body" className="shadow-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <label>
+                  Categoria
+                  <Select
+                    value={formData.category || ''}
+                    onValueChange={(val: string) =>
+                      setFormData({ ...formData, category: val })
+                    }
+                  >
+                    <SelectTrigger className="h-[45px] mt-1">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CLIENT_CATEGORIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </label>
+
+                <label>
+                  Como nos conheceu
+                  <Select
+                    value={formData.lead_source || ''}
+                    onValueChange={(val: string) =>
+                      setFormData({ ...formData, lead_source: val })
+                    }
+                  >
+                    <SelectTrigger className="h-[45px] mt-1">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CLIENT_LEAD_SOURCES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </label>
               </div>
             </View>

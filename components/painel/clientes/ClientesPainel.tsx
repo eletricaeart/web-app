@@ -1,13 +1,12 @@
 // components/painel/clientes/ClientesPainel.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import FAB from '@/components/ui/FAB';
 import AppBar from '@/components/layout/AppBar';
 import View from '@/components/layout/View';
-// import SearchBar from "@/components/SearchBar";
 import EntityToolbar from '@/components/EntityToolbar';
 import { useSearch } from '@/hooks/useSearch';
 import ClientCard from '@/components/layout/ClientCard';
@@ -26,30 +25,38 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 
-/* styles */
 import '@/app/clientes/Clientes.css';
 import Page from '@/components/layout/Page';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 import DeleteClientModal from '@/app/clientes/components/DeleteClientModal';
 import EntitySortFilter from '@/components/EntitySortFilter';
+import { CLIENT_CATEGORIES } from '@/lib/clientMeta';
 
-// Interface alinhada com as novas definições (English/CamelCase)
 interface Cliente {
   id: string;
-  name: string; // Novo padrão
-  document?: string; // Novo padrão
+  name: string;
+  document?: string;
   gender?: string;
   photo?: string;
   whatsapp?: string;
   email?: string;
-  city?: string; // Novo padrão
-  neighborhood?: string; // Novo padrão
-  // Fallbacks para compatibilidade com dados antigos do GS
+  city?: string;
+  neighborhood?: string;
+  category?: string;
   'Nome Completo'?: string;
   'CPF / CNPJ'?: string;
   Cidade?: string;
   Bairro?: string;
   [key: string]: any;
+}
+
+interface Orcamento {
+  id: string;
+  client_id?: string;
+  client_name_manual?: string;
+  clientName?: string;
+  financial_json?: { total?: number };
+  financial?: { total?: number };
 }
 
 export default function ClientesPainel() {
@@ -62,7 +69,8 @@ export default function ClientesPainel() {
     loading,
   } = useEASyncSupabase<Cliente>('clientes');
 
-  // USANDO O HOOK da searchbar
+  const { data: orcamentos } = useEASyncSupabase<Orcamento>('orcamentos');
+
   const sortOptions = [
     { label: 'Mais recentes', value: 'recent' },
     { label: 'Nome (A-Z)', value: 'name' },
@@ -72,31 +80,44 @@ export default function ClientesPainel() {
   const { searchTerm, setSearchTerm, sort, filter, updatePrefs, filteredData } =
     useSearch(allClients, ['name', 'Nome Completo', 'document'], 'clientes');
 
-  const [term, setTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  /* Estados para o Modal de Exclusão */
-  const {
-    isDelOpen,
-    setIsDelOpen,
-    itemToDelete,
-    handleDeleteRequest,
-    confirmDelete,
-  } = useDeleteEntity(saveClient);
-
-  // Helper para extrair o nome de forma segura (Novo ou Antigo)
   const getClientName = (c: Cliente) =>
     c.name || c['Nome Completo'] || 'Sem Nome';
 
-  // Helper para extrair o documento
   const getClientDoc = (c: Cliente) => c.document || c['CPF / CNPJ'] || '';
 
-  const filtered = allClients.filter((c) => {
-    const searchTerm = term.trim().toLowerCase();
-    const name = getClientName(c).toLowerCase();
-    const doc = String(getClientDoc(c));
+  // --- Cálculo do "Cliente Top" (maior valor total investido em orçamentos) ---
+  const topClientId = useMemo(() => {
+    const totals: Record<string, number> = {};
 
-    return name.includes(searchTerm) || doc.includes(searchTerm);
-  });
+    orcamentos.forEach((o) => {
+      const total = Number(o.financial_json?.total ?? o.financial?.total ?? 0);
+      if (total <= 0) return;
+
+      const client = allClients.find((c) => {
+        const matchesId = o.client_id === c.id;
+        const name = (o.client_name_manual || o.clientName || '').toLowerCase();
+        const matchesName = name === getClientName(c).toLowerCase();
+        return matchesId || matchesName;
+      });
+
+      if (client) {
+        totals[client.id] = (totals[client.id] || 0) + total;
+      }
+    });
+
+    const entries = Object.entries(totals);
+    if (entries.length === 0) return null;
+
+    entries.sort((a, b) => b[1] - a[1]);
+    return entries[0][0];
+  }, [orcamentos, allClients]);
+
+  const categorizedData = useMemo(() => {
+    if (categoryFilter === 'all') return filteredData;
+    return filteredData.filter((c) => c.category === categoryFilter);
+  }, [filteredData, categoryFilter]);
 
   const fabConfig = [
     {
@@ -126,6 +147,14 @@ export default function ClientesPainel() {
     color: '#444',
   };
 
+  const {
+    isDelOpen,
+    setIsDelOpen,
+    itemToDelete,
+    handleDeleteRequest,
+    confirmDelete,
+  } = useDeleteEntity(saveClient);
+
   return (
     <>
       <AppBar title="Clientes" />
@@ -150,11 +179,29 @@ export default function ClientesPainel() {
               />
             }
           />
+
+          {/* --- CHIPS DE CATEGORIA --- */}
+          <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
+            <CategoryChip
+              label="Todos"
+              active={categoryFilter === 'all'}
+              onClick={() => setCategoryFilter('all')}
+            />
+            {CLIENT_CATEGORIES.map((c) => (
+              <CategoryChip
+                key={c.value}
+                label={c.label}
+                active={categoryFilter === c.value}
+                onClick={() => setCategoryFilter(c.value)}
+              />
+            ))}
+          </div>
         </header>
 
-        <View tag="clients-container" className="flex flex-col gap-2 py-4">
-          {filteredData.map((c) => {
+        <View tag="clients-container" className="flex flex-col gap-2 py-2">
+          {categorizedData.map((c) => {
             const currentName = getClientName(c);
+            const isTop = c.id === topClientId;
 
             return (
               <div
@@ -169,9 +216,9 @@ export default function ClientesPainel() {
                     cidade: c.city || c['Cidade'] || 'Cidade não informada',
                     bairro: c.neighborhood || c['Bairro'] || '',
                   }}
-                  onClick={() =>
-                    router.push('clientes.perfil', { id: String(c.id) })
-                  }
+                  isTopClient={isTop}
+                  category={c.category}
+                  onClick={() => router.push('clientes.perfil', { id: c.id })}
                   options={
                     <div className="options-container">
                       <Popover>
@@ -203,9 +250,7 @@ export default function ClientesPainel() {
                             <button
                               className="menu-item"
                               onClick={() =>
-                                router.push('clientes.novo', {
-                                  id: String(c.id),
-                                })
+                                router.push('clientes.novo', { id: c.id })
                               }
                               style={menuItemStyle}
                             >
@@ -213,9 +258,9 @@ export default function ClientesPainel() {
                             </button>
                             <button
                               className="menu-item delete"
-                              onClick={() => {
-                                handleDeleteRequest(c.id, currentName);
-                              }}
+                              onClick={() =>
+                                handleDeleteRequest(c.id, currentName)
+                              }
                               style={{
                                 ...menuItemStyle,
                                 color: '#ff4444',
@@ -234,7 +279,7 @@ export default function ClientesPainel() {
             );
           })}
 
-          {filtered.length === 0 && (
+          {categorizedData.length === 0 && (
             <div className="text-center py-20 opacity-40">
               <p>Nenhum cliente encontrado.</p>
             </div>
@@ -244,7 +289,6 @@ export default function ClientesPainel() {
 
       <FAB actions={fabConfig} hasBottomNav={true} />
 
-      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
       <DeleteClientModal
         isOpen={isDelOpen}
         onOpenChange={setIsDelOpen}
@@ -252,5 +296,29 @@ export default function ClientesPainel() {
         onConfirm={confirmDelete}
       />
     </>
+  );
+}
+
+function CategoryChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+        active
+          ? 'bg-indigo-600 text-white'
+          : 'bg-white text-slate-500 border border-slate-200'
+      }`}
+    >
+      {label}
+    </button>
   );
 }

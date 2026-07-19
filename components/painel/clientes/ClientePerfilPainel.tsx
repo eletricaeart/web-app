@@ -1,12 +1,12 @@
 // components/painel/clientes/ClientePerfilPainel.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import AppBar from '@/components/layout/AppBar';
 import View from '@/components/layout/View';
-import Divider from '@/components/Divider';
+import ClientGhostAvatar from './ClientGhostAvatar';
 import {
   Pen,
   Trash,
@@ -20,8 +20,15 @@ import {
   FileText,
   Note,
   Phone,
+  Wallet,
+  Receipt,
+  ChartLineUp,
+  Clock,
+  CalendarPlus,
 } from '@phosphor-icons/react';
 import { Mask } from '@/utils/mask';
+import { getNameGradient } from '@/lib/avatarColor';
+import { toast } from 'sonner';
 
 /* shadcn components */
 import {
@@ -31,18 +38,15 @@ import {
 } from '@/components/ui/popover';
 
 import '@/app/clientes/[id]/styles.css';
-import Image from 'next/image';
-import EAAvatar from '@/components/ui/EA-Avatar';
 import Link from 'next/link';
 import DeleteClientModal from '@/app/clientes/components/DeleteClientModal';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 
-// Interfaces Atualizadas para o Supabase (Mantendo suporte a fallbacks)
 interface Cliente {
   id: string;
   name: string;
-  photo_url?: string; // Coluna oficial Supabase
-  photo?: string; // Fallback legacy
+  photo_url?: string;
+  photo?: string;
   gender?: string;
   city?: string;
   whatsapp?: string;
@@ -55,28 +59,52 @@ interface Cliente {
   rua?: string;
   num?: string;
   bairro?: string;
+  created_at?: string;
 }
 
 interface Orcamento {
   id: string;
-  client_id?: string; // Coluna oficial Supabase
+  client_id?: string;
   client_name_manual?: string;
-  document_title?: string; // Coluna oficial Supabase
-  issue_date?: string; // Coluna oficial Supabase
-  clientName?: string; // Legacy
-  documentTitle?: string; // Legacy
-  docTitle?: { text: string; emissao: string | Date }; // Legacy
-  issueDate?: string; // Legacy
+  document_title?: string;
+  issue_date?: string;
+  clientName?: string;
+  documentTitle?: string;
+  docTitle?: { text: string; emissao: string | Date };
+  issueDate?: string;
+  financial_json?: { total?: number };
+  financial?: { total?: number };
 }
 
 interface Nota {
   id: string;
-  client_id: string; // Snake case do Supabase
+  client_id: string;
   date: string;
   title: string;
 }
 
 type Tab_ = 'infos' | 'budgets' | 'notes';
+
+const CLOUD = {
+  name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+};
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}
+
+function formatShortDate(value: Date | null) {
+  if (!value) return '—';
+  return value.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 
 export default function ClientePerfilPainel() {
   const router = usePainelRouter();
@@ -89,8 +117,9 @@ export default function ClientePerfilPainel() {
 
   const [client, setClient] = useState<Cliente | null>(null);
   const [activeTab, setActiveTab] = useState<Tab_>('infos');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* Estados para o Modal de Exclusão */
   const {
     isDelOpen,
     setIsDelOpen,
@@ -106,6 +135,99 @@ export default function ClientePerfilPainel() {
     }
   }, [clientId, clients]);
 
+  const historicoOrcamentos = useMemo(() => {
+    if (!client) return [];
+    return orcamentos.filter((o) => {
+      const matchesId = o.client_id === client.id;
+      const currentName = (client.name || '').toLowerCase();
+      const matchesName =
+        (o.client_name_manual || o.clientName || '').toLowerCase() ===
+        currentName;
+      return matchesId || matchesName;
+    });
+  }, [orcamentos, client]);
+
+  const historicoNotas = useMemo(() => {
+    if (!client) return [];
+    return notes.filter((n) => String(n.client_id) === String(client.id));
+  }, [notes, client]);
+
+  const stats = useMemo(() => {
+    const totalOrcamentos = historicoOrcamentos.length;
+    const totalInvestido = historicoOrcamentos.reduce(
+      (acc, o) =>
+        acc + Number(o.financial_json?.total ?? o.financial?.total ?? 0),
+      0,
+    );
+    const ticketMedio =
+      totalOrcamentos > 0 ? totalInvestido / totalOrcamentos : 0;
+
+    const allDates = [
+      ...historicoOrcamentos.map((o) => o.issue_date || o.issueDate),
+      ...historicoNotas.map((n) => n.date),
+    ]
+      .filter(Boolean)
+      .map((d) => new Date(d as string).getTime())
+      .filter((t) => !isNaN(t));
+
+    const ultimaInteracao = allDates.length
+      ? new Date(Math.max(...allDates))
+      : null;
+
+    const clienteDesde = client?.created_at
+      ? new Date(client.created_at)
+      : null;
+
+    return {
+      totalOrcamentos,
+      totalInvestido,
+      ticketMedio,
+      ultimaInteracao,
+      clienteDesde,
+    };
+  }, [historicoOrcamentos, historicoNotas, client]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !client) return;
+
+    if (!CLOUD.name || !CLOUD.preset) {
+      toast.error('Upload de imagem não configurado.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo 4MB.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUD.preset);
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD.name}/image/upload`,
+        { method: 'POST', body: formData },
+      );
+      const data = await res.json();
+
+      if (data.secure_url) {
+        await saveClient(
+          { id: client.id, photo_url: data.secure_url },
+          'update',
+        );
+        setClient({ ...client, photo_url: data.secure_url });
+        toast.success('Foto atualizada!');
+      }
+    } catch {
+      toast.error('Erro ao subir imagem');
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   if (!client)
     return (
       <View tag="page" className="p-10 text-center">
@@ -113,31 +235,8 @@ export default function ClientePerfilPainel() {
       </View>
     );
 
-  // Lógica de Filtro de Histórico (UUID é prioridade)
-  const historicoOrcamentos = orcamentos.filter((o) => {
-    // Filtra pelo ID do cliente vinculado no Supabase ou pelo nome (fallback legacy)
-    const matchesId = o.client_id === client.id;
-    const currentName = (client.name || '').toLowerCase();
-    const matchesName =
-      (o.client_name_manual || o.clientName || '').toLowerCase() ===
-      currentName;
-    return matchesId || matchesName;
-  });
-
-  const historicoNotas = notes.filter(
-    (n) => String(n.client_id) === String(client.id),
-  );
-
-  const AVATARS = {
-    masc: '/pix/avatar/default_avatar_masc.webp',
-    fem: '/pix/avatar/default_avatar_fem.webp',
-  };
-
-  const clientAvatar =
-    client.photo_url ||
-    client.photo ||
-    AVATARS[client.gender as keyof typeof AVATARS] ||
-    AVATARS.masc;
+  const clientAvatar = client.photo_url || client.photo;
+  const coverGradient = getNameGradient(client.name);
 
   return (
     <>
@@ -164,23 +263,19 @@ export default function ClientePerfilPainel() {
                     label: ' Editar Perfil',
                     icon: <Pen size={20} color="#29f" weight="duotone" />,
                     option: () =>
-                      router.push('clientes.novo', { id: String(client.id) }),
+                      router.push('clientes.novo', { id: client.id }),
                   },
                   {
                     label: 'Novo Orçamento',
                     icon: <FilePlus size={20} color="#29f" weight="duotone" />,
                     option: () =>
-                      router.push('orcamentos.novo', {
-                        clienteId: String(client.id),
-                      }),
+                      router.push('orcamentos.novo', { clienteId: client.id }),
                   },
                   {
                     label: 'Nova Nota Técnica',
                     icon: <Notebook size={20} color="#29f" weight="duotone" />,
                     option: () =>
-                      router.push('notas.novo', {
-                        clienteId: String(client.id),
-                      }),
+                      router.push('notas.novo', { clienteId: client.id }),
                   },
                   {
                     label: 'Excluir Cliente',
@@ -212,78 +307,78 @@ export default function ClientePerfilPainel() {
 
       <View
         tag="client-page"
-        className="client-perfil-page absolute top-0 w-full bg-mauve-50 min-h-[95dvh] pb-40"
+        className="client-perfil-page absolute top-0 w-full bg-slate-50 min-h-[95dvh] pb-40"
       >
+        {/* --- CAPA (gradiente único por cliente) --- */}
         <View
           tag="avatar-section"
-          className="relative min-h-[200px] text-center bg-[var(--sv-sodalita)] text-white "
+          className="relative min-h-[190px] text-white"
+          style={{ background: coverGradient }}
         >
           <View
-            tag="perfil-pic"
-            className="mt-[-2px] top-0 left-0 w-full h-full z-10 overflow-hidden bg-transparent"
+            tag="client-links"
+            className="absolute bottom-4 left-0 z-20 w-full py-4 px-6"
           >
-            <Image
-              src={clientAvatar}
-              alt={client.name}
-              fill
-              className="object-cover"
-              priority
-            />
             <View
-              tag="client-links"
-              className="absolute bottom-[2rem] left-0 z-20 w-full py-4 px-6 bg-linear-to-b from-transparent to-[#0003]"
+              tag="contact-shortcuts"
+              className="flex items-center justify-end w-full gap-3"
             >
-              <View
-                tag="contact-shortcuts"
-                className="flex items-center justify-end w-full gap-3"
+              <Link
+                href={`https://wa.me/${client.whatsapp}`}
+                target="_blank"
+                className="bg-white/95 p-3 rounded-full shadow-lg backdrop-blur"
               >
-                <Link
-                  href={`https://wa.me/${client.whatsapp}`}
-                  target="_blank"
-                  className="bg-white p-3 rounded-full shadow-lg"
-                >
-                  <WhatsappLogo
-                    size={20}
-                    weight="duotone"
-                    className="text-green-500"
-                  />
-                </Link>
-                <Link
-                  href={`tel:${client.whatsapp}`}
-                  className="bg-white p-3 rounded-full shadow-lg"
-                >
-                  <Phone size={20} weight="duotone" className="text-gray-800" />
-                </Link>
-                <Link
-                  href={`mailto:${client.email}`}
-                  className="bg-white p-3 rounded-full shadow-lg"
-                >
-                  <EnvelopeSimple
-                    size={20}
-                    weight="duotone"
-                    className="text-blue-500"
-                  />
-                </Link>
-              </View>
+                <WhatsappLogo
+                  size={20}
+                  weight="duotone"
+                  className="text-green-500"
+                />
+              </Link>
+              <Link
+                href={`tel:${client.whatsapp}`}
+                className="bg-white/95 p-3 rounded-full shadow-lg backdrop-blur"
+              >
+                <Phone size={20} weight="duotone" className="text-gray-800" />
+              </Link>
+              <Link
+                href={`mailto:${client.email}`}
+                className="bg-white/95 p-3 rounded-full shadow-lg backdrop-blur"
+              >
+                <EnvelopeSimple
+                  size={20}
+                  weight="duotone"
+                  className="text-blue-500"
+                />
+              </Link>
             </View>
           </View>
         </View>
 
+        {/* --- AVATAR SOBREPOSTO + NOME --- */}
         <View
           tag="avatar-section-bottom"
-          className="flex relative w-full h-24 mt-[-2rem] bg-mauve-50 rounded-[2rem_2rem_0_0]"
+          className="flex relative w-full h-24 mt-[-2rem] bg-slate-50 rounded-[2rem_2rem_0_0]"
         >
           <View className="flex w-full px-4 absolute top-[-40%] gap-4 items-center">
-            <View className="avatar-circle w-24 h-24 z-30">
-              <EAAvatar
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+            <View className="z-30">
+              <ClientGhostAvatar
                 name={client.name}
-                url={clientAvatar}
-                w="full"
-                h="full"
+                gender={client.gender}
+                photoUrl={clientAvatar}
+                size={96}
+                onUploadClick={() => fileInputRef.current?.click()}
+                uploading={uploadingPhoto}
               />
             </View>
-            <View className="flex flex-col w-full h-24 justify-end flex-1 pb-3">
-              <h3 className="text-2xl text-slate-900 capitalize font-medium line-clamp-1 trtuncate">
+            <View className="flex flex-col w-full h-24 justify-end flex-1 pb-3 min-w-0">
+              <h3 className="text-2xl text-slate-900 capitalize font-bold line-clamp-1 truncate">
                 {client.name}
               </h3>
               <p className="opacity-80 text-sm text-slate-400 capitalize font-bold line-clamp-1 truncate">
@@ -293,11 +388,49 @@ export default function ClientePerfilPainel() {
           </View>
         </View>
 
-        <View className="grid grid-cols-3 text-sm bg-[#e5e5e5] rounded-[1rem_1rem_0_0] px-3 pt-3 pb-[1rem]">
+        {/* --- ESTATÍSTICAS PREMIUM --- */}
+        <View className="px-4 mt-3 mb-2">
+          <View className="grid grid-cols-2 gap-3">
+            <StatCard
+              icon={<Wallet size={18} weight="duotone" />}
+              label="Total investido"
+              value={formatCurrency(stats.totalInvestido)}
+              accent="emerald"
+            />
+            <StatCard
+              icon={<Receipt size={18} weight="duotone" />}
+              label="Orçamentos"
+              value={String(stats.totalOrcamentos)}
+              accent="indigo"
+            />
+            <StatCard
+              icon={<ChartLineUp size={18} weight="duotone" />}
+              label="Ticket médio"
+              value={formatCurrency(stats.ticketMedio)}
+              accent="amber"
+            />
+            <StatCard
+              icon={<Clock size={18} weight="duotone" />}
+              label="Última interação"
+              value={formatShortDate(stats.ultimaInteracao)}
+              accent="sky"
+            />
+          </View>
+
+          {stats.clienteDesde && (
+            <View className="flex items-center gap-2 mt-3 text-xs text-slate-400 font-medium px-1">
+              <CalendarPlus size={14} weight="bold" />
+              Cliente desde {formatShortDate(stats.clienteDesde)}
+            </View>
+          )}
+        </View>
+
+        {/* --- ABAS --- */}
+        <View className="grid grid-cols-3 text-sm bg-[#e5e5e5] rounded-[1rem_1rem_0_0] px-3 pt-3 pb-[1rem] mt-4">
           {(['infos', 'budgets', 'notes'] as Tab_[]).map((t) => (
             <View
               key={t}
-              className="grid place-items-center p-2 rounded-[.7rem_.7rem_0_0]"
+              className="grid place-items-center p-2 rounded-[.7rem_.7rem_0_0] transition-colors"
               style={{
                 background: activeTab === t ? '#fff' : '#f5f5f5',
                 color: activeTab === t ? '#666' : '#999',
@@ -356,27 +489,39 @@ export default function ClientePerfilPainel() {
               icon={<FileText size={18} weight="duotone" />}
             >
               {historicoOrcamentos.length > 0 ? (
-                historicoOrcamentos.map((orc) => (
-                  <View
-                    key={orc.id}
-                    className="py-3 border-b last:border-0 cursor-pointer"
-                    onClick={() =>
-                      router.push('orcamentos.ver', { id: String(orc.id) })
-                    }
-                  >
-                    <p className="text-xs text-gray-400">
-                      {orc.issue_date ||
-                        orc.issueDate ||
-                        (orc as any).docTitle?.emissao ||
-                        'Data não informada'}
-                    </p>
-                    <p className="text-gray-600 font-medium">
-                      {orc.document_title ||
-                        orc.documentTitle ||
-                        orc.docTitle?.text}
-                    </p>
-                  </View>
-                ))
+                historicoOrcamentos.map((orc) => {
+                  const total = Number(
+                    orc.financial_json?.total ?? orc.financial?.total ?? 0,
+                  );
+                  return (
+                    <View
+                      key={orc.id}
+                      className="py-3 border-b last:border-0 cursor-pointer flex items-center justify-between"
+                      onClick={() =>
+                        router.push('orcamentos.ver', { id: orc.id })
+                      }
+                    >
+                      <View>
+                        <p className="text-xs text-gray-400">
+                          {orc.issue_date ||
+                            orc.issueDate ||
+                            (orc as any).docTitle?.emissao ||
+                            'Data não informada'}
+                        </p>
+                        <p className="text-gray-600 font-medium">
+                          {orc.document_title ||
+                            orc.documentTitle ||
+                            orc.docTitle?.text}
+                        </p>
+                      </View>
+                      {total > 0 && (
+                        <span className="text-sm font-bold text-emerald-600">
+                          {formatCurrency(total)}
+                        </span>
+                      )}
+                    </View>
+                  );
+                })
               ) : (
                 <p className="text-gray-400 text-sm">
                   Nenhum orçamento encontrado.
@@ -395,9 +540,7 @@ export default function ClientePerfilPainel() {
                   <View
                     key={n.id}
                     className="py-3 border-b last:border-0 cursor-pointer"
-                    onClick={() =>
-                      router.push('notas.ver', { id: String(n.id) })
-                    }
+                    onClick={() => router.push('notas.ver', { id: n.id })}
                   >
                     <p className="text-xs text-gray-400">
                       {new Date(n.date).toLocaleDateString('pt-BR')}
@@ -413,7 +556,6 @@ export default function ClientePerfilPainel() {
         </View>
       </View>
 
-      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
       <DeleteClientModal
         isOpen={isDelOpen}
         onOpenChange={setIsDelOpen}
@@ -424,7 +566,41 @@ export default function ClientePerfilPainel() {
   );
 }
 
-// Componentes Auxiliares Locais
+/* --- Componentes auxiliares --- */
+
+function StatCard({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  accent: 'emerald' | 'indigo' | 'amber' | 'sky';
+}) {
+  const accentMap = {
+    emerald: 'bg-emerald-50 text-emerald-600',
+    indigo: 'bg-indigo-50 text-indigo-600',
+    amber: 'bg-amber-50 text-amber-600',
+    sky: 'bg-sky-50 text-sky-600',
+  };
+
+  return (
+    <View className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+      <View className={`w-fit p-2 rounded-xl mb-2 ${accentMap[accent]}`}>
+        {icon}
+      </View>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+        {label}
+      </p>
+      <p className="text-sm font-black text-slate-800 mt-0.5 truncate">
+        {value}
+      </p>
+    </View>
+  );
+}
+
 function InfoSection({
   title,
   icon,
