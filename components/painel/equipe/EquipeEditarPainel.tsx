@@ -33,7 +33,7 @@ export default function EquipeEditarPainel() {
   const { data: users, save: saveUser } =
     useEASyncSupabase<MembroEquipe>('profiles');
 
-  const { userId } = usePainelAuth();
+  const { userId, email } = usePainelAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<MembroEquipe>({
     id: '',
@@ -67,7 +67,7 @@ export default function EquipeEditarPainel() {
     const payload = {
       id: finalId,
       name: formData.name,
-      email: formData.email || user?.email, // Agora a coluna existe!
+      email: formData.email || email, // Agora a coluna existe!
       role: formData.role,
       specialty: formData.specialty,
       whatsapp: formData.whatsapp,
