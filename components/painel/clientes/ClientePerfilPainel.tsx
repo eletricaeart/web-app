@@ -317,7 +317,7 @@ export default function ClientePerfilPainel() {
         >
           <View
             tag="client-links"
-            className="absolute bottom-4 left-0 z-20 w-full py-4 px-6"
+            className="absolute bottom-4 left-0 z-20 w-full pt-0 pb-[2rem] px-6"
           >
             <View
               tag="contact-shortcuts"
@@ -377,7 +377,7 @@ export default function ClientePerfilPainel() {
                 uploading={uploadingPhoto}
               />
             </View>
-            <View className="flex flex-col w-full h-24 justify-end flex-1 pb-3 min-w-0">
+            <View className="flex flex-col w-full h-24 justify-end flex-1 pb-0 min-w-0">
               <h3 className="text-2xl text-slate-900 capitalize font-bold line-clamp-1 truncate">
                 {client.name}
               </h3>
