@@ -1,26 +1,25 @@
 // components/layout/BudgetCard.tsx
-"use client";
+'use client';
 
-import React from "react";
-import View from "./View";
-import "./ClientCard.css"; // Reutilizamos o CSS para manter a consistência
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  User,
-  GenderFemale,
-  CloudCheck,
-  ArrowsClockwise,
-} from "@phosphor-icons/react";
-import { getCleanDate } from "@/utils/helpers";
+import React from 'react';
+import View from './View';
+import './ClientCard.css';
+import ClientGhostAvatar from '@/components/painel/clientes/ClientGhostAvatar';
+import { CloudCheck, ArrowsClockwise } from '@phosphor-icons/react';
+import { getCleanDate } from '@/utils/helpers';
+import { getDisplayStatus, ORCAMENTO_STATUS_STYLES } from '@/lib/orcamentoMeta';
 
 interface BudgetCardProps {
   orc: {
     id: string | number;
-    clientName?: string; // Adicione esta linha
-    documentTitle?: string; // Adicione esta linha
-    issueDate?: string; // Adicione esta linha
-    cliente?: { name?: string }; // Mantenha como opcional para não quebrar
-    docTitle?: { text?: string; emissao?: string }; // Mantenha como opcional
+    clientName?: string;
+    documentTitle?: string;
+    issueDate?: string;
+    expiration?: string;
+    status?: string;
+    total?: number;
+    cliente?: { name?: string };
+    docTitle?: { text?: string; emissao?: string };
   };
   clientData?: {
     photo?: string;
@@ -30,55 +29,41 @@ interface BudgetCardProps {
   options?: React.ReactNode;
 }
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}
+
 export default function BudgetCard({
   orc,
   clientData,
   onClick,
   options,
 }: BudgetCardProps) {
-  const isTemp = String(orc.id).startsWith("TEMP_");
+  const isTemp = String(orc.id).startsWith('TEMP_');
 
-  const defaultAvatars = {
-    masc: "/pix/avatar/default_avatar_masc.webp",
-    fem: "/pix/avatar/default_avatar_fem.webp",
-  };
-
-  // Extraímos os valores com fallbacks seguros para evitar o erro de toLowerCase()
-  const clienteNome = orc?.clientName || "Cliente não identificado";
-  // console.warn("\n\n\norc", orc);
-  const tituloOrcamento = orc?.documentTitle || "Sem título";
+  const clienteNome = orc?.clientName || 'Cliente não identificado';
+  const tituloOrcamento = orc?.documentTitle || 'Sem título';
   const dataEmissao = orc?.issueDate || new Date().toISOString();
+  const displayStatus = getDisplayStatus(orc);
 
   return (
     <View tag="client-card" className="rounded-[1rem] shadow-sm">
-      {" "}
-      {/* Mantemos a tag para herdar o CSS de layout */}
       <View tag="client-avatar" onClick={onClick} className="cursor-pointer">
-        <Avatar className="w-12 h-12">
-          <AvatarImage
-            src={
-              clientData?.photo ||
-              defaultAvatars[
-                (clientData?.gender || "masc") as keyof typeof defaultAvatars
-              ] ||
-              defaultAvatars.masc
-            }
-            alt={clienteNome}
-            className="object-cover"
-          />
-          <AvatarFallback>
-            {clientData?.gender === "fem" ? (
-              <GenderFemale size={24} />
-            ) : (
-              <User size={24} />
-            )}
-          </AvatarFallback>
-        </Avatar>
+        <ClientGhostAvatar
+          name={clienteNome}
+          gender={clientData?.gender}
+          photoUrl={clientData?.photo}
+          size={48}
+          showGenderBadge={false}
+        />
       </View>
       <View
         tag="client-info"
         onClick={onClick}
-        className="cursor-pointer truncate"
+        className="cursor-pointer truncate flex-1 min-w-0"
       >
         <div className="flex items-center justify-between">
           <h4 className="text-[#333] capitalize font-bold leading-tight truncate">
@@ -103,6 +88,18 @@ export default function BudgetCard({
         <p className="text-xs text-indigo-600 font-medium truncate mt-1">
           {tituloOrcamento}
         </p>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span
+            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${ORCAMENTO_STATUS_STYLES[displayStatus.color]}`}
+          >
+            {displayStatus.label}
+          </span>
+          {typeof orc.total === 'number' && orc.total > 0 && (
+            <span className="text-[11px] font-black text-slate-700">
+              {formatCurrency(orc.total)}
+            </span>
+          )}
+        </div>
       </View>
       <View tag="client-badge" className="bg-transparent">
         {options}

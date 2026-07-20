@@ -5,30 +5,24 @@ import React, { useState, useMemo } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import AppBar from '@/components/layout/AppBar';
-import View from '@/components/layout/View';
 import FAB from '@/components/ui/FAB';
 import EntityToolbar from '@/components/EntityToolbar';
 import { useSearch } from '@/hooks/useSearch';
-import {
-  Plus,
-  SquaresFour,
-  Rows,
-  Star,
-  CaretRight,
-} from '@phosphor-icons/react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Plus, CaretRight, Camera } from '@phosphor-icons/react';
 import Page from '@/components/layout/Page';
+import ClientGhostAvatar from '@/components/painel/clientes/ClientGhostAvatar';
+import { getNotaStatus, NOTA_STATUS_STYLES } from '@/lib/notaMeta';
 
-// Interface atualizada para o padrão Supabase
 interface NotaTecnica {
   id: string;
   title: string;
-  client_id?: string; // UUID do cliente no Supabase
-  client_name_manual?: string; // Fallback para nomes manuais
-  is_important?: boolean; // Nome da coluna no SQL
+  client_id?: string;
+  client_name_manual?: string;
+  is_important?: boolean;
   date?: string;
   content?: string;
-  // Fallbacks legacy
+  status?: string;
+  photos?: string[];
   clienteNome?: string;
   important?: boolean;
 }
@@ -36,30 +30,28 @@ interface NotaTecnica {
 interface ClienteCache {
   id: string;
   name: string;
+  gender?: string;
+  photo?: string;
 }
 
 export default function NotasPainel() {
   const router = usePainelRouter();
 
-  // Buscamos notas e clientes do Supabase
   const { data: notes } = useEASyncSupabase<NotaTecnica>('notas');
   const { data: allClients } = useEASyncSupabase<ClienteCache>('clientes');
 
-  // Normalização dos dados para a busca e exibição
-  // Isso garante que o 'clienteNome' apareça mesmo que no banco só tenha o 'client_id'
   const normalizedNotes = useMemo(() => {
     return notes.map((nota) => {
       const client = allClients.find((c) => c.id === nota.client_id);
       return {
         ...nota,
-        // Prioriza o nome do banco de clientes, depois o manual, depois o antigo
         displayClientName:
           client?.name ||
           nota.client_name_manual ||
           nota.clienteNome ||
           'Sem cliente',
-        // Unifica o campo de importância
-        displayImportant: nota.is_important ?? nota.important ?? false,
+        clientGender: client?.gender,
+        clientPhoto: client?.photo,
       };
     });
   }, [notes, allClients]);
@@ -69,8 +61,6 @@ export default function NotasPainel() {
     ['title', 'displayClientName'],
     'notas',
   );
-
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   return (
     <>
@@ -82,80 +72,60 @@ export default function NotasPainel() {
             placeholder="Buscar notas..."
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
-            showAction={true}
-            actionIcon={
-              viewMode === 'grid' ? (
-                <Rows size={20} />
-              ) : (
-                <SquaresFour size={20} />
-              )
-            }
-            onActionClick={() =>
-              setViewMode((prev) => (prev === 'grid' ? 'list' : 'grid'))
-            }
           />
         </header>
 
-        <main className="p-4 pb-24 bg-[#f5f5f5_!important] grid grid-cols-1 gap-4">
-          <div
-            className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-2 gap-4'
-                : 'notes-list flex flex-col gap-2'
-            }
-          >
-            {filteredData.map((nota) => {
-              const isImportant = nota.displayImportant === true;
+        <main className="p-4 pb-24 flex flex-col gap-3">
+          {filteredData.map((nota) => {
+            const status = getNotaStatus(nota.status);
+            const photoCount = nota.photos?.length || 0;
 
-              // ESTILO IMPORTANTE (ESTILO QUICKACTION DA HOME)
-              if (isImportant) {
-                return (
-                  <div
-                    key={nota.id}
-                    className="note-card-important flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
-                    onClick={() =>
-                      router.push('notas.ver', { id: String(nota.id) })
-                    }
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="icon-wrapper">
-                        <Star size={32} weight="fill" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg leading-tight">
-                          {nota.title}
-                        </h3>
-                        <p className="text-muted text-sm">
-                          {nota.displayClientName}
-                        </p>
-                      </div>
-                    </div>
-                    <CaretRight
-                      size={20}
-                      weight="bold"
-                      className="opacity-50"
-                    />
-                  </div>
-                );
-              }
-
-              // ESTILO PADRÃO (ESTILO MENUCARD DA HOME)
-              return (
-                <NoteCard
-                  key={nota.id}
-                  nota={{
-                    id: nota.id,
-                    title: nota.title,
-                    clienteNome: nota.displayClientName,
-                  }}
-                  viewMode={viewMode}
-                  onClick={() =>
-                    router.push('notas.ver', { id: String(nota.id) })
-                  }
+            return (
+              <div
+                key={nota.id}
+                onClick={() => router.push('notas.ver', { id: nota.id })}
+                className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+              >
+                <ClientGhostAvatar
+                  name={nota.displayClientName}
+                  gender={nota.clientGender}
+                  photoUrl={nota.clientPhoto}
+                  size={44}
+                  showGenderBadge={false}
                 />
-              );
-            })}
-          </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-800 truncate">
+                      {nota.title}
+                    </h3>
+                    {photoCount > 0 && (
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400 shrink-0">
+                        <Camera size={12} weight="fill" />
+                        {photoCount}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 truncate">
+                    {nota.displayClientName}
+                  </p>
+                  <span
+                    className={`inline-block mt-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${NOTA_STATUS_STYLES[status.color]}`}
+                  >
+                    {status.label}
+                  </span>
+                </div>
+
+                <CaretRight size={18} className="text-slate-300 shrink-0" />
+              </div>
+            );
+          })}
+
+          {filteredData.length === 0 && (
+            <div className="text-center py-20 opacity-40">
+              <p>Nenhuma nota encontrada.</p>
+            </div>
+          )}
         </main>
       </Page>
 
@@ -167,54 +137,8 @@ export default function NotasPainel() {
             label: 'Nova Nota',
             action: () => router.push('notas.novo'),
           },
-          {
-            icon: <Plus size={28} weight="duotone" />,
-            label: 'Novo Membro',
-            action: () => router.push('equipe.editar'),
-          },
         ]}
       />
     </>
-  );
-}
-
-interface NoteCardProps {
-  nota: {
-    id: string | number;
-    title: string;
-    clienteNome: string;
-  };
-  viewMode: 'grid' | 'list';
-  onClick: () => void;
-}
-
-function NoteCard({ nota, viewMode, onClick }: NoteCardProps) {
-  const isGrid = viewMode === 'grid';
-
-  return (
-    <div className="block h-full cursor-pointer" onClick={onClick}>
-      <Card
-        className={`border-none shadow-sm hover:shadow-md active:scale-[0.97] transition-all rounded-3xl h-full ${!isGrid ? 'w-full' : ''}`}
-      >
-        <CardContent
-          className={`p-6 flex ${isGrid ? 'flex-col gap-3 aspect-[1/1]' : 'flex-row items-center justify-between gap-4'}`}
-        >
-          <div className="flex flex-col items-start gap-4">
-            <div className={isGrid ? 'mt-1' : ''}>
-              <h3 className="font-bold text-slate-800 leading-tight">
-                {nota.title}
-              </h3>
-              <p className="text-xs text-slate-400 font-medium">
-                {nota.clienteNome}
-              </p>
-            </div>
-          </div>
-
-          {!isGrid && (
-            <CaretRight size={18} className="text-slate-300" weight="bold" />
-          )}
-        </CardContent>
-      </Card>
-    </div>
   );
 }

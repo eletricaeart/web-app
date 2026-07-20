@@ -6,13 +6,21 @@ import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import AppBar from '@/components/layout/AppBar';
 import View from '@/components/layout/View';
-import { FloppyDisk, CircleNotch, Star } from '@phosphor-icons/react';
+import { FloppyDisk, CircleNotch, Star, Camera } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import ClientForm from '@/components/forms/ClientForm';
+import NotaPhotoUpload from './NotaPhotoUpload';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { NOTA_STATUSES } from '@/lib/notaMeta';
 
-import '../../../app/clientes/Clientes.css';
+import '@/app/clientes/Clientes.css';
 
-// Interfaces Atualizadas
 interface Cliente {
   id: string;
   name: string;
@@ -28,9 +36,11 @@ interface NotaFormData {
   title: string;
   content: string;
   date: string;
-  client_id: string; // Atualizado para snake_case
+  client_id: string;
   clientName: string;
-  is_important: boolean; // Atualizado para snake_case
+  is_important: boolean;
+  status: string;
+  photos: string[];
 }
 
 export default function NotaNovaPainel() {
@@ -49,9 +59,10 @@ export default function NotaNovaPainel() {
     client_id: '',
     clientName: '',
     is_important: false,
+    status: 'pending',
+    photos: [],
   });
 
-  // Preenchimento automático se vier clientId via URL
   useEffect(() => {
     if (clientIdParam && clients.length > 0) {
       const target = clients.find(
@@ -68,20 +79,20 @@ export default function NotaNovaPainel() {
   }, [clientIdParam, clients]);
 
   const handleSave = async () => {
-    // Validação mantida
     if (!formData.title || !formData.client_id) {
       return toast.error('Preencha o título e selecione um cliente');
     }
 
     setLoading(true);
 
-    // Mapeamento para o Supabase (owner_id é inserido pelo hook automaticamente)
     const payload = {
       title: formData.title,
       content: formData.content,
       date: formData.date,
       client_id: formData.client_id,
       is_important: formData.is_important,
+      status: formData.status,
+      photos: formData.photos,
     };
 
     const res = await saveNota(payload, 'create');
@@ -99,7 +110,6 @@ export default function NotaNovaPainel() {
 
       <View tag="page" className="add-client-page">
         <View tag="page-content" className="p-4">
-          {/* SELETOR DE CLIENTE */}
           <View tag="card-ea-client">
             <View tag="card-ea-header">VINCULAR CLIENTE</View>
             <View tag="card-ea-body">
@@ -116,7 +126,6 @@ export default function NotaNovaPainel() {
                 }}
                 clientsCache={clients}
                 onClientChange={(client: any) => {
-                  // Busca o ID no cache do Supabase
                   const fullClient = clients.find(
                     (c) => c.name === client.name,
                   );
@@ -131,7 +140,6 @@ export default function NotaNovaPainel() {
             </View>
           </View>
 
-          {/* DADOS DA NOTA */}
           <View tag="card-ea-client">
             <View tag="card-ea-header">RELATO TÉCNICO</View>
             <View tag="card-ea-body" className="flex flex-col gap-4">
@@ -147,17 +155,40 @@ export default function NotaNovaPainel() {
                 />
               </label>
 
-              <label>
-                Data da Visita
-                <input
-                  type="date"
-                  className="input"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                />
-              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <label>
+                  Data da Visita
+                  <input
+                    type="date"
+                    className="input"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                  />
+                </label>
+
+                <label>
+                  Status
+                  <Select
+                    value={formData.status}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, status: v })
+                    }
+                  >
+                    <SelectTrigger className="h-[56px] mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NOTA_STATUSES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </label>
+              </div>
 
               <label>
                 Descrição Detalhada
@@ -173,7 +204,19 @@ export default function NotaNovaPainel() {
             </View>
           </View>
 
-          {/* CONFIGURAÇÕES ADICIONAIS */}
+          {/* --- NOVO: FOTOS DO SERVIÇO --- */}
+          <View tag="card-ea-client">
+            <View tag="card-ea-header" className="flex items-center gap-2">
+              <Camera size={16} weight="duotone" /> FOTOS (ANTES/DEPOIS)
+            </View>
+            <View tag="card-ea-body">
+              <NotaPhotoUpload
+                photos={formData.photos}
+                onChange={(photos) => setFormData({ ...formData, photos })}
+              />
+            </View>
+          </View>
+
           <View tag="card-ea-client">
             <View tag="card-ea-body">
               <label className="flex items-center justify-between cursor-pointer p-2">

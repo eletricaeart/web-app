@@ -104,6 +104,7 @@ export default function EquipeEditarPainel() {
           <AvatarUpload
             value={formData.photo_url || ''}
             gender={formData.gender}
+            name={formData.name}
             onChange={(url: string) =>
               setFormData({ ...formData, photo_url: url })
             }

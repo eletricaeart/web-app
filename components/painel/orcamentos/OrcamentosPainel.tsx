@@ -225,6 +225,13 @@ export default function OrcamentosPainel() {
                       clientName: currentClientName,
                       documentTitle: currentTitle,
                       issueDate: getIssueDate(orc),
+                      expiration: (orc as any).expiration,
+                      status: (orc as any).status,
+                      total: Number(
+                        (orc as any).financial_json?.total ??
+                          (orc as any).financial?.total ??
+                          0,
+                      ),
                     }}
                     clientData={clientData}
                     onClick={() =>

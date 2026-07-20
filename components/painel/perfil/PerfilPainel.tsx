@@ -1,13 +1,16 @@
 // components/painel/perfil/PerfilPainel.tsx
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { usePainelAuth } from '@/components/painel/auth/PainelAuthContext';
+import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import AppBar from '@/components/layout/AppBar';
 import View from '@/components/layout/View';
 import Divider from '@/components/Divider';
-import Image from 'next/image';
+import ClientGhostAvatar from '@/components/painel/clientes/ClientGhostAvatar';
+import StatCard from '@/components/painel/shared/StatCard';
+import { getNameGradient } from '@/lib/avatarColor';
 import {
   WhatsappLogo,
   EnvelopeSimple,
@@ -15,12 +18,41 @@ import {
   IdentificationCard,
   SignOut,
   GearSix,
+  FileText,
+  Notebook,
+  CalendarBlank,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+
+interface RegistroComOwner {
+  owner_id?: string;
+}
+
+function formatShortDate(value: Date | null) {
+  if (!value) return '—';
+  return value.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 
 export default function PerfilPainel() {
   const router = usePainelRouter();
   const { profile, loading, signOut } = usePainelAuth();
+
+  const { data: orcamentos } =
+    useEASyncSupabase<RegistroComOwner>('orcamentos');
+  const { data: notas } = useEASyncSupabase<RegistroComOwner>('notas');
+
+  const stats = useMemo(() => {
+    if (!profile) return { budgets: 0, notes: 0, since: null as Date | null };
+    return {
+      budgets: orcamentos.filter((o) => o.owner_id === profile.id).length,
+      notes: notas.filter((n) => n.owner_id === profile.id).length,
+      since: profile.created_at ? new Date(profile.created_at) : null,
+    };
+  }, [orcamentos, notas, profile]);
 
   if (loading || !profile)
     return (
@@ -28,6 +60,8 @@ export default function PerfilPainel() {
         Buscando identidade...
       </View>
     );
+
+  const coverGradient = getNameGradient(profile.name || 'Perfil');
 
   return (
     <>
@@ -42,24 +76,48 @@ export default function PerfilPainel() {
       />
 
       <View tag="page" className="bg-slate-50 min-h-screen">
-        <div className="bg-indigo-950 pt-6 pb-12 flex flex-col items-center">
-          <div className="w-28 h-28 rounded-full border-4 border-white shadow-2xl overflow-hidden relative">
-            <Image
-              src={profile.photo_url || '/pix/avatar/default_avatar_masc.webp'}
-              alt={profile.name || 'Usuário'}
-              fill
-              className="object-cover"
-            />
-          </div>
+        <div
+          className="pt-6 pb-12 flex flex-col items-center"
+          style={{ background: coverGradient }}
+        >
+          <ClientGhostAvatar
+            name={profile.name || 'CEO'}
+            gender={profile.gender}
+            photoUrl={profile.photo_url}
+            size={112}
+            showGenderBadge={false}
+          />
           <h2 className="text-white text-2xl font-bold mt-4 uppercase">
             {profile.name || 'CEO'}
           </h2>
-          <span className="text-indigo-300 text-sm font-medium">
+          <span className="text-white/70 text-sm font-medium">
             {profile.role}
           </span>
         </div>
 
         <View tag="page-content" className="px-6 -mt-8">
+          {/* --- ESTATÍSTICAS --- */}
+          <View className="grid grid-cols-3 gap-3 mb-6">
+            <StatCard
+              icon={<FileText size={18} weight="duotone" />}
+              label="Orçamentos"
+              value={String(stats.budgets)}
+              accent="indigo"
+            />
+            <StatCard
+              icon={<Notebook size={18} weight="duotone" />}
+              label="Notas"
+              value={String(stats.notes)}
+              accent="amber"
+            />
+            <StatCard
+              icon={<CalendarBlank size={18} weight="duotone" />}
+              label="Na equipe desde"
+              value={formatShortDate(stats.since)}
+              accent="sky"
+            />
+          </View>
+
           <View className="bg-white rounded-3xl p-6 shadow-sm mb-6 border border-slate-100">
             <div className="flex items-center gap-2 mb-4 text-indigo-600 font-bold text-xs uppercase tracking-widest">
               <Briefcase size={18} weight="duotone" /> Carreira

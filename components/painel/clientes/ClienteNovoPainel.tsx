@@ -169,6 +169,7 @@ export default function ClienteNovoPainel() {
           <AvatarUpload
             value={formData.photo}
             gender={formData.gender}
+            name={formData.name}
             onChange={(url: string) =>
               setFormData((prev) => ({ ...prev, photo: url }))
             }

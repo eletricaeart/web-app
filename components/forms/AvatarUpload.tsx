@@ -1,22 +1,24 @@
 // components/forms/AvatarUpload.tsx
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, SpinnerGap } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { Camera, SpinnerGap } from '@phosphor-icons/react';
+import { toast } from 'sonner';
+import ClientGhostAvatar from '@/components/painel/clientes/ClientGhostAvatar';
 
-// Interface para as props do componente
 interface AvatarUploadProps {
   value: string;
   onChange: (url: string) => void;
   gender: string;
+  /** Usado para gerar o avatar-fantasma quando ainda não há foto */
+  name?: string;
 }
 
 export default function AvatarUpload({
   value,
   onChange,
   gender,
+  name = '',
 }: AvatarUploadProps) {
   const [uploading, setUploading] = useState(false);
 
@@ -25,35 +27,28 @@ export default function AvatarUpload({
     preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
   };
 
-  const defaultAvatars = {
-    masc: "/pix/avatar/default_avatar_masc.webp",
-    fem: "/pix/avatar/default_avatar_fem.webp",
-  };
-
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
-    // Verificação de segurança para as variáveis de ambiente e arquivo
     if (!file || !CLOUD.name || !CLOUD.preset) {
-      console.error("Configurações do Cloudinary ou arquivo ausentes");
+      console.error('Configurações do Cloudinary ou arquivo ausentes');
       return;
     }
 
-    // Validação básica de tamanho (ex: 4MB)
     if (file.size > 4 * 1024 * 1024) {
-      return toast.error("Imagem muito grande. Máximo 4MB.");
+      return toast.error('Imagem muito grande. Máximo 4MB.');
     }
 
     setUploading(true);
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUD.preset);
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUD.preset);
 
     try {
       const res = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD.name}/image/upload`,
         {
-          method: "POST",
+          method: 'POST',
           body: formData,
         },
       );
@@ -62,10 +57,10 @@ export default function AvatarUpload({
 
       if (data.secure_url) {
         onChange(data.secure_url);
-        toast.success("Foto carregada!");
+        toast.success('Foto carregada!');
       }
     } catch (err) {
-      toast.error("Erro ao subir imagem");
+      toast.error('Erro ao subir imagem');
     } finally {
       setUploading(false);
     }
@@ -82,31 +77,26 @@ export default function AvatarUpload({
           accept="image/*"
           disabled={uploading}
         />
-        <label htmlFor="avatar-input" className="cursor-pointer block">
-          <Avatar className="w-28 h-28 border-4 border-white shadow-xl hover:opacity-90 transition-opacity">
-            <AvatarImage
-              src={
-                value ||
-                defaultAvatars[gender as keyof typeof defaultAvatars] ||
-                defaultAvatars.masc
-              }
-              className="object-cover"
-            />
-            <AvatarFallback className="bg-slate-100 text-slate-400">
-              {uploading ? (
-                <SpinnerGap className="animate-spin" size={32} />
-              ) : (
-                <Camera size={32} />
-              )}
-            </AvatarFallback>
-          </Avatar>
+        <label htmlFor="avatar-input" className="cursor-pointer block relative">
+          <ClientGhostAvatar
+            name={name || 'Novo'}
+            gender={gender}
+            photoUrl={value || undefined}
+            size={112}
+            showGenderBadge={false}
+          />
+          {uploading && (
+            <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+              <SpinnerGap className="animate-spin text-white" size={32} />
+            </div>
+          )}
           <div className="absolute bottom-1 right-1 bg-amber-500 text-white p-1.5 rounded-full shadow-md">
             <Camera size={16} weight="bold" />
           </div>
         </label>
       </div>
       <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-        Foto do Cliente
+        Foto
       </span>
     </div>
   );
