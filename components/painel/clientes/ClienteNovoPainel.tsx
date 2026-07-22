@@ -29,8 +29,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import '@/app/clientes/Clientes.css';
-import '@/app/clientes/novo/styles.css';
+import './Clientes.css';
+import './clientesNovoStyles.css';
 import Pressable from '@/components/Pressable';
 
 interface Cliente {

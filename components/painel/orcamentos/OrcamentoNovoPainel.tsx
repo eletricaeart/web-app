@@ -6,11 +6,18 @@ import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import AppBar from '@/components/layout/AppBar';
 import ClientForm from '@/components/forms/ClientForm';
 import ClauseManager from '@/components/forms/ClauseManager';
+import InvestmentDrawer from './InvestmentDrawer';
 import View from '@/components/layout/View';
 import { CircleNotch, Calculator } from '@phosphor-icons/react';
-// IMPORTANTE: Trocamos o client manual pelo hook do Supabase
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import * as Default_Divider from '@/components/Divider';
+import {
+  InvestmentCategory,
+  getInvestmentTotal,
+  formatCurrency,
+  buildInvestmentClause,
+  buildSummaryClause,
+} from '@/lib/types/investment';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -31,7 +38,7 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 
-import '@/app/orcamentos/novo/style.css';
+import './orcamentosNovo.css';
 import Pressable from '@/components/Pressable';
 import { generateAccessPassword } from '@/utils/helpers';
 import { toast } from 'sonner';
@@ -41,7 +48,6 @@ export default function OrcamentoNovoPainel() {
   const editId = router.params.id;
   const isEditing = !!router.params.natabiruta;
 
-  // Hooks do Supabase
   const { data: allBudgets, save: saveBudget } =
     useEASyncSupabase<any>('orcamentos');
   const { data: clientsCache } = useEASyncSupabase<any>('clientes');
@@ -71,34 +77,38 @@ export default function OrcamentoNovoPainel() {
             id: Date.now() + 1,
             subtitulo: '',
             content: '',
-            price: 0,
-            services: [],
           },
         ],
       },
     ],
+    investmentCategories: [] as InvestmentCategory[],
     financial: { labor: 0, materials: 0, discount: 0, total: 0 },
   });
 
-  const calculatedTotal = useMemo(() => {
+  const legacyClauseTotal = useMemo(() => {
     let total = 0;
     budget.services.forEach((clause: any) => {
-      clause.items.forEach((item: any) => {
+      (clause.items || []).forEach((item: any) => {
         total += Number(item.price) || 0;
-        if (item.services) {
-          item.services.forEach((s: any) => {
-            total += Number(s.totalValue) || 0;
-          });
-        }
       });
     });
+    return total;
+  }, [budget.services]);
+
+  const investmentTotal = useMemo(
+    () => getInvestmentTotal(budget.investmentCategories),
+    [budget.investmentCategories],
+  );
+
+  const calculatedTotal = useMemo(() => {
     return (
-      total +
+      legacyClauseTotal +
+      investmentTotal +
       Number(budget.financial.labor) +
       Number(budget.financial.materials) -
       Number(budget.financial.discount)
     );
-  }, [budget.services, budget.financial]);
+  }, [legacyClauseTotal, investmentTotal, budget.financial]);
 
   useEffect(() => {
     setBudget((prev: any) => ({
@@ -106,6 +116,41 @@ export default function OrcamentoNovoPainel() {
       financial: { ...prev.financial, total: calculatedTotal },
     }));
   }, [calculatedTotal]);
+
+  // --- SINCRONIZAÇÃO AUTOMÁTICA das seções Investimento/Resumo Financeiro,
+  // sempre que os dados do painel de Investimento (ou financeiro geral) mudam.
+  useEffect(() => {
+    const hasGenerated = budget.services.some(
+      (c: any) => c.sourceType === 'investment' || c.sourceType === 'summary',
+    );
+    if (!hasGenerated) return;
+
+    setBudget((prev: any) => ({
+      ...prev,
+      services: prev.services.map((c: any) => {
+        if (c.sourceType === 'investment') {
+          return {
+            ...c,
+            items: buildInvestmentClause(prev.investmentCategories).items,
+          };
+        }
+        if (c.sourceType === 'summary') {
+          return {
+            ...c,
+            items: buildSummaryClause(prev.investmentCategories, {
+              legacyTotal: legacyClauseTotal,
+              labor: Number(prev.financial.labor) || 0,
+              materials: Number(prev.financial.materials) || 0,
+              discount: Number(prev.financial.discount) || 0,
+              grandTotal: calculatedTotal,
+            }).items,
+          };
+        }
+        return c;
+      }),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [budget.investmentCategories, legacyClauseTotal, calculatedTotal]);
 
   useEffect(() => {
     if (editId && allBudgets.length > 0) {
@@ -123,7 +168,6 @@ export default function OrcamentoNovoPainel() {
       issueDate: data.issue_date || data.issueDate,
       expiration: data.expiration,
       subtitle: data.subtitle,
-      // CORREÇÃO: Mapear o endereço completo para o formulário não ficar vazio na edição
       client: {
         id: data.client_id,
         name: data.client_name_manual || data.clientName,
@@ -135,20 +179,51 @@ export default function OrcamentoNovoPainel() {
         complement: data.complement || data.client?.complement || '',
       },
       services: data.services_json || data.services,
+      investmentCategories: data.investment_categories || [],
       financial: data.financial_json || data.financial,
       accessPassword: data.access_password || data.accessPassword,
     });
   };
 
+  const handleInsertInvestmentClause = () => {
+    if (budget.investmentCategories.length === 0) {
+      return toast.error(
+        'Defina ao menos uma categoria no painel de Investimento primeiro.',
+      );
+    }
+    const clause = buildInvestmentClause(budget.investmentCategories);
+    setBudget((prev: any) => ({
+      ...prev,
+      services: [...prev.services, clause],
+    }));
+  };
+
+  const handleInsertSummaryClause = () => {
+    if (budget.investmentCategories.length === 0) {
+      return toast.error(
+        'Defina ao menos uma categoria no painel de Investimento primeiro.',
+      );
+    }
+    const clause = buildSummaryClause(budget.investmentCategories, {
+      legacyTotal: legacyClauseTotal,
+      labor: Number(budget.financial.labor) || 0,
+      materials: Number(budget.financial.materials) || 0,
+      discount: Number(budget.financial.discount) || 0,
+      grandTotal: calculatedTotal,
+    });
+    setBudget((prev: any) => ({
+      ...prev,
+      services: [...prev.services, clause],
+    }));
+  };
+
   const handleSave = async () => {
-    // 1. Função auxiliar para validar se o ID é um UUID real
     const isUUID = (val: any) =>
       typeof val === 'string' &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         val,
       );
 
-    // 2. Validações básicas de UI
     if (!budget.documentTitle || !budget.client.name) {
       return toast.error('Título e Cliente são obrigatórios.');
     }
@@ -156,14 +231,11 @@ export default function OrcamentoNovoPainel() {
     setLoading(true);
     const accessPassword = budget.accessPassword || generateAccessPassword();
 
-    // 3. Construção do Payload rigoroso
     const payload: any = {
       document_title: budget.documentTitle,
       client_name_manual: budget.client.name,
-      // Trata o client_id: se não for um UUID válido, envia null
       client_id: isUUID(budget.client.id) ? budget.client.id : null,
 
-      // Endereço (Strings são aceitas como "" no Supabase, sem problemas aqui)
       zip: budget.client.zip || null,
       street: budget.client.street || null,
       number: budget.client.number || null,
@@ -175,8 +247,8 @@ export default function OrcamentoNovoPainel() {
       expiration: budget.expiration,
       subtitle: budget.subtitle,
 
-      // Dados Complexos (JSONB)
       services_json: budget.services,
+      investment_categories: budget.investmentCategories,
       financial_json: {
         labor: Number(budget.financial.labor) || 0,
         materials: Number(budget.financial.materials) || 0,
@@ -186,12 +258,9 @@ export default function OrcamentoNovoPainel() {
       access_password: accessPassword,
     };
 
-    // Se estivermos editando e o ID do orçamento for válido, incluímos no payload
     if (editId && isUUID(editId)) {
       payload.id = editId;
     }
-
-    console.log('📤 Enviando Orçamento para o Supabase:', payload);
 
     const action = editId ? 'update' : 'create';
 
@@ -315,6 +384,9 @@ export default function OrcamentoNovoPainel() {
             onClausesChange={(newClauses) =>
               setBudget({ ...budget, services: newClauses })
             }
+            canInsertInvestmentSections={budget.investmentCategories.length > 0}
+            onInsertInvestmentClause={handleInsertInvestmentClause}
+            onInsertSummaryClause={handleInsertSummaryClause}
           />
 
           <Default_Divider.default spacing="2rem" color="transparent" />
@@ -363,7 +435,7 @@ export default function OrcamentoNovoPainel() {
               </label>
               <label className="flex flex-col gap-1">
                 <span className="text-[10px] font-bold text-red-400 uppercase">
-                  Desconto
+                  Desconto Geral
                 </span>
                 <Input
                   type="number"
@@ -385,16 +457,13 @@ export default function OrcamentoNovoPainel() {
             <div className="mt-6 pt-6 border-t flex justify-between items-center">
               <span className="text-slate-500 font-medium">VALOR TOTAL:</span>
               <span className="text-3xl font-black text-indigo-700">
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                }).format(calculatedTotal)}
+                {formatCurrency(calculatedTotal)}
               </span>
             </div>
           </View>
         </View>
 
-        <footer className="footer flex flex-col p-6">
+        <footer className="footer flex flex-col p-6 pb-24">
           <Pressable
             onClick={handleSave}
             style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
@@ -409,6 +478,14 @@ export default function OrcamentoNovoPainel() {
           </Pressable>
         </footer>
       </View>
+
+      <InvestmentDrawer
+        categories={budget.investmentCategories}
+        onChange={(categories) =>
+          setBudget({ ...budget, investmentCategories: categories })
+        }
+        legacyClauseTotal={legacyClauseTotal}
+      />
     </>
   );
 }

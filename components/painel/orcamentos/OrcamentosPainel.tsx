@@ -28,7 +28,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import Page from '@/components/layout/Page';
-import DeleteBudgetModal from '@/app/orcamentos/components/DeleteBudgetModal';
+import DeleteBudgetModal from './DeleteBudgetModal';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 import EntitySortFilter from '@/components/EntitySortFilter';
 

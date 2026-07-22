@@ -27,8 +27,8 @@ import { calculateWallMaterials } from '@/utils/calculators/drywallWall';
 import { calculateCeilingMaterials } from '@/utils/calculators/drywallCeiling';
 import FAB from '@/components/ui/FAB';
 import Pressable from '@/components/Pressable';
-import '@/app/ferramentas/drywall/drywall.css';
-// import './Drywall.css';
+// import '@/app/ferramentas/drywall/drywall.css';
+import './Drywall.css';
 
 /** --- interfaces --- */
 interface Opening {

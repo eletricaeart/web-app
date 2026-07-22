@@ -37,9 +37,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 
-import '@/app/clientes/[id]/styles.css';
+import '../clientes/clientesIDStyle.css';
 import Link from 'next/link';
-import DeleteClientModal from '@/app/clientes/components/DeleteClientModal';
+import DeleteClientModal from './DeleteClientModal';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 
 interface Cliente {

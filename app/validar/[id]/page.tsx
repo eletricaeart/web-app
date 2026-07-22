@@ -18,7 +18,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import '../../orcamentos/[id]/Budget.css';
+// import '../../orcamentos/[id]/Budget.css';
+import '@/components/painel/orcamentos/IDBudget.css';
 
 export default function PublicBudgetValidator() {
   const params = useParams();

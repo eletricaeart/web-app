@@ -11,7 +11,7 @@ import AvatarUpload from '@/components/forms/AvatarUpload';
 import { FloppyDisk, CircleNotch } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client'; // Importar o cliente
-import '@/app/clientes/Clientes.css';
+import '../clientes/Clientes.css';
 
 interface MembroEquipe {
   id: string;

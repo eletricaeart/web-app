@@ -1,96 +1,99 @@
 // components/forms/ClauseManager.tsx
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import View from '@/components/layout/View';
+import styles from './ClauseManager.module.css';
+import Pressable from '../Pressable';
+import TipTapEditor from '@/components/editor/TipTapEditor';
+import { Input } from '@/components/ui/input';
 import {
-  Trash,
-  CurrencyDollar,
+  CaretUp,
+  CaretDown,
+  Lock,
   Plus,
-  PencilSimple,
+  FileText,
+  Wallet,
   Calculator,
-  ListPlus,
-} from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
-import { Button } from "../ui/button";
-import TipTapEditor from "@/components/editor/TipTapEditor";
-import View from "@/components/layout/View";
-import styles from "./ClauseManager.module.css";
-import Pressable from "../Pressable";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import { valorPorExtenso } from "@/utils/helpers";
-
-/**
- * Interfaces para garantir a tipagem estrita do Gerenciador de Cláusulas
- */
-interface ServiceItem {
-  id: string;
-  description: string;
-  unitValue: number;
-  quantity: number;
-  totalValue: number;
-}
+  X,
+} from '@phosphor-icons/react';
 
 interface ClauseItem {
   id: number;
   subtitulo: string;
   content: string;
-  price?: number;
-  services?: ServiceItem[];
+  [key: string]: any;
 }
 
 interface Clause {
   id: number;
   titulo: string;
   items: ClauseItem[];
+  /** Quando presente, esta cláusula foi gerada pelo painel de Investimento
+   *  e fica travada para edição direta — toda alteração acontece no
+   *  drawer, e a sincronização é automática. */
+  sourceType?: 'investment' | 'summary';
 }
 
 interface ClauseManagerProps {
   clauses: Clause[];
   onClausesChange: (newClauses: Clause[]) => void;
+  canInsertInvestmentSections: boolean;
+  onInsertInvestmentClause: () => void;
+  onInsertSummaryClause: () => void;
 }
 
 export default function ClauseManager({
   clauses,
   onClausesChange,
+  canInsertInvestmentSections,
+  onInsertInvestmentClause,
+  onInsertSummaryClause,
 }: ClauseManagerProps) {
-  const [isServiceDrawerOpen, setIsServiceDrawerOpen] = useState(false);
-  const [activeItemRef, setActiveItemRef] = useState<{
-    clauseId: number;
-    itemId: number;
-  } | null>(null);
-
-  // Estado para o formulário do novo serviço dentro do Drawer
-  const [newService, setNewService] = useState({
-    description: "",
-    unitValue: 0,
-    quantity: 1,
-  });
+  const [showAddMenu, setShowAddMenu] = useState(false);
 
   const addClause = () => {
     const newClause: Clause = {
       id: Date.now(),
-      titulo: "", // Começa com parágrafo padrão (texto simples)
+      titulo: '',
       items: [
         {
           id: Date.now() + 1,
-          subtitulo: "",
-          content: "",
-          services: [],
-          price: 0,
+          subtitulo: '',
+          content: '',
         },
       ],
     };
     onClausesChange([...clauses, newClause]);
+    setShowAddMenu(false);
+  };
+
+  const handleInsertInvestment = () => {
+    onInsertInvestmentClause();
+    setShowAddMenu(false);
+  };
+
+  const handleInsertSummary = () => {
+    onInsertSummaryClause();
+    setShowAddMenu(false);
   };
 
   const removeClause = (id: number) => {
     onClausesChange(clauses.filter((c) => c.id !== id));
+  };
+
+  const moveClause = (id: number, direction: 'up' | 'down') => {
+    const index = clauses.findIndex((c) => c.id === id);
+    if (index === -1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= clauses.length) return;
+
+    const updated = [...clauses];
+    [updated[index], updated[targetIndex]] = [
+      updated[targetIndex],
+      updated[index],
+    ];
+    onClausesChange(updated);
   };
 
   const updateClauseTitle = (id: number, title: string) => {
@@ -109,10 +112,8 @@ export default function ClauseManager({
                 ...c.items,
                 {
                   id: Date.now(),
-                  subtitulo: "",
-                  content: "",
-                  services: [],
-                  price: 0,
+                  subtitulo: '',
+                  content: '',
                 },
               ],
             }
@@ -124,9 +125,7 @@ export default function ClauseManager({
   const updateItem = (
     clauseId: number,
     itemId: number,
-    // field: keyof ClauseItem,
     field: string,
-    // value: string | number,
     value: any,
   ) => {
     onClausesChange(
@@ -143,56 +142,6 @@ export default function ClauseManager({
     );
   };
 
-  // LÓGICA DO DRAWER DE SERVIÇOS
-  const handleAddServiceToItem = () => {
-    if (!activeItemRef) return;
-    const { clauseId, itemId } = activeItemRef;
-
-    const service: ServiceItem = {
-      id: Math.random().toString(36),
-      ...newService,
-      totalValue: newService.unitValue * newService.quantity,
-    };
-
-    const currentClause = clauses.find((c) => c.id === clauseId);
-    const currentItem = currentClause?.items.find((i) => i.id === itemId);
-    const updatedServices = [...(currentItem?.services || []), service];
-
-    // Atualiza os serviços e recalcula o preço total da subcláusula
-    const newTotalPrice = updatedServices.reduce(
-      (acc, s) => acc + s.totalValue,
-      0,
-    );
-
-    updateItem(clauseId, itemId, "services", updatedServices);
-    updateItem(clauseId, itemId, "price", newTotalPrice);
-
-    setNewService({ description: "", unitValue: 0, quantity: 1 });
-  };
-
-  const removeServiceFromItem = (
-    clauseId: number,
-    itemId: number,
-    serviceId: string,
-  ) => {
-    const clause = clauses.find((c) => c.id === clauseId);
-    const item = clause?.items.find((i) => i.id === itemId);
-
-    if (!item) return;
-
-    const updatedServices = (item.services || []).filter(
-      (s) => s.id !== serviceId,
-    );
-
-    const newTotalPrice = updatedServices.reduce(
-      (acc, s) => acc + s.totalValue,
-      0,
-    );
-
-    updateItem(clauseId, itemId, "services", updatedServices);
-    updateItem(clauseId, itemId, "price", newTotalPrice);
-  };
-
   const removeItem = (clauseId: number, itemId: number) => {
     onClausesChange(
       clauses.map((c) => {
@@ -206,282 +155,270 @@ export default function ClauseManager({
 
   return (
     <View tag="clauses-field">
-      {clauses.map((clause, index) => (
-        <View tag="clause" key={clause.id}>
-          <View tag="clause-options" className={styles.clauseOptions}>
-            <View tag="label-text" className={styles.labelTitle}>
-              Título
-            </View>
-            <View
-              tag="btn_remove-clause"
-              className={styles.btn_remove_clause}
-              onClick={() => removeClause(clause.id)}
+      {clauses.map((clause, index) => {
+        const isFirst = index === 0;
+        const isLast = index === clauses.length - 1;
+        const isGenerated = !!clause.sourceType;
+
+        const moveControls = (
+          <View className="flex flex-col gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => moveClause(clause.id, 'up')}
+              disabled={isFirst}
+              className="p-1 rounded-md bg-white border border-slate-200 disabled:opacity-30"
             >
-              Excluir
-            </View>
+              <CaretUp size={14} weight="bold" />
+            </button>
+            <button
+              type="button"
+              onClick={() => moveClause(clause.id, 'down')}
+              disabled={isLast}
+              className="p-1 rounded-md bg-white border border-slate-200 disabled:opacity-30"
+            >
+              <CaretDown size={14} weight="bold" />
+            </button>
           </View>
-          <View tag="clause-header" className={styles.clauseHeader}>
-            <View className={styles.clauseHeader_ui}>
-              <View tag="clause-number" className={styles.clauseNumber}>
-                {index + 1}.
-              </View>
-              <input
-                type="text"
-                className={styles.clauseTitleInput}
-                placeholder="Ex: Descrição dos Serviços"
-                value={clause.titulo}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  updateClauseTitle(clause.id, e.target.value)
-                }
-              />
-            </View>
-          </View>
+        );
 
-          <View tag="subclause-field">
-            {clause.items.map((item) => (
-              <React.Fragment key={item.id}>
-                <View
-                  tag="subclause"
-                  className={styles.subclause}
-                  key={item.id}
-                >
-                  <View
-                    tag="subclause-content"
-                    className={styles.subclauseContent}
-                  >
-                    <label className={styles.subclauseTitle}>
-                      <span className="label-text">Subtítulo</span>
-                      <Input
-                        placeholder="Subtítulo (Ex: Cozinha)"
-                        className="subclause-subtitle"
-                        value={item.subtitulo}
-                        onChange={(e) =>
-                          updateItem(
-                            clause.id,
-                            item.id,
-                            "subtitulo",
-                            e.target.value,
-                          )
-                        }
-                      />
-                    </label>
-
-                    <label className={styles.subclauseHelpTips}>
-                      <View
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span className="label-text">Conteúdo</span>
-                        <span
-                          className={styles.btn_helpTips}
-                          style={{ display: "flex", gap: ".5rem" }}
-                          onClick={() => {
-                            setActiveItemRef({
-                              clauseId: clause.id,
-                              itemId: item.id,
-                            });
-                            setIsServiceDrawerOpen(true);
-                          }}
-                        >
-                          <ListPlus size={14} /> + Serviços
-                        </span>
-                      </View>
-
-                      <TipTapEditor
-                        value={item.content}
-                        services={item.services || []}
-                        onChange={(val: string) =>
-                          updateItem(clause.id, item.id, "content", val)
-                        }
-                        bg="#f5f5f5"
-                        radius="9px"
-                      />
-                    </label>
-                  </View>
+        return (
+          <View tag="clause" key={clause.id}>
+            <View tag="clause-options" className={styles.clauseOptions}>
+              <View className="flex items-center gap-2">
+                {moveControls}
+                <View tag="label-text" className={styles.labelTitle}>
+                  Título
                 </View>
-                <View
-                  tag="subclause-options"
-                  className={styles.subclauseOptions}
-                >
+                {isGenerated && (
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-full">
+                    <Lock size={11} weight="bold" /> Sincronizado com o
+                    Investimento
+                  </span>
+                )}
+              </View>
+              <View
+                tag="btn_remove-clause"
+                className={styles.btn_remove_clause}
+                onClick={() => removeClause(clause.id)}
+              >
+                Excluir
+              </View>
+            </View>
+            <View tag="clause-header" className={styles.clauseHeader}>
+              <View className={styles.clauseHeader_ui}>
+                <View tag="clause-number" className={styles.clauseNumber}>
+                  {index + 1}.
+                </View>
+                <input
+                  type="text"
+                  className={styles.clauseTitleInput}
+                  placeholder="Ex: Descrição dos Serviços"
+                  value={clause.titulo}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateClauseTitle(clause.id, e.target.value)
+                  }
+                />
+              </View>
+            </View>
+
+            <View tag="subclause-field">
+              {clause.items.map((item) => (
+                <React.Fragment key={item.id}>
                   <View
-                    tag="subclause-options-overlay"
-                    className={styles.subclauseOptionsOverlay}
-                  />
-                  <View
-                    tag="btn_remove-subclause"
-                    className={styles.btn_remove_subclause}
+                    tag="subclause"
+                    className={styles.subclause}
+                    key={item.id}
                   >
                     <View
-                      tag="btn_x"
-                      style={{
-                        width: "fit-content",
-                        display: "flex",
-                      }}
-                      onClick={() => removeItem(clause.id, item.id)}
+                      tag="subclause-content"
+                      className={styles.subclauseContent}
                     >
-                      Excluir subcláusula
+                      {isGenerated ? (
+                        // --- Pré-visualização travada (edição só no drawer de Investimento) ---
+                        <>
+                          {item.subtitulo && (
+                            <div className="text-sm font-bold text-slate-700 mb-2">
+                              {item.subtitulo}
+                            </div>
+                          )}
+                          <div
+                            className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3"
+                            dangerouslySetInnerHTML={{ __html: item.content }}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className={styles.subclauseTitle}>
+                            <span className="label-text">Subtítulo</span>
+                            <Input
+                              placeholder="Subtítulo (Ex: Cozinha)"
+                              className="subclause-subtitle"
+                              value={item.subtitulo}
+                              onChange={(e) =>
+                                updateItem(
+                                  clause.id,
+                                  item.id,
+                                  'subtitulo',
+                                  e.target.value,
+                                )
+                              }
+                            />
+                          </label>
+
+                          <label className={styles.subclauseHelpTips}>
+                            <span className="label-text">Conteúdo</span>
+
+                            <TipTapEditor
+                              value={item.content}
+                              onChange={(val: string) =>
+                                updateItem(clause.id, item.id, 'content', val)
+                              }
+                              bg="#f5f5f5"
+                              radius="9px"
+                            />
+                          </label>
+                        </>
+                      )}
                     </View>
                   </View>
-                </View>
-              </React.Fragment>
-            ))}
-          </View>
-
-          <View
-            tag="footer-options"
-            className="flex flex-col justify-center p-4"
-          >
-            <Pressable
-              label="+ Adicionar Subcláusula"
-              style={{ background: "#27f2", color: "#29f" }}
-              onClick={() => addItem(clause.id)}
-            />
-          </View>
-        </View>
-      ))}
-
-      <View
-        tag="btn_add-clause-field"
-        className="flex flex-col justify-center px-4 py-0"
-      >
-        <Pressable
-          className="btn_add-clause"
-          style={{ background: "#27f2", color: "#29f" }}
-          onClick={addClause}
-        >
-          + Adicionar Cláusula
-        </Pressable>
-      </View>
-
-      {/* DRAWER ÚNICO PARA GERENCIAR SERVIÇOS */}
-      <Drawer open={isServiceDrawerOpen} onOpenChange={setIsServiceDrawerOpen}>
-        <DrawerContent className="bg-slate-50 h-[85vh]">
-          <div className="mx-auto w-full max-w-md p-6">
-            <DrawerHeader className="px-0">
-              <DrawerTitle className="text-indigo-900 flex items-center gap-2">
-                <Calculator weight="duotone" /> Serviços da Etapa
-              </DrawerTitle>
-            </DrawerHeader>
-
-            {/* LISTA DE SERVIÇOS JÁ ADICIONADOS */}
-            <div className="space-y-2 mb-6 max-h-40 overflow-y-auto p-1">
-              {activeItemRef &&
-                clauses
-                  .find((c) => c.id === activeItemRef.clauseId)
-                  ?.items.find((i) => i.id === activeItemRef.itemId)
-                  ?.services?.map((s) => (
-                    <div
-                      key={s.id}
-                      className="bg-white p-3 rounded-xl border flex justify-between items-center shadow-sm"
+                  {!isGenerated && (
+                    <View
+                      tag="subclause-options"
+                      className={styles.subclauseOptions}
                     >
-                      <div>
-                        <div className="font-bold text-sm text-slate-800 truncate w-40">
-                          {s.description}
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          {s.quantity}x de R$ {s.unitValue.toFixed(2)}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-black text-indigo-600">
-                          R$ {s.totalValue.toFixed(2)}
-                        </span>
-                        <button
-                          onClick={() =>
-                            activeItemRef &&
-                            removeServiceFromItem(
-                              activeItemRef.clauseId,
-                              activeItemRef.itemId,
-                              s.id,
-                            )
-                          }
-                          className="text-red-400"
+                      <View
+                        tag="subclause-options-overlay"
+                        className={styles.subclauseOptionsOverlay}
+                      />
+                      <View
+                        tag="btn_remove-subclause"
+                        className={styles.btn_remove_subclause}
+                      >
+                        <View
+                          tag="btn_x"
+                          style={{
+                            width: 'fit-content',
+                            display: 'flex',
+                          }}
+                          onClick={() => removeItem(clause.id, item.id)}
                         >
-                          <Trash size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-            </div>
+                          Excluir subcláusula
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                </React.Fragment>
+              ))}
+            </View>
 
-            {/* FORMULÁRIO DE ADIÇÃO */}
-            <div className="bg-white p-4 rounded-2xl border space-y-4 shadow-inner">
-              <label className="block">
-                <span className="text-xs font-bold text-slate-400">
-                  DESCRIÇÃO
-                </span>
-                <Input
-                  value={newService.description}
-                  onChange={(e) =>
-                    setNewService({
-                      ...newService,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="Ex: Instalação de luminária"
+            {!isGenerated && (
+              <View
+                tag="footer-options"
+                className="flex flex-col justify-center p-4"
+              >
+                <Pressable
+                  label="+ Adicionar Subcláusula"
+                  style={{ background: '#27f2', color: '#29f' }}
+                  onClick={() => addItem(clause.id)}
                 />
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <label>
-                  <span className="text-xs font-bold text-slate-400">
-                    VALOR UNIT.
-                  </span>
-                  <Input
-                    type="number"
-                    value={newService.unitValue || ""}
-                    onChange={(e) =>
-                      setNewService({
-                        ...newService,
-                        unitValue: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  <span className="text-xs font-bold text-slate-400">QTD</span>
-                  <Input
-                    type="number"
-                    value={newService.quantity || ""}
-                    onChange={(e) =>
-                      setNewService({
-                        ...newService,
-                        quantity: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </label>
-              </div>
-              <Button
-                onClick={handleAddServiceToItem}
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
+              </View>
+            )}
+          </View>
+        );
+      })}
+
+      {/* --- CARD "FANTASMA" DE ADICIONAR SEÇÃO --- */}
+      <View tag="btn_add-clause-field" className="px-4 mt-2">
+        {!showAddMenu ? (
+          <button
+            type="button"
+            onClick={() => setShowAddMenu(true)}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 font-bold text-sm active:scale-[0.98] transition-transform"
+          >
+            <Plus size={18} weight="bold" /> Adicionar Seção
+          </button>
+        ) : (
+          <View className="rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1 mb-1">
+              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+                O que você quer adicionar?
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowAddMenu(false)}
+                className="text-slate-400 p-1"
               >
-                <Plus className="mr-2" /> ADICIONAR SERVIÇO
-              </Button>
+                <X size={16} weight="bold" />
+              </button>
             </div>
 
-            <div className="mt-6 flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setIsServiceDrawerOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="flex-1 bg-green-600 hover:bg-green-700"
-                onClick={() => {
-                  // Ao salvar, vamos inserir no editor! (Lógica simplificada aqui)
-                  setIsServiceDrawerOpen(false);
-                }}
-              >
-                Concluir
-              </Button>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+            <button
+              type="button"
+              onClick={addClause}
+              className="flex items-center gap-3 bg-white rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
+            >
+              <View className="bg-slate-100 text-slate-500 p-2 rounded-lg">
+                <FileText size={18} weight="duotone" />
+              </View>
+              <div>
+                <p className="text-sm font-bold text-slate-700">
+                  Cláusula em Branco
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Texto livre, como as demais
+                </p>
+              </div>
+            </button>
+
+            {canInsertInvestmentSections && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleInsertInvestment}
+                  className="flex items-center gap-3 bg-white rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
+                >
+                  <View className="bg-indigo-100 text-indigo-600 p-2 rounded-lg">
+                    <Wallet size={18} weight="duotone" />
+                  </View>
+                  <div>
+                    <p className="text-sm font-bold text-slate-700">
+                      Seção Investimento
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Sempre atualizada com o painel de Investimento
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleInsertSummary}
+                  className="flex items-center gap-3 bg-white rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
+                >
+                  <View className="bg-indigo-100 text-indigo-600 p-2 rounded-lg">
+                    <Calculator size={18} weight="duotone" />
+                  </View>
+                  <div>
+                    <p className="text-sm font-bold text-slate-700">
+                      Seção Resumo Financeiro
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Soma tudo, sempre em sincronia
+                    </p>
+                  </div>
+                </button>
+              </>
+            )}
+
+            {!canInsertInvestmentSections && (
+              <p className="text-[11px] text-slate-400 px-1 pt-1">
+                Preencha o Investimento (barra na parte inferior da tela) para
+                liberar as opções de Investimento e Resumo Financeiro.
+              </p>
+            )}
+          </View>
+        )}
+      </View>
     </View>
   );
 }

@@ -10,17 +10,22 @@ import FAB from '@/components/ui/FAB';
 import Text from '@/components/ui/Text';
 import { processTextToHtml } from '@/utils/TextPreProcessor';
 import View from '@/components/layout/View';
-import BudgetSkeleton from '@/app/orcamentos/components/BudgetSkeleton';
+import BudgetSkeleton from './BudgetSkeleton';
 import BudgetShareMenu from '@/components/orcamentos/BudgetShareMenu';
 import { Pen, ShareNetwork, Trash } from '@phosphor-icons/react';
 import { CID, getCleanDate } from '@/utils/helpers';
-import { useEASyncSupabase } from '@/hooks/useEASyncSupabase'; // Alterado para Supabase
+import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
-import DeleteBudgetModal from '@/app/orcamentos/components/DeleteBudgetModal';
+import DeleteBudgetModal from './DeleteBudgetModal';
 import { Popover, PopoverContent } from '@/components/ui/popover';
-import '@/app/orcamentos/[id]/Budget.css';
-
-// --- Interfaces (Mantidas do Original) ---
+import {
+  InvestmentCategory,
+  getCategoryNetValue,
+  getInvestmentTotal,
+  formatCurrency,
+} from '@/lib/types/investment';
+import { valorPorExtenso } from '@/lib/numberToWords';
+import './IDBudget.css';
 
 interface DetailContent {
   tipo: 'brk' | 'tagc' | 't6' | 'ul' | 'html' | string;
@@ -74,9 +79,9 @@ interface BudgetData {
     text: string;
   };
   servicos?: ServiceBudget[];
-  // Novos campos Supabase
   services_json?: any;
   financial_json?: any;
+  investment_categories?: InvestmentCategory[];
   client_id?: string;
   client_name_manual?: string;
   document_title?: string;
@@ -88,7 +93,6 @@ export default function OrcamentoVerPainel() {
   const router = usePainelRouter();
   const id = router.params.id;
 
-  // Sincronização com Supabase
   const { data: orcamentos, save: saveOrcamento } =
     useEASyncSupabase<BudgetData>('orcamentos');
   const { data: clientes } = useEASyncSupabase<any>('clientes');
@@ -109,11 +113,9 @@ export default function OrcamentoVerPainel() {
   const [data, setData] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Normalização de dados (Mantendo a estrutura do displayData fiel ao original)
   const displayData = useMemo(() => {
     if (!data) return null;
 
-    // Busca o cliente pelo ID (Supabase) ou nome (Legacy)
     const clienteBase = clientes?.find(
       (c: any) =>
         c.id === data.client_id ||
@@ -124,6 +126,56 @@ export default function OrcamentoVerPainel() {
     );
 
     const ref = clienteBase || data;
+
+    const financial = data.financial_json ||
+      data.financial || {
+        labor: 0,
+        materials: 0,
+        discount: 0,
+        total: 0,
+      };
+
+    const investmentCategories: InvestmentCategory[] =
+      data.investment_categories || [];
+
+    // Soma de itens legados (orçamentos criados antes desta atualização,
+    // que usavam o antigo botão "+ Serviços" dentro da subcláusula).
+    const servicesRaw = (() => {
+      const raw =
+        data.services_json ||
+        data.services ||
+        data.servicos ||
+        (data as any)['Serviços JSON'];
+      if (!raw) return [];
+      if (typeof raw === 'string') {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return [];
+        }
+      }
+      return Array.isArray(raw) ? raw : [];
+    })();
+
+    const legacyTotal = servicesRaw.reduce((acc: number, clause: any) => {
+      const itens = clause.itens || clause.items || [];
+      return (
+        acc +
+        itens.reduce(
+          (iAcc: number, item: any) => iAcc + (Number(item.price) || 0),
+          0,
+        )
+      );
+    }, 0);
+
+    const investmentTotal = getInvestmentTotal(investmentCategories);
+
+    const grandTotal =
+      investmentTotal +
+      legacyTotal +
+      Number(financial.labor || 0) +
+      Number(financial.materials || 0) -
+      Number(financial.discount || 0);
 
     return {
       clientName:
@@ -154,29 +206,12 @@ export default function OrcamentoVerPainel() {
         data.docTitle?.subtitle ||
         (data as any)['Subtítulo'] ||
         'PROPOSTA DE ORÇAMENTO',
-      financial: data.financial_json ||
-        data.financial || {
-          labor: 0,
-          materials: 0,
-          discount: 0,
-          total: 0,
-        },
-      services: (() => {
-        const raw =
-          data.services_json ||
-          data.services ||
-          data.servicos ||
-          (data as any)['Serviços JSON'];
-        if (!raw) return [];
-        if (typeof raw === 'string') {
-          try {
-            return JSON.parse(raw);
-          } catch {
-            return [];
-          }
-        }
-        return Array.isArray(raw) ? raw : [];
-      })(),
+      financial,
+      investmentCategories,
+      legacyTotal,
+      investmentTotal,
+      grandTotal,
+      services: servicesRaw,
       address: {
         street:
           ref.street ||
@@ -266,6 +301,8 @@ export default function OrcamentoVerPainel() {
             .join('\n')
         : (item as any).content || '';
 
+      // Mantido para exibir corretamente orçamentos antigos que já
+      // tinham itens precificados via o extinto "+ Serviços".
       const servicesTotal =
         item.services?.reduce((acc, s) => acc + s.totalValue, 0) ?? 0;
       const itemPrice = item.price || servicesTotal;
@@ -284,10 +321,7 @@ export default function OrcamentoVerPainel() {
                     color: '#444',
                   }}
                 >
-                  {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  }).format(itemPrice)}
+                  {formatCurrency(itemPrice)}
                 </span>
               )}
             </View>
@@ -312,10 +346,7 @@ export default function OrcamentoVerPainel() {
                 {item.services.map((s, i) => (
                   <div key={i}>
                     • {s.description} ({s.quantity}x) —{' '}
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(s.totalValue)}
+                    {formatCurrency(s.totalValue)}
                   </div>
                 ))}
               </View>
@@ -379,6 +410,9 @@ export default function OrcamentoVerPainel() {
       .filter((val) => val && String(val).trim() !== '')
       .join(', ') || 'Endereço não informado';
 
+  const hasInvestmentData =
+    displayData.investmentCategories.length > 0 || displayData.legacyTotal > 0;
+
   return (
     <>
       <style
@@ -421,7 +455,6 @@ export default function OrcamentoVerPainel() {
               </span>
             </View>
           </View>
-
           <View tag="doc-title">
             <View tag="doc-title_layout">
               <View tag="doc-title_type">
@@ -437,7 +470,6 @@ export default function OrcamentoVerPainel() {
               <View tag="doc-title_title">{displayData.documentTitle}</View>
             </View>
           </View>
-
           <View tag="cliente-section">
             <View tag="ui">
               <header>
@@ -459,7 +491,6 @@ export default function OrcamentoVerPainel() {
               </View>
             </View>
           </View>
-
           <View tag="budget-body">
             {displayData.services.map((servico: any, index: number) => (
               <View key={index} tag="clause">
@@ -482,7 +513,7 @@ export default function OrcamentoVerPainel() {
               budgetId={String(data.id)}
               password={data.access_password || data.accessPassword}
             />
-          </View>
+          </View>{' '}
         </View>
       </View>
 

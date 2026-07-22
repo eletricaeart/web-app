@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { NOTA_STATUSES } from '@/lib/notaMeta';
 
-import '@/app/clientes/Clientes.css';
+import '../clientes/Clientes.css';
 
 interface Cliente {
   id: string;

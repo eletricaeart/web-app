@@ -25,10 +25,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 
-import '@/app/clientes/Clientes.css';
+import './Clientes.css';
 import Page from '@/components/layout/Page';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
-import DeleteClientModal from '@/app/clientes/components/DeleteClientModal';
+import DeleteClientModal from './DeleteClientModal';
 import EntitySortFilter from '@/components/EntitySortFilter';
 import { CLIENT_CATEGORIES } from '@/lib/clientMeta';
 
