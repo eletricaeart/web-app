@@ -161,28 +161,28 @@ export default function ClauseManager({
         const isGenerated = !!clause.sourceType;
 
         const moveControls = (
-          <View className="flex flex-col gap-1 shrink-0">
+          <View className="flex flex-row gap-1 shrink-0">
             <button
               type="button"
               onClick={() => moveClause(clause.id, 'up')}
               disabled={isFirst}
-              className="p-1 rounded-md bg-white border border-slate-200 disabled:opacity-30"
+              className="p-1 rounded-md bg-amber-200-[!important] border border-slate-200 disabled:opacity-30"
             >
-              <CaretUp size={14} weight="bold" />
+              <CaretUp size={14} weight="bold" color="#000" />
             </button>
             <button
               type="button"
               onClick={() => moveClause(clause.id, 'down')}
               disabled={isLast}
-              className="p-1 rounded-md bg-white border border-slate-200 disabled:opacity-30"
+              className="p-1 rounded-md bg-amber-200 border border-slate-200 disabled:opacity-30"
             >
-              <CaretDown size={14} weight="bold" />
+              <CaretDown size={14} weight="bold" color="#000" />
             </button>
           </View>
         );
 
         return (
-          <View tag="clause" key={clause.id}>
+          <View tag="clause" key={clause.id} className="bg-[#e5e5e5]">
             <View tag="clause-options" className={styles.clauseOptions}>
               <View className="flex items-center gap-2">
                 {moveControls}

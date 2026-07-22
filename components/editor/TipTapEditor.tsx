@@ -1,7 +1,7 @@
-// components/TipTapEditor.tsx
+// components/editor/TipTapEditor.tsx
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -11,26 +11,32 @@ import { Placeholder } from '@tiptap/extension-placeholder';
 import { Image } from '@tiptap/extension-image';
 import {
   TextB,
+  TextItalic,
   ListNumbers,
   Quotes,
   TextHOne,
-  CurrencyDollar,
   ListBullets,
-  Plus,
-  Calculator,
+  Minus,
+  ImageSquare,
+  ArrowUUpLeft,
+  ArrowUUpRight,
+  SpinnerGap,
 } from '@phosphor-icons/react';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
-import { valorPorExtenso } from '@/utils/helpers';
 
 import './TipTapEditor.css';
+
+const CLOUD = {
+  name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+};
 
 interface TipTapEditorProps {
   value: string;
   onChange: (val: string) => void;
-  services?: any[];
   placeholder?: string;
   bg?: string;
   radius?: string;
@@ -39,18 +45,17 @@ interface TipTapEditorProps {
 export default function TipTapEditor({
   value,
   onChange,
-  services = [],
   placeholder = 'Descreva os detalhes...',
   bg = '#f8fafc',
   radius = '1rem',
 }: TipTapEditorProps) {
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      // StarterKit,
       StarterKit.configure({
-        // 1. Modificando a lógica da lista:
-        // Desativamos a lista padrão do StarterKit para reconfigurar o comportamento
         bulletList: {
           keepMarks: true,
           keepAttributes: false,
@@ -74,12 +79,10 @@ export default function TipTapEditor({
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
-    // onCreate garante que ao criar o editor, ele resete as marcações
     onCreate: ({ editor }) => {
       editor.commands.unsetAllMarks();
     },
     onFocus: ({ editor }) => {
-      // Se o conteúdo for apenas um parágrafo vazio, garante que não há negrito
       if (editor.isEmpty) {
         editor.commands.unsetAllMarks();
       }
@@ -92,7 +95,6 @@ export default function TipTapEditor({
     },
   });
 
-  // Atualiza o conteúdo se o valor externo mudar (ex: ao carregar edição)
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value || '');
@@ -101,43 +103,40 @@ export default function TipTapEditor({
 
   if (!editor) return null;
 
-  // Função para inserir o Shortcode de Preço
-  const addPriceTag = () => {
-    const price = window.prompt('Digite o valor do serviço (ex: 150.00):');
-    if (price) {
-      editor
-        .chain()
-        .focus()
-        .insertContent(` <strong>[R$ ${price}]</strong> `)
-        .run();
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!CLOUD.name || !CLOUD.preset) {
+      alert('Upload de imagem não configurado.');
+      return;
     }
-  };
+    if (file.size > 4 * 1024 * 1024) {
+      alert('Imagem muito grande. Máximo 4MB.');
+      return;
+    }
 
-  // Função para inserir todos os serviços formatados
-  const insertServicesList = () => {
-    if (services.length === 0)
-      return alert('Nenhum serviço adicionado no menu.');
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUD.preset);
 
-    let htmlContent = '<ul>';
-    services.forEach((s) => {
-      const extenso = valorPorExtenso(s.totalValue);
-      htmlContent += `<li>${s.description} (${s.quantity}x) ........... <strong>R$ ${s.totalValue.toFixed(2)} (${extenso})</strong></li>`;
-    });
-    htmlContent += '</ul>';
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD.name}/image/upload`,
+        { method: 'POST', body: formData },
+      );
+      const data = await res.json();
 
-    editor.chain().focus().insertContent(htmlContent).run();
-  };
-
-  const insertSubtotal = () => {
-    const total = services.reduce((acc, s) => acc + s.totalValue, 0);
-    const extenso = valorPorExtenso(total);
-    editor
-      .chain()
-      .focus()
-      .insertContent(
-        `<p><strong>TOTAL DA ETAPA: R$ ${total.toFixed(2)} (${extenso})</strong></p>`,
-      )
-      .run();
+      if (data.secure_url) {
+        editor.chain().focus().setImage({ src: data.secure_url }).run();
+      }
+    } catch {
+      alert('Erro ao subir imagem');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -145,9 +144,6 @@ export default function TipTapEditor({
       className="tiptap-container relative border border-slate-100 shadow-inner overflow-hidden"
       style={{ background: bg, borderRadius: radius }}
     >
-      {/* TOOLBAR DINÂMICA (Aparece acima do editor no PC e acima do teclado no Mobile) 
-          A classe 'tiptap-toolbar' no CSS deve lidar com o position: sticky
-      */}
       <div className="tiptap-toolbar flex items-center gap-1 p-2 border-b border-slate-200 bg-white sticky top-0 z-20 overflow-x-auto">
         <MenuButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -155,9 +151,17 @@ export default function TipTapEditor({
         >
           <TextB
             size={20}
-            weight={
-              editor.isFocused && editor.isActive('bold') ? 'bold' : 'regular'
-            }
+            weight={editor.isActive('bold') ? 'bold' : 'regular'}
+          />
+        </MenuButton>
+
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          active={editor.isActive('italic')}
+        >
+          <TextItalic
+            size={20}
+            weight={editor.isActive('italic') ? 'bold' : 'regular'}
           />
         </MenuButton>
 
@@ -167,74 +171,69 @@ export default function TipTapEditor({
           }
           active={editor.isActive('heading', { level: 3 })}
         >
-          <TextHOne
-            size={20}
-            weight={
-              editor.isFocused && editor.isActive('bold') ? 'bold' : 'regular'
-            }
-          />
+          <TextHOne size={20} />
         </MenuButton>
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           active={editor.isActive('orderedList')}
         >
-          <ListNumbers
-            size={20}
-            weight={
-              editor.isFocused && editor.isActive('bold') ? 'bold' : 'regular'
-            }
-          />
+          <ListNumbers size={20} />
         </MenuButton>
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           active={editor.isActive('bulletList')}
         >
-          <ListBullets
-            size={20}
-            weight={
-              editor.isFocused && editor.isActive('bold') ? 'bold' : 'regular'
-            }
-          />
+          <ListBullets size={20} />
         </MenuButton>
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           active={editor.isActive('blockquote')}
         >
-          <Quotes
-            size={20}
-            weight={
-              editor.isFocused && editor.isActive('bold') ? 'bold' : 'regular'
-            }
-          />
+          <Quotes size={20} />
+        </MenuButton>
+
+        <MenuButton
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        >
+          <Minus size={20} weight="bold" />
         </MenuButton>
 
         <div className="w-[1px] h-6 bg-slate-200 mx-1" />
 
         <MenuButton
-          onClick={addPriceTag}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadingImage}
         >
-          <CurrencyDollar size={16} weight="bold" />
-          VALOR
+          {uploadingImage ? (
+            <SpinnerGap size={20} className="animate-spin" />
+          ) : (
+            <ImageSquare size={20} weight="duotone" />
+          )}
         </MenuButton>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageUpload}
+        />
 
-        {/* BOTÃO PARA INSERIR LISTA DE SERVIÇOS NO TEXTO */}
+        <div className="w-[1px] h-6 bg-slate-200 mx-1" />
+
         <MenuButton
-          onClick={insertServicesList}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-green-50 text-green-700 text-[10px] font-bold"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
         >
-          <Plus size={14} /> INSERIR LISTA
+          <ArrowUUpLeft size={18} />
         </MenuButton>
-
-        {/* BOTÃO PARA INSERIR TOTAL NO TEXTO */}
         <MenuButton
-          onClick={insertSubtotal}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-[10px] font-bold"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
         >
-          <Calculator size={14} /> INSERIR TOTAL
+          <ArrowUUpRight size={18} />
         </MenuButton>
       </div>
 
@@ -243,19 +242,25 @@ export default function TipTapEditor({
   );
 }
 
-/**
- * MenuButton atualizado com cores de fundo e texto dinâmicas
- * Quando ativo: Fundo azul e ícone branco
- * Quando inativo: Fundo transparente e ícone cinza/escuro
- */
-function MenuButton({ onClick, active, children }: any) {
+function MenuButton({
+  onClick,
+  active,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200 ${
+      disabled={disabled}
+      className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200 shrink-0 disabled:opacity-30 ${
         active
-          ? 'bg-[#00559C] text-white shadow-md scale-105' // Cor padrão da sua marca (Azul)
+          ? 'bg-[#00559C] text-white shadow-md scale-105'
           : 'bg-transparent text-slate-500 hover:bg-slate-100'
       }`}
     >

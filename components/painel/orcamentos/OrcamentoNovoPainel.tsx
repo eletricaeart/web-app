@@ -463,11 +463,12 @@ export default function OrcamentoNovoPainel() {
           </View>
         </View>
 
-        <footer className="footer flex flex-col p-6 pb-24">
+        <footer className="footer bottom-[92px] flex flex-col pt-4 pb-[130px_!important] mx-2 mb-2 bg-white rounded-2xl shadow-lg">
           <Pressable
             onClick={handleSave}
             style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
           >
+            {' '}
             {loading ? (
               <CircleNotch size={20} className="animate-spin" />
             ) : (

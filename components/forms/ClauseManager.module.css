@@ -2,6 +2,7 @@
 .clauseOptions {
   display: flex;
   align-items: stretch;
+  align-items: end;
   justify-content: space-between;
   padding: 0 1rem;
 }
@@ -12,7 +13,8 @@
   display: grid;
   font-family: Poppins, sans-serif !important;
   gap: 0px;
-  padding: 0.5rem 0px;
+  /* padding: 0.5rem 0px; */
+  height: fit-content;
 }
 .btn_remove_clause {
   color: rgba(255, 68, 68, 1);
@@ -35,6 +37,7 @@
   border-radius: 0.7rem 0.7rem 0px 0px;
   place-items: center;
   padding: 0.5rem;
+  height: fit-content;
 }
 
 .clauseBox {

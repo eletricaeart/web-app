@@ -35,14 +35,15 @@ export default function InvestmentDrawer({
       <DrawerTrigger asChild>
         <button
           type="button"
-          className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-5 py-3 flex items-center justify-between active:bg-slate-50"
+          style={{ border: '2px solid #00559c !important' }}
+          className="sssc fixed bottom-0 left-0 right-0 z-55 bg-[#e5e5e5_!important] rounded-[2rem_2rem_0_0_!important] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] px-5 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] flex items-center justify-between active:bg-slate-50"
         >
           <div className="flex items-center gap-3">
             <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl">
               <Wallet size={20} weight="duotone" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-bold text-slate-800">Investimento</p>
+              <p className="text-sm font-bold text-[#00559c]">Investimento</p>
               <p className="text-xs text-slate-400">
                 {categories.length === 0
                   ? 'Nenhuma categoria definida'
@@ -54,15 +55,16 @@ export default function InvestmentDrawer({
         </button>
       </DrawerTrigger>
 
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader>
-          <DrawerTitle className="flex items-center gap-2 text-indigo-900">
-            <Wallet size={20} weight="duotone" /> Investimento
+      <DrawerContent className="max-h-[85vh] rounded-t-[2rem_!important] bg-[#e5e5e5] shadow-2xl">
+        <DrawerHeader className="text-center pb-3">
+          <DrawerTitle className="flex flex-col items-center gap-1 text-amber-400">
+            <Wallet size={26} weight="duotone" />
+            <span className="text-xl font-black">Investimento</span>
           </DrawerTitle>
         </DrawerHeader>
 
         <div className="overflow-y-auto px-4 pb-8">
-          <p className="text-xs text-slate-400 mb-4">
+          <p className="text-xs text-slate-500 mb-4 text-center">
             Defina o valor de cada categoria de serviço. Depois, use "+
             Adicionar Seção" na lista de cláusulas para inserir o texto gerado
             onde você quiser no orçamento.
