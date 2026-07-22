@@ -6,7 +6,7 @@ import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import AppBar from '@/components/layout/AppBar';
 import ClientForm from '@/components/forms/ClientForm';
 import ClauseManager from '@/components/forms/ClauseManager';
-import InvestmentDrawer from './InvestmentDrawer';
+import InvestmentDrawer, { PEEK_HEIGHT } from './InvestmentDrawer';
 import View from '@/components/layout/View';
 import { CircleNotch, Calculator } from '@phosphor-icons/react';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
@@ -463,7 +463,11 @@ export default function OrcamentoNovoPainel() {
           </View>
         </View>
 
-        <footer className="footer bottom-[92px] flex flex-col pt-4 pb-[130px_!important] mx-2 mb-2 bg-[#7faacd] rounded-2xl shadow-lg">
+        <footer
+          className="footer left-0 right-0 z-[55] flex flex-col pt-4 pb-[130px_!important] mx-2 bg-[#7faacd] dark:bg-slate-700 rounded-2xl shadow-lg"
+          style={{ bottom: PEEK_HEIGHT + 8 }}
+        >
+          {' '}
           <Pressable
             onClick={handleSave}
             style={{ cursor: loading ? 'not-allowed' : 'pointer' }}

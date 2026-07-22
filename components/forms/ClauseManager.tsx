@@ -1,7 +1,7 @@
 // components/forms/ClauseManager.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import View from '@/components/layout/View';
 import styles from './ClauseManager.module.css';
 import Pressable from '../Pressable';
@@ -11,11 +11,9 @@ import {
   CaretUp,
   CaretDown,
   Lock,
-  Plus,
   FileText,
   Wallet,
   Calculator,
-  X,
 } from '@phosphor-icons/react';
 
 interface ClauseItem {
@@ -29,9 +27,6 @@ interface Clause {
   id: number;
   titulo: string;
   items: ClauseItem[];
-  /** Quando presente, esta cláusula foi gerada pelo painel de Investimento
-   *  e fica travada para edição direta — toda alteração acontece no
-   *  drawer, e a sincronização é automática. */
   sourceType?: 'investment' | 'summary';
 }
 
@@ -50,8 +45,6 @@ export default function ClauseManager({
   onInsertInvestmentClause,
   onInsertSummaryClause,
 }: ClauseManagerProps) {
-  const [showAddMenu, setShowAddMenu] = useState(false);
-
   const addClause = () => {
     const newClause: Clause = {
       id: Date.now(),
@@ -65,17 +58,6 @@ export default function ClauseManager({
       ],
     };
     onClausesChange([...clauses, newClause]);
-    setShowAddMenu(false);
-  };
-
-  const handleInsertInvestment = () => {
-    onInsertInvestmentClause();
-    setShowAddMenu(false);
-  };
-
-  const handleInsertSummary = () => {
-    onInsertSummaryClause();
-    setShowAddMenu(false);
   };
 
   const removeClause = (id: number) => {
@@ -166,7 +148,7 @@ export default function ClauseManager({
               type="button"
               onClick={() => moveClause(clause.id, 'up')}
               disabled={isFirst}
-              className="p-1 rounded-md bg-amber-200-[!important] border border-slate-200 disabled:opacity-30"
+              className="p-1 rounded-md bg-amber-200 border border-slate-200 disabled:opacity-30"
             >
               <CaretUp size={14} weight="bold" color="#000" />
             </button>
@@ -182,7 +164,11 @@ export default function ClauseManager({
         );
 
         return (
-          <View tag="clause" key={clause.id} className="bg-[#e5e5e5]">
+          <View
+            tag="clause"
+            key={clause.id}
+            className="bg-[#e5e5e5] dark:bg-slate-800"
+          >
             <View tag="clause-options" className={styles.clauseOptions}>
               <View className="flex items-center gap-2">
                 {moveControls}
@@ -190,7 +176,7 @@ export default function ClauseManager({
                   Título
                 </View>
                 {isGenerated && (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-full">
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-1 rounded-full">
                     <Lock size={11} weight="bold" /> Sincronizado com o
                     Investimento
                   </span>
@@ -234,15 +220,14 @@ export default function ClauseManager({
                       className={styles.subclauseContent}
                     >
                       {isGenerated ? (
-                        // --- Pré-visualização travada (edição só no drawer de Investimento) ---
                         <>
                           {item.subtitulo && (
-                            <div className="text-sm font-bold text-slate-700 mb-2">
+                            <div className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
                               {item.subtitulo}
                             </div>
                           )}
                           <div
-                            className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3"
+                            className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3"
                             dangerouslySetInnerHTML={{ __html: item.content }}
                           />
                         </>
@@ -327,96 +312,78 @@ export default function ClauseManager({
         );
       })}
 
-      {/* --- CARD "FANTASMA" DE ADICIONAR SEÇÃO --- */}
-      <View tag="btn_add-clause-field" className="px-4 mt-2">
-        {!showAddMenu ? (
-          <button
-            type="button"
-            onClick={() => setShowAddMenu(true)}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 font-bold text-sm active:scale-[0.98] transition-transform"
-          >
-            <Plus size={18} weight="bold" /> Adicionar Seção
-          </button>
-        ) : (
-          <View className="rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between px-1 mb-1">
-              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
-                O que você quer adicionar?
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowAddMenu(false)}
-                className="text-slate-400 p-1"
-              >
-                <X size={16} weight="bold" />
-              </button>
-            </div>
+      {/* --- CARD "FANTASMA" — SEMPRE EXPANDIDO, SEM CLIQUE EXTRA --- */}
+      <View
+        tag="btn_add-clause-field"
+        className="px-4 mt-2 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/20 dark:border-indigo-800 p-3 flex flex-col gap-2"
+      >
+        <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-1">
+          Adicionar Seção
+        </span>
 
+        <button
+          type="button"
+          onClick={addClause}
+          className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
+        >
+          <View className="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-lg">
+            <FileText size={18} weight="duotone" />
+          </View>
+          <div>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-100">
+              Cláusula em Branco
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Texto livre, como as demais
+            </p>
+          </div>
+        </button>
+
+        {canInsertInvestmentSections && (
+          <>
             <button
               type="button"
-              onClick={addClause}
-              className="flex items-center gap-3 bg-white rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
+              onClick={onInsertInvestmentClause}
+              className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
             >
-              <View className="bg-slate-100 text-slate-500 p-2 rounded-lg">
-                <FileText size={18} weight="duotone" />
+              <View className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 p-2 rounded-lg">
+                <Wallet size={18} weight="duotone" />
               </View>
               <div>
-                <p className="text-sm font-bold text-slate-700">
-                  Cláusula em Branco
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-100">
+                  Seção Investimento
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  Texto livre, como as demais
+                  Sempre atualizada com o painel de Investimento
                 </p>
               </div>
             </button>
 
-            {canInsertInvestmentSections && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleInsertInvestment}
-                  className="flex items-center gap-3 bg-white rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
-                >
-                  <View className="bg-indigo-100 text-indigo-600 p-2 rounded-lg">
-                    <Wallet size={18} weight="duotone" />
-                  </View>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">
-                      Seção Investimento
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      Sempre atualizada com o painel de Investimento
-                    </p>
-                  </div>
-                </button>
+            <button
+              type="button"
+              onClick={onInsertSummaryClause}
+              className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
+            >
+              <View className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 p-2 rounded-lg">
+                <Calculator size={18} weight="duotone" />
+              </View>
+              <div>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-100">
+                  Seção Resumo Financeiro
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Soma tudo, sempre em sincronia
+                </p>
+              </div>
+            </button>
+          </>
+        )}
 
-                <button
-                  type="button"
-                  onClick={handleInsertSummary}
-                  className="flex items-center gap-3 bg-white rounded-xl p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
-                >
-                  <View className="bg-indigo-100 text-indigo-600 p-2 rounded-lg">
-                    <Calculator size={18} weight="duotone" />
-                  </View>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">
-                      Seção Resumo Financeiro
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      Soma tudo, sempre em sincronia
-                    </p>
-                  </div>
-                </button>
-              </>
-            )}
-
-            {!canInsertInvestmentSections && (
-              <p className="text-[11px] text-slate-400 px-1 pt-1">
-                Preencha o Investimento (barra na parte inferior da tela) para
-                liberar as opções de Investimento e Resumo Financeiro.
-              </p>
-            )}
-          </View>
+        {!canInsertInvestmentSections && (
+          <p className="text-[11px] text-slate-400 px-1 pt-1">
+            Preencha o Investimento (barra na parte inferior da tela) para
+            liberar as opções de Investimento e Resumo Financeiro.
+          </p>
         )}
       </View>
     </View>
