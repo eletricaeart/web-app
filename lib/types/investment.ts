@@ -1,4 +1,5 @@
 // lib/types/investment.ts
+import { valorPorExtenso } from './numberToWords';
 
 export interface InvestmentItem {
   id: string;
@@ -10,11 +11,7 @@ export interface InvestmentItem {
 export interface InvestmentCategory {
   id: string;
   name: string;
-  /** Título customizado da subcláusula no orçamento. Se vazio, usa
-   *  "{name} (Mão de Obra)" automaticamente. */
   title: string;
-  /** Texto adicional livre (uma linha por parágrafo), inserido depois
-   *  do valor na seção de Investimento. */
   description: string;
   mode: 'fixed' | 'itemized';
   fixedValue: number;
@@ -52,7 +49,7 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-/* --- Geradores de cláusula (usados na inserção inicial E na sincronização automática) --- */
+/* --- Geradores de cláusula --- */
 
 export interface GeneratedClauseItem {
   id: number;
@@ -85,7 +82,7 @@ export function buildInvestmentClause(
     sourceType: 'investment',
     items: categories.map((cat, i) => {
       const net = getCategoryNetValue(cat);
-      const priceHtml = `<p><strong>${formatCurrency(net)}</strong></p>`;
+      const priceHtml = `<p><strong>${formatCurrency(net)}</strong> (${valorPorExtenso(net)})</p>`;
       const descHtml = descriptionToHtml(cat.description);
       return {
         id: Date.now() + i + 1,
@@ -139,7 +136,7 @@ export function buildSummaryClause(
 
   lines.push(
     `<p><strong>VALOR TOTAL DO INVESTIMENTO</strong></p>`,
-    `<p><strong>${formatCurrency(extra.grandTotal)}</strong></p>`,
+    `<p><strong>${formatCurrency(extra.grandTotal)}</strong> (${valorPorExtenso(extra.grandTotal)})</p>`,
   );
 
   return {
