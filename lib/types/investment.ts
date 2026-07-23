@@ -1,5 +1,5 @@
 // lib/types/investment.ts
-import { valorPorExtenso } from './numberToWords';
+import { valorPorExtenso } from '../numberToWords';
 
 export interface InvestmentItem {
   id: string;
