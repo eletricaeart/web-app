@@ -285,7 +285,8 @@ export default function OrcamentoVerPainel() {
     return () => clearTimeout(timer);
   }, [orcamentos, id]);
 
-  const renderMarkdown = (itens: ItemBudget[]) => {
+  const renderMarkdown = (itens: ItemBudget[], clauseNumber: number) => {
+    let subCounter = 0;
     return itens.map((item, idx) => {
       const markdownText = item.detalhes
         ? item.detalhes
@@ -307,12 +308,17 @@ export default function OrcamentoVerPainel() {
         item.services?.reduce((acc, s) => acc + s.totalValue, 0) ?? 0;
       const itemPrice = item.price || servicesTotal;
 
+      let displaySubtitulo = item.subtitulo;
+      if ((item as any).numbered) {
+        subCounter += 1;
+        displaySubtitulo = `${clauseNumber}.${subCounter} ${item.subtitulo}`;
+      }
+
       return (
         <View key={idx} tag="subclause">
           <View tag="ui">
             <View tag="subclause-header">
-              <View tag="t6">{item.subtitulo}</View>
-
+              <View tag="t6">{displaySubtitulo}</View>
               {itemPrice > 0 && (
                 <span
                   style={{
@@ -503,8 +509,11 @@ export default function OrcamentoVerPainel() {
                     </View>
                   </View>
                   <View tag="clause-content">
-                    {renderMarkdown(servico.itens || servico.items || [])}
-                  </View>
+                    {renderMarkdown(
+                      servico.itens || servico.items || [],
+                      index + 1,
+                    )}
+                  </View>{' '}
                 </View>
               </View>
             ))}

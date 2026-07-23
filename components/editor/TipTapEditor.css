@@ -111,3 +111,15 @@
   border: 1px solid #ddd;
   padding: 8px;
 }
+
+/* Título estilizado inserido pelo botão da barra — puramente visual,
+   não conta na numeração de subcláusulas */
+.tiptap-styled-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 1.05em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #1a237e;
+  margin: 0.75rem 0 0.4rem;
+}

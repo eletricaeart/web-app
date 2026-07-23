@@ -15,6 +15,7 @@ import {
   ListNumbers,
   Quotes,
   TextHOne,
+  TextAa,
   ListBullets,
   Minus,
   ImageSquare,
@@ -146,6 +147,16 @@ export default function TipTapEditor({
     >
       <div className="tiptap-toolbar flex items-center gap-1 p-2 border-b border-slate-200 bg-white sticky top-0 z-20 overflow-x-auto">
         <MenuButton
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
+          active={editor.isActive('heading', { level: 3 })}
+        >
+          {/* <TextHOne size={20} /> */}
+          <TextAa size={20} weight="bold" />
+        </MenuButton>
+
+        <MenuButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive('bold')}
         >
@@ -166,14 +177,20 @@ export default function TipTapEditor({
         </MenuButton>
 
         <MenuButton
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 3 }).run()
-          }
-          active={editor.isActive('heading', { level: 3 })}
+          onClick={() => {
+            const text = window.prompt('Texto do título estilizado:');
+            if (text) {
+              editor
+                .chain()
+                .focus()
+                .insertContent(`<p class="tiptap-styled-title">${text}</p>`)
+                .run();
+            }
+          }}
+          // onClick={() => editor.chain().focus().toggleBold().run()}
         >
-          <TextHOne size={20} />
+          <TextHOne size={20} weight="regular" />
         </MenuButton>
-
         <MenuButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           active={editor.isActive('orderedList')}

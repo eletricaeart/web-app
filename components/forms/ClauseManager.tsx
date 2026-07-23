@@ -14,6 +14,8 @@ import {
   FileText,
   Wallet,
   Calculator,
+  ListNumbers,
+  Article,
 } from '@phosphor-icons/react';
 
 interface ClauseItem {
@@ -101,6 +103,7 @@ export default function ClauseManager({
                   id: Date.now(),
                   subtitulo: '',
                   content: '',
+                  numbered: true,
                 },
               ],
             }
@@ -239,7 +242,32 @@ export default function ClauseManager({
                       ) : (
                         <>
                           <label className={styles.subclauseTitle}>
-                            <span className="label-text">Subtítulo</span>
+                            <div className="flex items-center justify-between">
+                              <span
+                                onClick={() =>
+                                  updateItem(
+                                    clause.id,
+                                    item.id,
+                                    'numbered',
+                                    !item.numbered,
+                                  )
+                                }
+                                className={`text-[10px] font-bold px-2 py-2 rounded-[.8rem] ${
+                                  item.numbered
+                                    ? 'bg-indigo-100 text-indigo-600'
+                                    : 'bg-slate-100 text-slate-400'
+                                }`}
+                              >
+                                {item.numbered ? (
+                                  <ListNumbers size={20} />
+                                ) : (
+                                  <Article size={20} />
+                                )}
+                              </span>
+                              <span className="label-text flex-1 ml-3">
+                                Subtítulo
+                              </span>
+                            </div>
                             <Input
                               placeholder="Subtítulo (Ex: Cozinha)"
                               className="subclause-subtitle"
