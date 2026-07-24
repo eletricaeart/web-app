@@ -149,6 +149,7 @@ export default function ClauseManager({
         const isFirst = index === 0;
         const isLast = index === clauses.length - 1;
         const isGenerated = !!clause.sourceType;
+        let subCounter = 0; // contador local, reinicia a cada cláusula
 
         const moveControls = (
           <View className="flex flex-row gap-1 shrink-0">
@@ -242,7 +243,7 @@ export default function ClauseManager({
                       ) : (
                         <>
                           <label className={styles.subclauseTitle}>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between mb-1">
                               <span
                                 onClick={() =>
                                   updateItem(
@@ -252,7 +253,7 @@ export default function ClauseManager({
                                     !item.numbered,
                                   )
                                 }
-                                className={`text-[10px] font-bold px-2 py-2 rounded-[.8rem] ${
+                                className={`text-[10px] font-bold px-2 py-2 rounded-[.8rem] cursor-pointer ${
                                   item.numbered
                                     ? 'bg-indigo-100 text-indigo-600'
                                     : 'bg-slate-100 text-slate-400'
@@ -268,19 +269,27 @@ export default function ClauseManager({
                                 Subtítulo
                               </span>
                             </div>
-                            <Input
-                              placeholder="Subtítulo (Ex: Cozinha)"
-                              className="subclause-subtitle"
-                              value={item.subtitulo}
-                              onChange={(e) =>
-                                updateItem(
-                                  clause.id,
-                                  item.id,
-                                  'subtitulo',
-                                  e.target.value,
-                                )
-                              }
-                            />
+
+                            <div className="flex items-center gap-2">
+                              <span className="shrink-0 min-w-[46px] text-center text-xs font-bold text-slate-400 bg-slate-100 rounded-lg py-2 px-1">
+                                {item.numbered
+                                  ? `${index + 1}.${++subCounter}`
+                                  : ''}
+                              </span>
+                              <Input
+                                placeholder="Subtítulo (Ex: Cozinha)"
+                                className="subclause-subtitle flex-1"
+                                value={item.subtitulo}
+                                onChange={(e) =>
+                                  updateItem(
+                                    clause.id,
+                                    item.id,
+                                    'subtitulo',
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                            </div>
                           </label>
 
                           <label className={styles.subclauseHelpTips}>

@@ -152,7 +152,6 @@ export default function TipTapEditor({
           }
           active={editor.isActive('heading', { level: 3 })}
         >
-          {/* <TextHOne size={20} /> */}
           <TextAa size={20} weight="bold" />
         </MenuButton>
 
@@ -176,21 +175,18 @@ export default function TipTapEditor({
           />
         </MenuButton>
 
+        {/* Título Estilizado: mesmo mecanismo de heading do TipTap (nível 4),
+            então clicar → digitar → Enter sai do modo automaticamente,
+            sem precisar de nenhuma lógica extra nossa. */}
         <MenuButton
-          onClick={() => {
-            const text = window.prompt('Texto do título estilizado:');
-            if (text) {
-              editor
-                .chain()
-                .focus()
-                .insertContent(`<p class="tiptap-styled-title">${text}</p>`)
-                .run();
-            }
-          }}
-          // onClick={() => editor.chain().focus().toggleBold().run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 4 }).run()
+          }
+          active={editor.isActive('heading', { level: 4 })}
         >
-          <TextHOne size={20} weight="regular" />
+          <TextHOne size={20} />
         </MenuButton>
+
         <MenuButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           active={editor.isActive('orderedList')}
