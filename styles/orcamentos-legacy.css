@@ -101,7 +101,7 @@ doc-title_title {
 
   display: block;
   font-size: 1em;
-  font-family: "inter", "Roboto", sans-serif;
+  font-family: 'inter', 'Roboto', sans-serif;
   overflow-wrap: break-word;
 }
 
@@ -155,7 +155,7 @@ cliente-section > ui > header > ui {
 }
 
 cliente-section > ui > header > ui > t {
-  font-family: "inter", "Roboto", sans-serif;
+  font-family: 'inter', 'Roboto', sans-serif;
   overflow-wrap: break-word;
   display: block;
   font-size: 1em;
@@ -187,7 +187,7 @@ cliente-section > ui > content > card > ui {
 }
 
 cliente-section > ui > content > card > ui t {
-  font-family: "inter", "Roboto", sans-serif;
+  font-family: 'inter', 'Roboto', sans-serif;
   font-weight: normal;
   overflow-wrap: break-word;
   display: block;
@@ -244,7 +244,7 @@ clause-header > ui {
 }
 
 clause-header > ui > t {
-  font-family: "inter", "Roboto", sans-serif;
+  font-family: 'inter', 'Roboto', sans-serif;
   overflow-wrap: break-word;
   display: block;
   font-size: 1em;
@@ -287,7 +287,7 @@ subclause-header {
 
 subclause-header > t6 {
   display: block;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: bold;
   font-optical-sizing: auto;
   font-style: normal;
@@ -339,7 +339,7 @@ footer-content_top > content {
 
 footer-content_top > content > t6 {
   display: block;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: bold;
   font-optical-sizing: auto;
   font-style: normal;
@@ -349,7 +349,7 @@ footer-content_top > content > t6 {
 }
 
 footer-content_top > content > p {
-  font-family: "inter", "Roboto", sans-serif;
+  font-family: 'inter', 'Roboto', sans-serif;
   font-weight: normal;
   padding: 1rem 0 1.5rem;
 }
@@ -363,7 +363,7 @@ tagb {
 }
 
 tagb > p {
-  font-family: "inter", "Roboto", sans-serif;
+  font-family: 'inter', 'Roboto', sans-serif;
   font-weight: normal;
   overflow-wrap: break-word;
   margin: 1em 0;
@@ -414,7 +414,7 @@ footer-content_bottom > ui > header > ui {
 }
 
 footer-content_bottom > ui > header > ui > t {
-  font-family: "inter", "Roboto", sans-serif;
+  font-family: 'inter', 'Roboto', sans-serif;
   overflow-wrap: break-word;
   display: block;
   font-size: 1em;
@@ -560,7 +560,7 @@ label > t {
   font-size: 0.8rem;
   gap: 0;
   padding: 0.5rem 0;
-  font-family: "Poppins", sans-serif !important;
+  font-family: 'Poppins', sans-serif !important;
 }
 
 /*
@@ -585,7 +585,7 @@ btn {
 
 input,
 select {
-  font-family: "Poppins", sans-serif !important;
+  font-family: 'Poppins', sans-serif !important;
   height: 56px;
   width: 100%;
   flex: 1;
@@ -835,11 +835,16 @@ menu {
     print-color-adjust: exact !important;
   }
 
+  subclause-body div > h3 {
+    font-size: 1.3rem;
+    font-weight: bold;
+  }
+
   @page {
     size: A4;
     /* margin: 5mm 0 5mm 0; */
     @bottom-right {
-      content: "Pág. " counter(page) " de " counter(pages);
+      content: 'Pág. ' counter(page) ' de ' counter(pages);
       font-size: 9pt;
       padding-bottom: 5px;
       padding-right: 5px;
