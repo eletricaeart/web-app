@@ -222,35 +222,34 @@ export default function DrywallPainel() {
         let res: any[] = [];
 
         if (s.type === 'wall') {
-          // Para paredes, calculamos com base em cada seção (medida) para maior precisão
-          s.measures.forEach((m) => {
-            const netArea =
-              m.w * m.h - m.openings.reduce((acc, o) => acc + o.w * o.h, 0);
-            // Chamamos o utilitário (ajustando para a interface esperada pelo seu script original)
-            const wallRes = calculateWallMaterials({
+          // Uma única chamada com todas as seções do serviço, para que
+          // barras/chapas sejam arredondadas uma vez só no total, não
+          // seção por seção (evita comprar material a mais).
+          res = calculateWallMaterials({
+            sections: s.measures.map((m) => ({
               wallLength: m.w,
               wallHeight: m.h,
               openings: m.openings.map((o) => ({ width: o.w, height: o.h })),
-            });
-            res = [...res, ...wallRes];
-
-            // Lógica extra para Lã de Vidro (Tarefa 3 - persistência)
-            if (s.useInsulation) {
-              res.push({
-                item: 'Lã de Vidro/Pet (m²)',
-                qtd: Number(netArea.toFixed(2)),
-                unit: 'm²',
-              });
-            }
+            })),
           });
-        } else {
-          // Para forros
-          s.measures.forEach((m) => {
-            const ceilingRes = calculateCeilingMaterials({
-              width: m.w,
-              length: m.h,
+
+          // Lógica extra para Lã de Vidro (soma de todas as seções)
+          if (s.useInsulation) {
+            const totalNetArea = s.measures.reduce((acc, m) => {
+              const net =
+                m.w * m.h - m.openings.reduce((a, o) => a + o.w * o.h, 0);
+              return acc + net;
+            }, 0);
+            res.push({
+              item: 'Lã de Vidro/Pet (m²)',
+              qtd: Number(totalNetArea.toFixed(2)),
+              unit: 'm²',
             });
-            res = [...res, ...ceilingRes];
+          }
+        } else {
+          // Para forros — mesma lógica de consolidação
+          res = calculateCeilingMaterials({
+            sections: s.measures.map((m) => ({ width: m.w, length: m.h })),
           });
         }
 
