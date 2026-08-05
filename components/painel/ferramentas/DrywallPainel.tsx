@@ -22,6 +22,8 @@ import {
   SquareHalf,
   X,
   PencilSimple,
+  ShareNetwork,
+  CaretDown,
 } from '@phosphor-icons/react';
 import { calculateWallMaterials } from '@/utils/calculators/drywallWall';
 import { calculateCeilingMaterials } from '@/utils/calculators/drywallCeiling';
@@ -210,73 +212,125 @@ export default function DrywallPainel() {
     toast.success(editingRoomId ? 'Ambiente atualizado!' : 'Ambiente salvo!');
   };
 
-  // TAREFA 4: CÁLCULO CONSOLIDADO (Soma itens duplicados e unifica a lista)
-  const consolidatedMaterials = useMemo(() => {
+  // Calcula os materiais de um conjunto de serviços (usado tanto para o
+  // total geral quanto para o cálculo específico de cada ambiente —
+  // garante que os dois nunca desalinhem, porque é a mesma função).
+  const computeMaterialsForServices = (services: ServiceInstance[]) => {
     const totalsMap: Record<
       string,
       { item: string; qtd: number; unit: string }
     > = {};
 
-    rooms.forEach((r) => {
-      r.services.forEach((s) => {
-        let res: any[] = [];
+    services.forEach((s) => {
+      let res: any[] = [];
 
-        if (s.type === 'wall') {
-          // Uma única chamada com todas as seções do serviço, para que
-          // barras/chapas sejam arredondadas uma vez só no total, não
-          // seção por seção (evita comprar material a mais).
-          res = calculateWallMaterials({
-            sections: s.measures.map((m) => ({
-              wallLength: m.w,
-              wallHeight: m.h,
-              openings: m.openings.map((o) => ({ width: o.w, height: o.h })),
-            })),
-          });
+      if (s.type === 'wall') {
+        res = calculateWallMaterials({
+          sections: s.measures.map((m) => ({
+            wallLength: m.w,
+            wallHeight: m.h,
+            openings: m.openings.map((o) => ({ width: o.w, height: o.h })),
+          })),
+        });
 
-          // Lógica extra para Lã de Vidro (soma de todas as seções)
-          if (s.useInsulation) {
-            const totalNetArea = s.measures.reduce((acc, m) => {
-              const net =
-                m.w * m.h - m.openings.reduce((a, o) => a + o.w * o.h, 0);
-              return acc + net;
-            }, 0);
-            res.push({
-              item: 'Lã de Vidro/Pet (m²)',
-              qtd: Number(totalNetArea.toFixed(2)),
-              unit: 'm²',
-            });
-          }
-        } else {
-          // Para forros — mesma lógica de consolidação
-          res = calculateCeilingMaterials({
-            sections: s.measures.map((m) => ({ width: m.w, length: m.h })),
+        if (s.useInsulation) {
+          const totalNetArea = s.measures.reduce((acc, m) => {
+            const net =
+              m.w * m.h - m.openings.reduce((a, o) => a + o.w * o.h, 0);
+            return acc + net;
+          }, 0);
+          res.push({
+            item: 'Lã de Vidro/Pet (m²)',
+            qtd: Number(totalNetArea.toFixed(2)),
+            unit: 'm²',
           });
         }
-
-        // Agrupamento e Soma
-        res.forEach((m) => {
-          // Ignoramos o item de "Área Total" da soma de materiais para não poluir a lista técnica
-          if (m.item.toLocaleLowerCase().includes('área total')) return;
-
-          if (totalsMap[m.item]) {
-            totalsMap[m.item].qtd += Number(m.qtd);
-          } else {
-            totalsMap[m.item] = {
-              item: m.item,
-              qtd: Number(m.qtd),
-              unit: m.unit,
-            };
-          }
+      } else {
+        res = calculateCeilingMaterials({
+          sections: s.measures.map((m) => ({ width: m.w, length: m.h })),
         });
+      }
+
+      res.forEach((m) => {
+        if (m.item.toLocaleLowerCase().includes('área total')) return;
+        if (totalsMap[m.item]) {
+          totalsMap[m.item].qtd += Number(m.qtd);
+        } else {
+          totalsMap[m.item] = {
+            item: m.item,
+            qtd: Number(m.qtd),
+            unit: m.unit,
+          };
+        }
       });
     });
 
-    // Retorna o mapa como array, formatando as quantidades para 2 casas decimais se não forem inteiros
     return Object.values(totalsMap).map((m) => ({
       ...m,
       qtd: Number.isInteger(m.qtd) ? m.qtd : Number(m.qtd.toFixed(2)),
     }));
+  };
+
+  // TAREFA 4: CÁLCULO CONSOLIDADO (todos os ambientes juntos)
+  const consolidatedMaterials = useMemo(() => {
+    const allServices = rooms.flatMap((r) => r.services);
+    return computeMaterialsForServices(allServices);
   }, [rooms]);
+
+  // Materiais específicos de cada ambiente, individualmente
+  const roomMaterials = useMemo(() => {
+    const map: Record<
+      string,
+      ReturnType<typeof computeMaterialsForServices>
+    > = {};
+    rooms.forEach((r) => {
+      map[r.id] = computeMaterialsForServices(r.services);
+    });
+    return map;
+  }, [rooms]);
+
+  const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
+
+  // Monta o texto formatado (regras de negrito do WhatsApp com *asteriscos*)
+  // para compartilhamento do documento completo.
+  const buildShareText = () => {
+    let text = `*ELÉTRICA & ART*\n*Estimativa de Materiais — Drywall*\n\n`;
+
+    rooms.forEach((room) => {
+      text += `*${room.name.toUpperCase()}*\n`;
+      (roomMaterials[room.id] || []).forEach((m) => {
+        text += `• ${m.item}: ${m.qtd} ${m.unit}\n`;
+      });
+      text += `\n`;
+    });
+
+    text += `*TOTAL GERAL*\n`;
+    consolidatedMaterials.forEach((m) => {
+      text += `• ${m.item}: ${m.qtd} ${m.unit}\n`;
+    });
+
+    return text;
+  };
+
+  const handleShareDocument = async () => {
+    if (rooms.length === 0) {
+      toast.warning('Adicione ao menos um ambiente antes de compartilhar.');
+      return;
+    }
+
+    const text = buildShareText();
+
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ text });
+        return;
+      } catch {
+        // Usuário cancelou o compartilhamento nativo — segue pro fallback
+      }
+    }
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   const currentLiveArea = useMemo(() => {
     return activeMeasures.reduce((acc, m) => {
@@ -295,7 +349,7 @@ export default function DrywallPainel() {
         tag="page"
         className={`p-4 bg-slate-50 min-h-[calc(100dvh_-_72px)] pb-40 ${isDrawerOpen ? 'hidden' : 'block'}`}
       >
-        <header className="mb-6 text-center">
+        <header className="mb-6 text-center relative">
           <SquareHalf
             size={48}
             weight="duotone"
@@ -307,6 +361,16 @@ export default function DrywallPainel() {
           <p className="text-slate-500 text-sm italic">
             Cálculos baseados em padrões técnicos ABNT
           </p>
+
+          {rooms.length > 0 && (
+            <Button
+              onClick={handleShareDocument}
+              className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-11 px-6"
+            >
+              <ShareNetwork size={18} weight="bold" className="mr-2" />
+              Compartilhar Documento
+            </Button>
+          )}
         </header>
 
         <View tag="listagem-de-ambientes" className="space-y-6 mb-12">
@@ -349,7 +413,7 @@ export default function DrywallPainel() {
               </div>
 
               {/* Serviços dentro deste ambiente */}
-              <div className="space-y-3">
+              <div className="space-y-3 mb-3">
                 {room.services.map((s) => (
                   <div
                     key={s.id}
@@ -385,6 +449,38 @@ export default function DrywallPainel() {
                   </div>
                 ))}
               </div>
+
+              {/* Materiais específicos deste ambiente (colapsável) */}
+              <button
+                type="button"
+                onClick={() =>
+                  setExpandedRoomId(expandedRoomId === room.id ? null : room.id)
+                }
+                className="w-full flex items-center justify-between text-[11px] font-bold text-indigo-500 uppercase tracking-widest py-2"
+              >
+                Materiais deste ambiente
+                <CaretDown
+                  size={14}
+                  weight="bold"
+                  className={`transition-transform ${expandedRoomId === room.id ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {expandedRoomId === room.id && (
+                <div className="bg-indigo-50/50 rounded-xl p-3 space-y-2 mt-1">
+                  {(roomMaterials[room.id] || []).map((m, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center text-xs"
+                    >
+                      <span className="text-slate-600">{m.item}</span>
+                      <span className="font-bold text-indigo-700">
+                        {m.qtd} {m.unit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </View>
           ))}
         </View>
