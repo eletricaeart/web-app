@@ -11,8 +11,10 @@ import View from '@/components/layout/View';
 import { CircleNotch, Calculator } from '@phosphor-icons/react';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import * as Default_Divider from '@/components/Divider';
+import FinancialInvestmentV2Editor from './FinancialInvestmentV2Editor';
 import {
   InvestmentCategory,
+  BudgetFinancialsV2,
   getInvestmentTotal,
   formatCurrency,
   buildInvestmentClause,
@@ -83,6 +85,13 @@ export default function OrcamentoNovoPainel() {
     ],
     investmentCategories: [] as InvestmentCategory[],
     financial: { labor: 0, materials: 0, discount: 0, total: 0 },
+    financialV2: {
+      schemaVersion: 2,
+      categories: [],
+      totalLabor: 0,
+      totalMaterials: 0,
+      grandTotal: 0,
+    } as BudgetFinancialsV2,
   });
 
   const legacyClauseTotal = useMemo(() => {
@@ -101,6 +110,12 @@ export default function OrcamentoNovoPainel() {
   );
 
   const calculatedTotal = useMemo(() => {
+    if (
+      budget.financialV2?.schemaVersion === 2 &&
+      budget.financialV2?.categories?.length > 0
+    ) {
+      return (budget.financialV2.grandTotal || 0) + legacyClauseTotal;
+    }
     return (
       legacyClauseTotal +
       investmentTotal +
@@ -108,7 +123,12 @@ export default function OrcamentoNovoPainel() {
       Number(budget.financial.materials) -
       Number(budget.financial.discount)
     );
-  }, [legacyClauseTotal, investmentTotal, budget.financial]);
+  }, [
+    legacyClauseTotal,
+    investmentTotal,
+    budget.financial,
+    budget.financialV2,
+  ]);
 
   useEffect(() => {
     setBudget((prev: any) => ({
@@ -117,8 +137,7 @@ export default function OrcamentoNovoPainel() {
     }));
   }, [calculatedTotal]);
 
-  // --- SINCRONIZAÇÃO AUTOMÁTICA das seções Investimento/Resumo Financeiro,
-  // sempre que os dados do painel de Investimento (ou financeiro geral) mudam.
+  // --- SINCRONIZAÇÃO AUTOMÁTICA das seções Investimento/Resumo Financeiro
   useEffect(() => {
     const hasGenerated = budget.services.some(
       (c: any) => c.sourceType === 'investment' || c.sourceType === 'summary',
@@ -131,7 +150,10 @@ export default function OrcamentoNovoPainel() {
         if (c.sourceType === 'investment') {
           return {
             ...c,
-            items: buildInvestmentClause(prev.investmentCategories).items,
+            items: buildInvestmentClause(
+              prev.investmentCategories,
+              prev.financialV2,
+            ).items,
           };
         }
         if (c.sourceType === 'summary') {
@@ -143,6 +165,7 @@ export default function OrcamentoNovoPainel() {
               materials: Number(prev.financial.materials) || 0,
               discount: Number(prev.financial.discount) || 0,
               grandTotal: calculatedTotal,
+              v2Data: prev.financialV2,
             }).items,
           };
         }
@@ -150,7 +173,12 @@ export default function OrcamentoNovoPainel() {
       }),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [budget.investmentCategories, legacyClauseTotal, calculatedTotal]);
+  }, [
+    budget.investmentCategories,
+    budget.financialV2,
+    legacyClauseTotal,
+    calculatedTotal,
+  ]);
 
   useEffect(() => {
     if (editId && allBudgets.length > 0) {
@@ -162,6 +190,9 @@ export default function OrcamentoNovoPainel() {
   }, [editId, allBudgets]);
 
   const mapIncomingData = (data: any) => {
+    const finJson = data.financial_json || data.financial || {};
+    const isV2 = finJson.schemaVersion === 2;
+
     setBudget({
       id: data.id,
       documentTitle: data.document_title || data.documentTitle,
@@ -180,18 +211,38 @@ export default function OrcamentoNovoPainel() {
       },
       services: data.services_json || data.services,
       investmentCategories: data.investment_categories || [],
-      financial: data.financial_json || data.financial,
+      financial: isV2
+        ? {
+            labor: finJson.totalLabor,
+            materials: finJson.totalMaterials,
+            discount: 0,
+            total: finJson.grandTotal,
+          }
+        : finJson,
+      financialV2: isV2
+        ? finJson
+        : {
+            schemaVersion: 2,
+            categories: [],
+            totalLabor: Number(finJson.labor || 0),
+            totalMaterials: Number(finJson.materials || 0),
+            grandTotal: Number(finJson.total || 0),
+          },
       accessPassword: data.access_password || data.accessPassword,
     });
   };
 
   const handleInsertInvestmentClause = () => {
-    if (budget.investmentCategories.length === 0) {
+    const v2Cats = budget.financialV2?.categories || [];
+    if (budget.investmentCategories.length === 0 && v2Cats.length === 0) {
       return toast.error(
-        'Defina ao menos uma categoria no painel de Investimento primeiro.',
+        'Defina ao menos um serviço no painel de Investimento/Financeiro primeiro.',
       );
     }
-    const clause = buildInvestmentClause(budget.investmentCategories);
+    const clause = buildInvestmentClause(
+      budget.investmentCategories,
+      budget.financialV2,
+    );
     setBudget((prev: any) => ({
       ...prev,
       services: [...prev.services, clause],
@@ -199,9 +250,10 @@ export default function OrcamentoNovoPainel() {
   };
 
   const handleInsertSummaryClause = () => {
-    if (budget.investmentCategories.length === 0) {
+    const v2Cats = budget.financialV2?.categories || [];
+    if (budget.investmentCategories.length === 0 && v2Cats.length === 0) {
       return toast.error(
-        'Defina ao menos uma categoria no painel de Investimento primeiro.',
+        'Defina ao menos um serviço no painel de Investimento/Financeiro primeiro.',
       );
     }
     const clause = buildSummaryClause(budget.investmentCategories, {
@@ -210,6 +262,7 @@ export default function OrcamentoNovoPainel() {
       materials: Number(budget.financial.materials) || 0,
       discount: Number(budget.financial.discount) || 0,
       grandTotal: calculatedTotal,
+      v2Data: budget.financialV2,
     });
     setBudget((prev: any) => ({
       ...prev,
@@ -249,12 +302,21 @@ export default function OrcamentoNovoPainel() {
 
       services_json: budget.services,
       investment_categories: budget.investmentCategories,
-      financial_json: {
-        labor: Number(budget.financial.labor) || 0,
-        materials: Number(budget.financial.materials) || 0,
-        discount: Number(budget.financial.discount) || 0,
-        total: Number(calculatedTotal) || 0,
-      },
+      financial_json:
+        budget.financialV2?.categories?.length > 0
+          ? {
+              schemaVersion: 2,
+              categories: budget.financialV2.categories,
+              totalLabor: budget.financialV2.totalLabor || 0,
+              totalMaterials: budget.financialV2.totalMaterials || 0,
+              grandTotal: calculatedTotal,
+            }
+          : {
+              labor: Number(budget.financial.labor) || 0,
+              materials: Number(budget.financial.materials) || 0,
+              discount: Number(budget.financial.discount) || 0,
+              total: Number(calculatedTotal) || 0,
+            },
       access_password: accessPassword,
     };
 
@@ -378,13 +440,25 @@ export default function OrcamentoNovoPainel() {
           />
 
           <Default_Divider.default spacing="2rem" color="transparent" />
-          <h3 className="page-subtitle">Cláusulas e Itens</h3>
+          <h3 className="page-subtitle">Divisão do Investimento & Serviços</h3>
+          <FinancialInvestmentV2Editor
+            data={budget.financialV2}
+            onChange={(updatedV2) =>
+              setBudget({ ...budget, financialV2: updatedV2 })
+            }
+          />
+
+          <Default_Divider.default spacing="2rem" color="transparent" />
+          <h3 className="page-subtitle">Cláusulas e Itens do Documento</h3>
           <ClauseManager
             clauses={budget.services}
             onClausesChange={(newClauses) =>
               setBudget({ ...budget, services: newClauses })
             }
-            canInsertInvestmentSections={budget.investmentCategories.length > 0}
+            canInsertInvestmentSections={
+              budget.investmentCategories.length > 0 ||
+              (budget.financialV2?.categories?.length || 0) > 0
+            }
             onInsertInvestmentClause={handleInsertInvestmentClause}
             onInsertSummaryClause={handleInsertSummaryClause}
           />

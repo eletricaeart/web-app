@@ -228,128 +228,108 @@ export default function ClauseManager({
                       tag="subclause-content"
                       className={styles.subclauseContent}
                     >
-                      {isGenerated ? (
-                        <>
-                          {item.subtitulo && (
-                            <div className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
-                              {item.subtitulo}
-                            </div>
-                          )}
-                          <div
-                            className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3"
-                            dangerouslySetInnerHTML={{ __html: item.content }}
+                      <label className={styles.subclauseTitle}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span
+                            onClick={() =>
+                              updateItem(
+                                clause.id,
+                                item.id,
+                                'numbered',
+                                !item.numbered,
+                              )
+                            }
+                            className={`text-[10px] font-bold px-2 py-2 rounded-[.8rem] cursor-pointer ${
+                              item.numbered
+                                ? 'bg-indigo-100 text-indigo-600'
+                                : 'bg-slate-100 text-slate-400'
+                            }`}
+                          >
+                            {item.numbered ? (
+                              <ListNumbers size={20} />
+                            ) : (
+                              <Article size={20} />
+                            )}
+                          </span>
+                          <span className="label-text flex-1 ml-3">
+                            Subtítulo / Categoria
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 min-w-[46px] text-center text-xs font-bold text-slate-400 bg-slate-100 rounded-lg py-2 px-1">
+                            {item.numbered
+                              ? `${index + 1}.${++subCounter}`
+                              : ''}
+                          </span>
+                          <Input
+                            placeholder="Subtítulo (Ex: Serviços de Elétrica)"
+                            className="subclause-subtitle flex-1"
+                            value={item.subtitulo}
+                            onChange={(e) =>
+                              updateItem(
+                                clause.id,
+                                item.id,
+                                'subtitulo',
+                                e.target.value,
+                              )
+                            }
                           />
-                        </>
-                      ) : (
-                        <>
-                          <label className={styles.subclauseTitle}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span
-                                onClick={() =>
-                                  updateItem(
-                                    clause.id,
-                                    item.id,
-                                    'numbered',
-                                    !item.numbered,
-                                  )
-                                }
-                                className={`text-[10px] font-bold px-2 py-2 rounded-[.8rem] cursor-pointer ${
-                                  item.numbered
-                                    ? 'bg-indigo-100 text-indigo-600'
-                                    : 'bg-slate-100 text-slate-400'
-                                }`}
-                              >
-                                {item.numbered ? (
-                                  <ListNumbers size={20} />
-                                ) : (
-                                  <Article size={20} />
-                                )}
-                              </span>
-                              <span className="label-text flex-1 ml-3">
-                                Subtítulo
-                              </span>
-                            </div>
+                        </div>
+                      </label>
 
-                            <div className="flex items-center gap-2">
-                              <span className="shrink-0 min-w-[46px] text-center text-xs font-bold text-slate-400 bg-slate-100 rounded-lg py-2 px-1">
-                                {item.numbered
-                                  ? `${index + 1}.${++subCounter}`
-                                  : ''}
-                              </span>
-                              <Input
-                                placeholder="Subtítulo (Ex: Cozinha)"
-                                className="subclause-subtitle flex-1"
-                                value={item.subtitulo}
-                                onChange={(e) =>
-                                  updateItem(
-                                    clause.id,
-                                    item.id,
-                                    'subtitulo',
-                                    e.target.value,
-                                  )
-                                }
-                              />
-                            </div>
-                          </label>
+                      <label className={styles.subclauseHelpTips}>
+                        <span className="label-text">Descrição / Conteúdo</span>
 
-                          <label className={styles.subclauseHelpTips}>
-                            <span className="label-text">Conteúdo</span>
-
-                            <TipTapEditor
-                              value={item.content}
-                              onChange={(val: string) =>
-                                updateItem(clause.id, item.id, 'content', val)
-                              }
-                              bg="#f5f5f5"
-                              radius="9px"
-                            />
-                          </label>
-                        </>
-                      )}
+                        <TipTapEditor
+                          value={item.content}
+                          onChange={(val: string) =>
+                            updateItem(clause.id, item.id, 'content', val)
+                          }
+                          bg="#f5f5f5"
+                          radius="9px"
+                        />
+                      </label>
                     </View>
                   </View>
-                  {!isGenerated && (
+                  <View
+                    tag="subclause-options"
+                    className={styles.subclauseOptions}
+                  >
                     <View
-                      tag="subclause-options"
-                      className={styles.subclauseOptions}
+                      tag="subclause-options-overlay"
+                      className={styles.subclauseOptionsOverlay}
+                    />
+                    <View
+                      tag="btn_remove-subclause"
+                      className={styles.btn_remove_subclause}
                     >
                       <View
-                        tag="subclause-options-overlay"
-                        className={styles.subclauseOptionsOverlay}
-                      />
-                      <View
-                        tag="btn_remove-subclause"
-                        className={styles.btn_remove_subclause}
+                        tag="btn_x"
+                        style={{
+                          width: 'fit-content',
+                          display: 'flex',
+                        }}
+                        onClick={() => removeItem(clause.id, item.id)}
                       >
-                        <View
-                          tag="btn_x"
-                          style={{
-                            width: 'fit-content',
-                            display: 'flex',
-                          }}
-                          onClick={() => removeItem(clause.id, item.id)}
-                        >
-                          Excluir subcláusula
-                        </View>
+                        Excluir subcláusula
                       </View>
                     </View>
-                  )}
+                  </View>
                 </React.Fragment>
               ))}
             </View>
 
-            {!isGenerated && (
-              <View
-                tag="footer-options"
-                className="flex flex-col justify-center p-4"
-              >
-                <Pressable
-                  label="+ Adicionar Subcláusula"
-                  style={{ background: '#27f2', color: '#29f' }}
-                  onClick={() => addItem(clause.id)}
-                />
-              </View>
-            )}
+            <View
+              tag="footer-options"
+              className="flex flex-col justify-center p-4"
+            >
+              <Pressable
+                label="+ Adicionar Subcláusula"
+                style={{ background: '#27f2', color: '#29f' }}
+                onClick={() => addItem(clause.id)}
+              />
+            </View>
           </View>
         );
       })}
