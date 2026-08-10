@@ -5,6 +5,7 @@ import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Lightning } from '@phosphor-icons/react';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
+import { usePainelAuth } from '@/components/painel/auth/PainelAuthContext';
 
 interface PainelAppBarProps {
   greeting: string;
@@ -19,7 +20,8 @@ export function PainelAppBar({
   randomPhrase,
   onAvatarClick,
 }: PainelAppBarProps) {
-  const { profile } = useEASyncSupabase();
+  // const { profile } = useEASyncSupabase();
+  const { profile, signOut } = usePainelAuth();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-slate-50/90 backdrop-blur-md border-b border-slate-200/60 px-4 sm:px-6 py-3 transition-all">
