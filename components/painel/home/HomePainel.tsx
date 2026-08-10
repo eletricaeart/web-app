@@ -23,7 +23,7 @@ import {
   Wallet,
 } from '@phosphor-icons/react';
 import Page from '@/components/layout/Page';
-import { View } from '@/components/layout/View';
+import View from '@/components/layout/View';
 import Section from '@/components/layout/Section';
 
 export default function HomePainel() {
