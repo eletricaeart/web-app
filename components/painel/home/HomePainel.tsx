@@ -19,9 +19,12 @@ import {
   CaretRight,
   UserCircle,
   CalculatorIcon,
+  TrendUp,
+  Wallet,
 } from '@phosphor-icons/react';
 import Page from '@/components/layout/Page';
-// import { View } from '@/components/ui/view';
+import { View } from '@/components/layout/View';
+import Section from '@/components/layout/Section';
 
 export default function HomePainel() {
   const router = usePainelRouter();
@@ -78,6 +81,11 @@ export default function HomePainel() {
     );
   }, []);
 
+  //TODO: Lógica real de cálculo usando os dados do Supabase (`orcamentos`, `recibos`)
+  // Para exibir nos cards financeiros
+  const totalAReceber = 12450.0;
+  const totalRecebidoMes = 8320.0;
+
   return (
     <>
       <PainelAppBar
@@ -99,12 +107,51 @@ export default function HomePainel() {
             />
           </section>
 
+          {/* Nova Seção: Resumo Financeiro */}
+          <Section
+            label="Resumo Financeiro"
+            quickAction={
+              <div
+                onClick={() => router.push('recibos')}
+                className="flex text-xs font-semibold text-indigo-600 hover:text-indigo-800 items-center gap-1 transition-colors cursor-pointer"
+              >
+                <span>Ver extrato</span>
+                <ArrowRight size={14} weight="bold" />
+              </div>
+            }
+          >
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <FinancialCard
+                title="A Receber"
+                amount={new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                }).format(totalAReceber)}
+                subtitle="Faturamento previsto"
+                icon={<TrendUp size={24} weight="duotone" />}
+                colorClass="bg-amber-50"
+                textColorClass="text-amber-700"
+                iconColorClass="text-amber-600"
+              />
+              <FinancialCard
+                title="Recebido"
+                amount={new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                }).format(totalRecebidoMes)}
+                subtitle="Neste mês"
+                icon={<Wallet size={24} weight="duotone" />}
+                colorClass="bg-emerald-50"
+                textColorClass="text-emerald-700"
+                iconColorClass="text-emerald-600"
+              />
+            </div>
+          </Section>
+
           {/* Seção 1: Gestão Geral com Título à esquerda e Ação à direita */}
-          <section className="mt-6 sm:mt-8">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                Gestão Geral
-              </h2>
+          <Section
+            label="Gestão Geral"
+            quickAction={
               <div
                 onClick={() => router.push('orcamentos')}
                 className="flex text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
@@ -112,8 +159,8 @@ export default function HomePainel() {
                 <span>Ver orçamentos</span>
                 <ArrowRight size={14} weight="bold" />
               </div>
-            </div>
-
+            }
+          >
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <MenuCard
                 onClick={() => router.push('clientes')}
@@ -152,13 +199,10 @@ export default function HomePainel() {
                 count="Visualizar"
               />
             </div>
-          </section>
+          </Section>
 
           {/* Seção 2: Ferramentas Técnicas */}
-          <section className="mt-6 sm:mt-8">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">
-              Ferramentas Técnicas
-            </h3>
+          <Section label="Ferramentas Técnicas">
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div
                 className="cursor-pointer"
@@ -182,7 +226,7 @@ export default function HomePainel() {
                 </div>
               </div>
             </div>
-          </section>
+          </Section>
 
           <footer className="mt-8 pb-4">
             <Button
@@ -239,6 +283,48 @@ function QuickAction({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+interface FinancialCardProps {
+  title: string;
+  amount: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  colorClass: string;
+  textColorClass: string;
+  iconColorClass: string;
+}
+function FinancialCard({
+  title,
+  amount,
+  subtitle,
+  icon,
+  colorClass,
+  textColorClass,
+  iconColorClass,
+}: FinancialCardProps) {
+  return (
+    <Card
+      className={`${colorClass} border-none shadow-sm rounded-2xl sm:rounded-3xl overflow-hidden`}
+    >
+      <CardContent className="p-4 sm:p-5 flex flex-col gap-2">
+        <div className={`flex items-center gap-2 ${iconColorClass}`}>
+          {icon}
+          <span className="font-bold text-xs sm:text-sm uppercase tracking-wide opacity-80">
+            {title}
+          </span>
+        </div>
+        <div className={`mt-1 ${textColorClass}`}>
+          <h3 className="font-extrabold text-lg sm:text-xl xl:text-2xl tracking-tight truncate">
+            {amount}
+          </h3>
+          <p className="text-[10px] sm:text-xs font-medium opacity-70 truncate mt-0.5">
+            {subtitle}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

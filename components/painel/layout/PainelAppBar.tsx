@@ -20,7 +20,6 @@ export function PainelAppBar({
   randomPhrase,
   onAvatarClick,
 }: PainelAppBarProps) {
-  // const { profile } = useEASyncSupabase();
   const { profile, signOut } = usePainelAuth();
 
   return (
