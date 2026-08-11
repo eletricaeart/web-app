@@ -1,5 +1,7 @@
 // lib/types/investment.ts
 
+import { valorPorExtenso } from '@/lib/numberToWords';
+
 export type ServiceCategoryType =
   'eletrica' | 'pintura' | 'drywall' | 'serralheria' | 'outros';
 
@@ -11,6 +13,16 @@ export const SERVICE_CATEGORIES: { id: ServiceCategoryType; label: string }[] =
     { id: 'serralheria', label: 'Serralheria' },
     { id: 'outros', label: 'Outros Serviços' },
   ];
+
+export interface DetailedServiceItem {
+  id: string;
+  name: string;
+  description?: string;
+  quantity: number;
+  unitValue: number;
+  laborValue: number;
+  totalValue: number;
+}
 
 export interface SubClauseItem {
   id: string;
@@ -28,6 +40,7 @@ export interface CategoryBreakdown {
   materialsValue: number; // Materiais
   totalValue: number; // laborValue + materialsValue
   executionTeam?: 'propria' | 'terceirizada';
+  items?: DetailedServiceItem[]; // Lista de itens de serviços individuais
   subClauses?: SubClauseItem[]; // Sub-cláusulas ou itens detalhados
 }
 
@@ -200,16 +213,44 @@ export function buildInvestmentClause(
 ) {
   if (v2Data && v2Data.schemaVersion === 2) {
     const items = (v2Data.categories || []).map((cat) => {
+      const total =
+        cat.totalValue ||
+        Number(cat.laborValue || 0) + Number(cat.materialsValue || 0);
+      const extensoTotal = valorPorExtenso(total);
+
       let descHtml = '';
       if (cat.description) {
         descHtml += `<p style="margin-bottom: 6px; color: #334155;"><strong>Escopo:</strong> ${cat.description}</p>`;
       }
-      if (cat.laborValue || cat.materialsValue) {
-        descHtml += `<p style="font-size: 0.85rem; color: #475569; margin-top: 4px;">
-          <span>Mão de Obra: <strong>${formatCurrency(cat.laborValue)}</strong></span> | 
-          <span>Materiais: <strong>${formatCurrency(cat.materialsValue)}</strong></span>
-        </p>`;
+
+      if (cat.items && cat.items.length > 0) {
+        descHtml += `<ul style="list-style-type: none; padding: 0; margin-top: 6px; margin-bottom: 6px; font-size: 0.85rem;">`;
+        cat.items.forEach((item) => {
+          const qtyText =
+            item.quantity > 1
+              ? ` (${item.quantity}x ${formatCurrency(item.unitValue)})`
+              : '';
+          descHtml += `<li style="margin-bottom: 4px; padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span><strong>${item.name}</strong>${qtyText}</span>
+              <span style="font-weight: 600; color: #1e1b4b;">${formatCurrency(item.totalValue)}</span>
+            </div>
+            ${item.description ? `<div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">${item.description}</div>` : ''}
+          </li>`;
+        });
+        descHtml += `</ul>`;
       }
+
+      let materialsText = '';
+      if (cat.materialsValue > 0) {
+        const extensoMaterials = valorPorExtenso(cat.materialsValue);
+        materialsText = `, sendo <strong>${formatCurrency(cat.materialsValue)}</strong> (${extensoMaterials}) referente a materiais`;
+      }
+
+      descHtml += `<p style="font-size: 0.9rem; color: #1e1b4b; font-weight: 600; margin-top: 6px;">
+      Valor do Serviço: <strong>${formatCurrency(total)}</strong> (${extensoTotal})${materialsText}.
+    </p>`;
+
       if (cat.subClauses && cat.subClauses.length > 0) {
         descHtml += `<ul style="list-style-type: disc; margin-left: 18px; margin-top: 6px; font-size: 0.85rem;">`;
         cat.subClauses.forEach((sub) => {
@@ -221,35 +262,40 @@ export function buildInvestmentClause(
       return {
         id: Date.now() + Math.random(),
         subtitulo: cat.categoryLabel || `Serviços de ${cat.category}`,
-        content:
-          descHtml || `<p>Investimento referente a ${cat.categoryLabel}.</p>`,
-        price:
-          cat.totalValue ||
-          Number(cat.laborValue || 0) + Number(cat.materialsValue || 0),
+        content: descHtml,
+        price: total,
         numbered: true,
       };
     });
 
     return {
       id: Date.now(),
-      titulo: 'Investimento por Categoria de Serviço',
+      titulo: 'Investimento',
       items,
       sourceType: 'investment' as const,
     };
   }
 
   // Fallback V1
-  const items = (categories || []).map((c: any) => ({
-    id: Date.now() + Math.random(),
-    subtitulo: c.title || c.name || 'Investimento',
-    content: c.description || '<p>Descrição dos serviços inclusos.</p>',
-    price: getCategoryNetValue(c) || c.fixedValue || 0,
-    numbered: true,
-  }));
+  const items = (categories || []).map((c: any) => {
+    const val = getCategoryNetValue(c) || c.fixedValue || 0;
+    const extensoVal = valorPorExtenso(val);
+    let content = c.description || '<p>Descrição dos serviços inclusos.</p>';
+    if (val > 0) {
+      content += `<p style="margin-top: 4px; font-weight: 600;">Valor: <strong>${formatCurrency(val)}</strong> (${extensoVal})</p>`;
+    }
+    return {
+      id: Date.now() + Math.random(),
+      subtitulo: c.title || c.name || 'Investimento',
+      content,
+      price: val,
+      numbered: true,
+    };
+  });
 
   return {
     id: Date.now(),
-    titulo: 'Investimento e Condições Financeiras',
+    titulo: 'Investimento',
     items,
     sourceType: 'investment' as const,
   };
@@ -268,10 +314,28 @@ export function buildSummaryClause(
 ) {
   if (financials.v2Data && financials.v2Data.schemaVersion === 2) {
     const v2 = financials.v2Data;
-    let summaryHtml = `<div style="font-size: 0.9rem; line-height: 1.6;">
-      <p><strong>Mão de Obra Total:</strong> ${formatCurrency(v2.totalLabor)}</p>
-      <p><strong>Materiais Total:</strong> ${formatCurrency(v2.totalMaterials)}</p>
-      <p style="font-size: 1rem; color: #3730a3; font-weight: bold; margin-top: 6px;"><strong>Investimento Total:</strong> ${formatCurrency(v2.grandTotal)}</p>
+    const grandTotal = v2.grandTotal || 0;
+    const extensoGrandTotal = valorPorExtenso(grandTotal);
+
+    let summaryHtml = `<div style="font-size: 0.9rem; line-height: 1.6;">`;
+
+    (v2.categories || []).forEach((cat) => {
+      const catTotal =
+        cat.totalValue ||
+        Number(cat.laborValue || 0) + Number(cat.materialsValue || 0) ||
+        0;
+      if (catTotal > 0) {
+        const materialSuffix =
+          cat.materialsValue && cat.materialsValue > 0
+            ? ' (com material incluso)'
+            : '';
+        summaryHtml += `<p><strong>${cat.categoryLabel}:</strong> ${formatCurrency(catTotal)}${materialSuffix}</p>`;
+      }
+    });
+
+    summaryHtml += `<p style="font-size: 1.05rem; color: #3730a3; font-weight: bold; margin-top: 8px; border-top: 1px solid #e2e8f0; padding-top: 4px;">
+        <strong>VALOR TOTAL DO INVESTIMENTO:</strong> ${formatCurrency(grandTotal)} (${extensoGrandTotal})
+      </p>
     </div>`;
 
     if (v2.generalNotes) {
@@ -280,11 +344,11 @@ export function buildSummaryClause(
 
     return {
       id: Date.now(),
-      titulo: 'Resumo do Investimento',
+      titulo: 'Resumo Financeiro',
       items: [
         {
           id: Date.now() + 1,
-          subtitulo: 'Condições de Pagamento e Totais',
+          subtitulo: '',
           content: summaryHtml,
           numbered: true,
         },
@@ -298,13 +362,14 @@ export function buildSummaryClause(
   const materials = financials.materials || 0;
   const discount = financials.discount || 0;
   const grandTotal = financials.grandTotal || 0;
+  const extensoGrandTotal = valorPorExtenso(grandTotal);
 
   let content = `<p><strong>Mão de Obra:</strong> ${formatCurrency(labor)}</p>
 <p><strong>Materiais:</strong> ${formatCurrency(materials)}</p>`;
   if (discount > 0) {
     content += `<p><strong>Desconto:</strong> -${formatCurrency(discount)}</p>`;
   }
-  content += `<p style="font-size: 1rem; color: #3730a3; font-weight: bold;"><strong>TOTAL GERAL:</strong> ${formatCurrency(grandTotal)}</p>`;
+  content += `<p style="font-size: 1rem; color: #3730a3; font-weight: bold; margin-top: 6px;"><strong>TOTAL GERAL:</strong> ${formatCurrency(grandTotal)} (${extensoGrandTotal})</p>`;
 
   return {
     id: Date.now(),

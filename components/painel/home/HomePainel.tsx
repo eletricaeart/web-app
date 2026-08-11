@@ -23,8 +23,8 @@ import {
   Wallet,
 } from '@phosphor-icons/react';
 import Page from '@/components/layout/Page';
-import View from '@/components/layout/View';
 import Section from '@/components/layout/Section';
+import { formatCurrency, getInvestmentTotal } from '@/lib/types/investment';
 
 export default function HomePainel() {
   const router = usePainelRouter();
@@ -81,10 +81,50 @@ export default function HomePainel() {
     );
   }, []);
 
-  //TODO: Lógica real de cálculo usando os dados do Supabase (`orcamentos`, `recibos`)
-  // Para exibir nos cards financeiros
-  const totalAReceber = 12450.0;
-  const totalRecebidoMes = 8320.0;
+  const totalAReceber = useMemo(() => {
+    if (!orcamentos || !Array.isArray(orcamentos)) return 0;
+    return orcamentos.reduce((acc: number, orc: any) => {
+      if (orc.financialV2?.schemaVersion === 2 && orc.financialV2?.grandTotal) {
+        return acc + (Number(orc.financialV2.grandTotal) || 0);
+      }
+      if (orc.financial?.total) {
+        return acc + (Number(orc.financial.total) || 0);
+      }
+      if (orc.investmentCategories && Array.isArray(orc.investmentCategories)) {
+        return acc + getInvestmentTotal(orc.investmentCategories);
+      }
+      return acc;
+    }, 0);
+  }, [orcamentos]);
+
+  const totalRecebidoMes = useMemo(() => {
+    if (!recibos || !Array.isArray(recibos)) return 0;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return recibos.reduce((acc: number, r: any) => {
+      const rDateStr = r.issue_date || r.issueDate;
+      const val = parseFloat(
+        String(r.amount || r.value || r.total || 0).replace(',', '.'),
+      );
+      const numericVal = isNaN(val) ? 0 : val;
+
+      if (rDateStr) {
+        const d = new Date(rDateStr);
+        if (
+          !isNaN(d.getTime()) &&
+          d.getMonth() === currentMonth &&
+          d.getFullYear() === currentYear
+        ) {
+          return acc + numericVal;
+        }
+      } else {
+        return acc + numericVal;
+      }
+      return acc;
+    }, 0);
+  }, [recibos]);
 
   return (
     <>
@@ -154,7 +194,7 @@ export default function HomePainel() {
             quickAction={
               <div
                 onClick={() => router.push('orcamentos')}
-                className="flex text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                className="flex text-xs font-semibold text-indigo-600 hover:text-indigo-800 items-center gap-1 transition-colors cursor-pointer"
               >
                 <span>Ver orçamentos</span>
                 <ArrowRight size={14} weight="bold" />

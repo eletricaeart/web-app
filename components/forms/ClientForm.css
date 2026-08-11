@@ -170,9 +170,9 @@ grid-duo {
 /* } */
 
 input,
-select,
-button,
-btn {
+select
+/* button, */
+/* btn  */ {
   font-family: 'Poppins', sans-serif !important;
   height: 56px;
   width: 100%;

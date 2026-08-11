@@ -97,6 +97,16 @@ export default function OrcamentoNovoPainel() {
   const legacyClauseTotal = useMemo(() => {
     let total = 0;
     budget.services.forEach((clause: any) => {
+      if (
+        clause.sourceType === 'investment' ||
+        clause.sourceType === 'summary' ||
+        clause.titulo === 'Investimento' ||
+        clause.titulo === 'Resumo Financeiro' ||
+        clause.title === 'Investimento' ||
+        clause.title === 'Resumo Financeiro'
+      ) {
+        return;
+      }
       (clause.items || []).forEach((item: any) => {
         total += Number(item.price) || 0;
       });
@@ -440,15 +450,6 @@ export default function OrcamentoNovoPainel() {
           />
 
           <Default_Divider.default spacing="2rem" color="transparent" />
-          <h3 className="page-subtitle">Divisão do Investimento & Serviços</h3>
-          <FinancialInvestmentV2Editor
-            data={budget.financialV2}
-            onChange={(updatedV2) =>
-              setBudget({ ...budget, financialV2: updatedV2 })
-            }
-          />
-
-          <Default_Divider.default spacing="2rem" color="transparent" />
           <h3 className="page-subtitle">Cláusulas e Itens do Documento</h3>
           <ClauseManager
             clauses={budget.services}
@@ -468,65 +469,37 @@ export default function OrcamentoNovoPainel() {
             <header className="flex items-center gap-2 mb-6 text-indigo-600 font-bold uppercase text-xs tracking-widest">
               <Calculator size={20} /> Resumo Financeiro
             </header>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  Mão de Obra Adicional
-                </span>
-                <Input
-                  type="number"
-                  value={budget.financial.labor || ''}
-                  onChange={(e) =>
-                    setBudget({
-                      ...budget,
-                      financial: {
-                        ...budget.financial,
-                        labor: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  placeholder="0,00"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  Materiais
-                </span>
-                <Input
-                  type="number"
-                  value={budget.financial.materials || ''}
-                  onChange={(e) =>
-                    setBudget({
-                      ...budget,
-                      financial: {
-                        ...budget.financial,
-                        materials: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  placeholder="0,00"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-red-400 uppercase">
-                  Desconto Geral
-                </span>
-                <Input
-                  type="number"
-                  value={budget.financial.discount || ''}
-                  onChange={(e) =>
-                    setBudget({
-                      ...budget,
-                      financial: {
-                        ...budget.financial,
-                        discount: parseFloat(e.target.value) || 0,
-                      },
-                    })
-                  }
-                  placeholder="0,00"
-                  className="text-red-500 font-bold"
-                />
-              </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {budget.financialV2?.schemaVersion === 2 &&
+              (budget.financialV2?.categories?.length || 0) > 0 ? (
+                budget.financialV2.categories.map((cat: any) => (
+                  <label key={cat.id} className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                      {cat.categoryLabel || `Serviços de ${cat.category}`}
+                    </span>
+                    <Input
+                      type="text"
+                      readOnly
+                      disabled
+                      value={formatCurrency(cat.totalValue || 0)}
+                      className="bg-slate-50 font-bold text-slate-800 cursor-not-allowed border-slate-200"
+                    />
+                  </label>
+                ))
+              ) : (
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    Total dos Serviços
+                  </span>
+                  <Input
+                    type="text"
+                    readOnly
+                    disabled
+                    value={formatCurrency(calculatedTotal)}
+                    className="bg-slate-50 font-bold text-slate-800 cursor-not-allowed border-slate-200"
+                  />
+                </label>
+              )}
             </div>
             <div className="mt-6 pt-6 border-t flex justify-between items-center">
               <span className="text-slate-500 font-medium">VALOR TOTAL:</span>
@@ -562,6 +535,10 @@ export default function OrcamentoNovoPainel() {
         categories={budget.investmentCategories}
         onChange={(categories) =>
           setBudget({ ...budget, investmentCategories: categories })
+        }
+        financialV2={budget.financialV2}
+        onChangeV2={(updatedV2) =>
+          setBudget({ ...budget, financialV2: updatedV2 })
         }
         legacyClauseTotal={legacyClauseTotal}
       />

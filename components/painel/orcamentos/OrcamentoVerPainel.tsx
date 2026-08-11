@@ -158,6 +158,16 @@ export default function OrcamentoVerPainel() {
     })();
 
     const legacyTotal = servicesRaw.reduce((acc: number, clause: any) => {
+      if (
+        clause.sourceType === 'investment' ||
+        clause.sourceType === 'summary' ||
+        clause.titulo === 'Investimento' ||
+        clause.titulo === 'Resumo Financeiro' ||
+        clause.title === 'Investimento' ||
+        clause.title === 'Resumo Financeiro'
+      ) {
+        return acc;
+      }
       const itens = clause.itens || clause.items || [];
       return (
         acc +
