@@ -13,9 +13,12 @@
   gap: 6px;
   padding: 8px;
   background: #ffffff;
-  border-bottom: 1px solid #eef2f6;
+  background: #ddd;
+  border-top: 1px solid #eef2f6;
+  border-bottom: none;
   position: sticky;
-  top: 0;
+  bottom: 0;
+  top: auto;
   z-index: 50;
   overflow-x: auto;
   scrollbar-width: none; /* Firefox */
@@ -23,19 +26,6 @@
 
 .tiptap-toolbar::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
-}
-
-/* No Mobile: Toolbar grudada no teclado ou no fundo */
-@media (max-width: 768px) {
-  .tiptap-toolbar {
-    order: 2; /* Joga a barra para baixo no mobile para facilitar o toque */
-    border-bottom: none;
-    border-top: 1px solid #eef2f6;
-    position: sticky;
-    bottom: 0;
-    top: auto;
-    padding: 10px 8px;
-  }
 }
 
 /* --- ESTILIZAÇÃO INTERNA DO EDITOR --- */

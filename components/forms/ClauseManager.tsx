@@ -152,22 +152,22 @@ export default function ClauseManager({
         let subCounter = 0; // contador local, reinicia a cada cláusula
 
         const moveControls = (
-          <View className="flex flex-row gap-1 shrink-0">
+          <View className="flex flex-row gap-1 p-1 shrink-0 bg-[#48a5] rounded-[.8rem_.8rem_0_0] ml-2">
             <button
               type="button"
               onClick={() => moveClause(clause.id, 'up')}
               disabled={isFirst}
-              className="p-1 rounded-md bg-amber-200 border border-slate-200 disabled:opacity-30"
+              className="flex p-1 rounded-[.6rem_5px_0_0] w-12 h-8 items-center justify-center bg-white border border-slate-200 disabled:opacity-30"
             >
-              <CaretUp size={14} weight="bold" color="#000" />
+              <CaretUp size={14} weight="bold" color="#28a" />
             </button>
             <button
               type="button"
               onClick={() => moveClause(clause.id, 'down')}
               disabled={isLast}
-              className="p-1 rounded-md bg-amber-200 border border-slate-200 disabled:opacity-30"
+              className="flex  items-center justify-center w-12 h-8 p-1 rounded-[5px_.6rem_0_0] bg-white border border-slate-200 disabled:opacity-30"
             >
-              <CaretDown size={14} weight="bold" color="#000" />
+              <CaretDown size={14} weight="bold" color="#28a" />
             </button>
           </View>
         );
@@ -176,14 +176,11 @@ export default function ClauseManager({
           <View
             tag="clause"
             key={clause.id}
-            className="bg-[#e5e5e5] dark:bg-slate-800"
+            className="bg-[#e5e5e500] dark:bg-slate-800"
           >
             <View tag="clause-options" className={styles.clauseOptions}>
               <View className="flex items-center gap-2">
                 {moveControls}
-                <View tag="label-text" className={styles.labelTitle}>
-                  Título
-                </View>
                 {isGenerated && (
                   <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-1 rounded-full">
                     <Lock size={11} weight="bold" /> Sincronizado com o
@@ -229,7 +226,7 @@ export default function ClauseManager({
                       className={styles.subclauseContent}
                     >
                       <label className={styles.subclauseTitle}>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap- bg-[#e5e5e5] text-center text-xs font-bold text-slate-400 rounded-[1.2rem]">
                           <span
                             onClick={() =>
                               updateItem(
@@ -239,32 +236,17 @@ export default function ClauseManager({
                                 !item.numbered,
                               )
                             }
-                            className={`text-[10px] font-bold px-2 py-2 rounded-[.8rem] cursor-pointer ${
-                              item.numbered
-                                ? 'bg-indigo-100 text-indigo-600'
-                                : 'bg-slate-100 text-slate-400'
-                            }`}
+                            className="flex items-center justify-center shrink-0 w-9 bg-none py-2 px-2"
                           >
                             {item.numbered ? (
-                              <ListNumbers size={20} />
+                              `${index + 1}.${++subCounter}`
                             ) : (
                               <Article size={20} />
                             )}
                           </span>
-                          <span className="label-text flex-1 ml-3">
-                            Subtítulo / Categoria
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="shrink-0 min-w-[46px] text-center text-xs font-bold text-slate-400 bg-slate-100 rounded-lg py-2 px-1">
-                            {item.numbered
-                              ? `${index + 1}.${++subCounter}`
-                              : ''}
-                          </span>
                           <Input
                             placeholder="Subtítulo (Ex: Serviços de Elétrica)"
-                            className="subclause-subtitle flex-1"
+                            className="subclause-subtitle flex-1 bg-[#fff_!important] rounded-[1.1rem_!important]"
                             value={item.subtitulo}
                             onChange={(e) =>
                               updateItem(
@@ -278,18 +260,16 @@ export default function ClauseManager({
                         </div>
                       </label>
 
-                      <label className={styles.subclauseHelpTips}>
-                        <span className="label-text">Descrição / Conteúdo</span>
-
+                      <div className={styles.subclauseHelpTips}>
                         <TipTapEditor
                           value={item.content}
                           onChange={(val: string) =>
                             updateItem(clause.id, item.id, 'content', val)
                           }
                           bg="#f5f5f5"
-                          radius="9px"
+                          radius="1rem"
                         />
-                      </label>
+                      </div>
                     </View>
                   </View>
                   <View

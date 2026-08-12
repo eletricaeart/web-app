@@ -143,9 +143,11 @@ export default function TipTapEditor({
   return (
     <div
       className="tiptap-container relative border border-slate-100 shadow-inner overflow-hidden"
-      style={{ background: bg, borderRadius: radius }}
+      style={{ background: '#fff' || bg, borderRadius: radius }}
     >
-      <div className="tiptap-toolbar flex items-center gap-1 p-2 border-b border-slate-200 bg-white sticky top-0 z-20 overflow-x-auto">
+      <EditorContent editor={editor} />
+
+      <div className="tiptap-toolbar flex items-center gap-1 p-2 border-t border-slate-200 bg-white sticky bottom-0 z-20 overflow-x-auto">
         <MenuButton
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 3 }).run()
@@ -249,8 +251,6 @@ export default function TipTapEditor({
           <ArrowUUpRight size={18} />
         </MenuButton>
       </div>
-
-      <EditorContent editor={editor} />
     </div>
   );
 }
