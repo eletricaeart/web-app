@@ -391,7 +391,7 @@ export default function OrcamentoNovoPainel() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full h-[45px] justify-start border-[#ccc]"
+                      className="w-full h-[45px] justify-start border-[#ccc0] bg-[#f5f5f5] text-slate-800"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {format(getSelectedDate(), 'dd/MM/yyyy')}
@@ -420,7 +420,7 @@ export default function OrcamentoNovoPainel() {
                   value={budget.expiration}
                   onValueChange={(v) => setBudget({ ...budget, expiration: v })}
                 >
-                  <SelectTrigger className="w-full h-[45px] border-[#ccc]">
+                  <SelectTrigger className="w-full h-[45px_!important] border-[#ccc0] bg-[#f5f5f5] text-sla800">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

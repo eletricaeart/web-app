@@ -1,7 +1,7 @@
 // components/painel/orcamentos/InvestmentDrawer.tsx
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Wallet,
   CaretUp,
@@ -68,6 +68,18 @@ export default function InvestmentDrawer({
     : getInvestmentTotal(categories) + legacyClauseTotal;
 
   const [expanded, setExpanded] = useState(false);
+
+  // Bloqueia rolagem vertical da página quando o painel estiver aberto
+  useEffect(() => {
+    if (expanded) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [expanded]);
 
   // Estado do Drawer interno / Modal "Novo Serviço"
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
@@ -343,6 +355,15 @@ export default function InvestmentDrawer({
 
   return (
     <>
+      {/* Backdrop overlay para bloquear interações com a página e minimizar o painel ao clicar fora */}
+      {expanded && (
+        <div
+          className="fixed inset-0 z-[55] bg-slate-950/40 backdrop-blur-[2px] transition-opacity duration-300"
+          onClick={() => setExpanded(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <div
         className="fixed bottom-0 left-0 right-0 z-[60] bg-[#f8fafc] dark:bg-slate-900 rounded-t-[2.5rem] shadow-[0_-10px_30px_rgba(0,0,0,0.22)] border-t border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 ease-out"
         style={{
