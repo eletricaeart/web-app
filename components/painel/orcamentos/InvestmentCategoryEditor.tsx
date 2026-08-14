@@ -147,11 +147,9 @@ export default function InvestmentCategoryEditor({
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  updateCategory(category.id, { mode: 'itemized' })
-                }
+                onClick={() => updateCategory(category.id, { mode: 'items' })}
                 className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${
-                  category.mode === 'itemized'
+                  category.mode === 'items'
                     ? 'bg-white shadow-sm text-indigo-600'
                     : 'text-slate-400'
                 }`}
