@@ -37,16 +37,26 @@ export function ThemeProvider({
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
 
+    let activeTheme = theme;
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
         .matches
         ? 'dark'
         : 'light';
       root.classList.add(systemTheme);
-      return;
+      activeTheme = systemTheme;
+    } else {
+      root.classList.add(theme);
     }
 
-    root.classList.add(theme);
+    // Atualiza dinamicamente a cor da statusbar no Android / Chrome
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute(
+        'content',
+        activeTheme === 'dark' ? '#0f172a' : '#f8fafc',
+      );
+    }
   }, [theme]);
 
   const value = {
