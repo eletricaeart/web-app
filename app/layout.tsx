@@ -30,7 +30,10 @@ const godOfThunder = localFont({
 });
 
 export const viewport: Viewport = {
-  themeColor: '#00559c',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
 };
 
 export const metadata: Metadata = {

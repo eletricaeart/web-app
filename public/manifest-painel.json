@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a1128",
-  "theme_color": "#00559c",
+  "theme_color": "#f8fafc",
   "icons": [
     {
       "src": "/pix/painel-icons/icon-192.png",
