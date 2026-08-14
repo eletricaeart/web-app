@@ -143,11 +143,11 @@ export default function TipTapEditor({
   return (
     <div
       className="tiptap-container relative border border-slate-100 shadow-inner overflow-hidden"
-      style={{ background: '#fff' || bg, borderRadius: radius }}
+      style={{ background: '#ffffff', borderRadius: radius }}
     >
       <EditorContent editor={editor} />
 
-      <div className="tiptap-toolbar flex items-center gap-1 p-2 border-t border-slate-200 bg-white sticky bottom-0 z-20 overflow-x-auto">
+      <div className="tiptap-toolbar flex items-center gap-1 p-2 border-t border-slate-200 bg-[#f1f5f9] sticky bottom-0 z-20 overflow-x-auto">
         <MenuButton
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 3 }).run()
