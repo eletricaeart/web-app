@@ -19,9 +19,12 @@ import OrcamentosPainel from '@/components/painel/orcamentos/OrcamentosPainel';
 import OrcamentoNovoPainel from '@/components/painel/orcamentos/OrcamentoNovoPainel';
 import OrcamentoVerPainel from '@/components/painel/orcamentos/OrcamentoVerPainel';
 import DrywallPainel from '@/components/painel/ferramentas/DrywallPainel';
+import FerramentasPainel from '@/components/painel/ferramentas/FerramentasPainel';
 import AdminsPainel from '@/components/painel/admins/AdminsPainel';
 import ConfiguracoesPainel from '@/components/painel/configuracoes/ConfiguracoesPainel';
 import NotaVerPainel from '@/components/painel/notas/NotaVerPainel';
+import ServicosPainel from '@/components/painel/servicos/ServicosPainel';
+import ServicoEditorPainel from '@/components/painel/servicos/ServicoEditorPainel';
 
 /**
  * Tabela de seções do painel.
@@ -46,10 +49,14 @@ const routes: Record<string, React.ComponentType> = {
   orcamentos: OrcamentosPainel,
   'orcamentos.novo': OrcamentoNovoPainel,
   'orcamentos.ver': OrcamentoVerPainel,
+  ferramentas: FerramentasPainel,
   'ferramentas.drywall': DrywallPainel,
   admins: AdminsPainel,
   configuracoes: ConfiguracoesPainel,
   'notas.ver': NotaVerPainel,
+  servicos: ServicosPainel,
+  'servicos.novo': ServicoEditorPainel,
+  'servicos.editar': ServicoEditorPainel,
   // ...
 };
 

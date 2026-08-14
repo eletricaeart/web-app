@@ -1,11 +1,13 @@
 // components/painel/equipe/EquipePainel.tsx
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
-import AppBar from '@/components/layout/AppBar';
-import View from '@/components/layout/View';
+import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
+import PageHeader from '@/components/layout/PageHeader';
+import Page from '@/components/layout/Page';
+import EntityToolbar from '@/components/EntityToolbar';
 import ClientGhostAvatar from '@/components/painel/clientes/ClientGhostAvatar';
 import FAB from '@/components/ui/FAB';
 import {
@@ -34,6 +36,7 @@ export default function EquipePainel() {
   const { data: orcamentos } =
     useEASyncSupabase<RegistroComOwner>('orcamentos');
   const { data: notas } = useEASyncSupabase<RegistroComOwner>('notas');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const activityByUser = useMemo(() => {
     const map: Record<string, { budgets: number; notes: number }> = {};
@@ -46,12 +49,49 @@ export default function EquipePainel() {
     return map;
   }, [users, orcamentos, notas]);
 
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm.trim()) return users;
+    const term = searchTerm.toLowerCase().trim();
+    return users.filter(
+      (u) =>
+        (u.name || '').toLowerCase().includes(term) ||
+        (u.role || '').toLowerCase().includes(term),
+    );
+  }, [users, searchTerm]);
+
   return (
     <>
-      <AppBar title="Minha Equipe" backAction={() => router.push('home')} />
+      <PainelAppBar
+        title="Minha Equipe"
+        backAction={() => router.push('home')}
+      />
 
-      <View tag="page" className="p-4 pb-24 bg-slate-50 min-h-screen">
-        <div className="flex flex-col gap-3">
+      <Page tag="equipe-page" hasBottomNavBar bg="#f8fafc">
+        {/* Header estático com título da página */}
+        <div className="pt-4 px-4 sm:px-6 max-w-5xl mx-auto w-full">
+          <PageHeader
+            title="Minha Equipe"
+            subtitle="Gerenciamento de membros, técnicos e permissões de acesso"
+            badge={
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                {users.length} {users.length === 1 ? 'membro' : 'membros'}
+              </span>
+            }
+          />
+        </div>
+
+        {/* Toolbar de Busca FIXA/STICKY imediatamente abaixo da AppBar */}
+        <div className="sticky top-[64px] sm:top-[68px] z-30 w-full bg-slate-50/95 backdrop-blur-md transition-all border-b border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2">
+            <EntityToolbar
+              placeholder="Buscar membro ou cargo..."
+              searchValue={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </div>
+        </div>
+
+        <main className="p-4 sm:p-6 pb-24 max-w-5xl mx-auto w-full flex flex-col gap-3">
           {loading && (
             <p className="text-center opacity-50">Carregando equipe...</p>
           )}
@@ -59,7 +99,7 @@ export default function EquipePainel() {
             <p className="text-center opacity-50">Nenhum membro encontrado.</p>
           )}
 
-          {users.map((u) => {
+          {filteredUsers.map((u) => {
             const activity = activityByUser[u.id] || { budgets: 0, notes: 0 };
 
             return (
@@ -99,8 +139,14 @@ export default function EquipePainel() {
               </div>
             );
           })}
-        </div>
-      </View>
+
+          {!loading && users.length > 0 && filteredUsers.length === 0 && (
+            <div className="text-center py-16 opacity-40">
+              <p>Nenhum membro corresponde à busca.</p>
+            </div>
+          )}
+        </main>
+      </Page>
 
       <FAB
         actions={[

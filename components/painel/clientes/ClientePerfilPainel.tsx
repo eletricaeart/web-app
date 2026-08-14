@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import AppBar from '@/components/layout/AppBar';
@@ -25,6 +26,10 @@ import {
   ChartLineUp,
   Clock,
   CalendarPlus,
+  CaretRight,
+  Copy,
+  CheckCircle,
+  Plus,
 } from '@phosphor-icons/react';
 import { Mask } from '@/utils/mask';
 import { getNameGradient } from '@/lib/avatarColor';
@@ -228,10 +233,15 @@ export default function ClientePerfilPainel() {
     }
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
+  };
+
   if (!client)
     return (
-      <View tag="page" className="p-10 text-center">
-        Carregando perfil...
+      <View tag="page" className="p-10 text-center text-slate-500">
+        Carregando perfil do cliente...
       </View>
     );
 
@@ -247,119 +257,123 @@ export default function ClientePerfilPainel() {
         options={
           <Popover>
             <PopoverTrigger asChild>
-              <button
-                style={{ background: 'none', border: 'none', color: 'white' }}
-              >
-                <DotsThreeOutlineVertical size={26} weight="bold" />
+              <button className="bg-black/20 hover:bg-black/30 p-2 rounded-full backdrop-blur-md text-white transition-all">
+                <DotsThreeOutlineVertical size={24} weight="bold" />
               </button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-52 p-0 bg-white shadow-xl border-none z-[10000] overflow-hidden"
+              className="w-56 p-1.5 bg-white shadow-2xl rounded-2xl border border-slate-100 z-[10000] overflow-hidden"
               align="end"
             >
-              <View className="flex flex-col">
+              <div className="flex flex-col gap-0.5">
                 {[
                   {
-                    label: ' Editar Perfil',
-                    icon: <Pen size={20} color="#29f" weight="duotone" />,
+                    label: 'Editar Cliente',
+                    icon: (
+                      <Pen
+                        size={18}
+                        className="text-indigo-600"
+                        weight="duotone"
+                      />
+                    ),
                     option: () =>
                       router.push('clientes.novo', { id: client.id }),
                   },
                   {
                     label: 'Novo Orçamento',
-                    icon: <FilePlus size={20} color="#29f" weight="duotone" />,
+                    icon: (
+                      <FilePlus
+                        size={18}
+                        className="text-emerald-600"
+                        weight="duotone"
+                      />
+                    ),
                     option: () =>
                       router.push('orcamentos.novo', { clienteId: client.id }),
                   },
                   {
                     label: 'Nova Nota Técnica',
-                    icon: <Notebook size={20} color="#29f" weight="duotone" />,
+                    icon: (
+                      <Notebook
+                        size={18}
+                        className="text-amber-600"
+                        weight="duotone"
+                      />
+                    ),
                     option: () =>
                       router.push('notas.novo', { clienteId: client.id }),
                   },
-                  {
-                    label: 'Excluir Cliente',
-                    icon: <Trash size={20} color="#932" weight="duotone" />,
-                    className:
-                      'menu-item-pop w-full p-2 flex items-center cursor-pointer text-red-500 border-t border-slate-300 bg-red-100',
-                    option: () => handleDeleteRequest(client.id, client.name),
-                  },
                 ].map((O, i) => (
-                  <View
+                  <button
                     key={i}
-                    tag="appbar-btn"
-                    className={
-                      O.className ||
-                      'menu-item-pop w-full p-2 flex items-center cursor-pointer'
-                    }
+                    className="w-full px-3 py-2.5 flex items-center gap-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-all"
                     onClick={O.option}
                   >
-                    <span className="w-full flex p-2 items-center gap-4">
-                      {O.icon} {O.label}
-                    </span>
-                  </View>
+                    {O.icon}
+                    <span>{O.label}</span>
+                  </button>
                 ))}
-              </View>
+
+                <button
+                  className="w-full px-3 py-2.5 flex items-center gap-3 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-all border-t border-slate-100 mt-1"
+                  onClick={() => handleDeleteRequest(client.id, client.name)}
+                >
+                  <Trash size={18} className="text-red-500" weight="duotone" />
+                  <span>Excluir Cliente</span>
+                </button>
+              </div>
             </PopoverContent>
           </Popover>
         }
       />
 
-      <View
-        tag="client-page"
-        className="client-perfil-page absolute top-0 w-full bg-slate-50 min-h-[95dvh] pb-40"
-      >
-        {/* --- CAPA (gradiente único por cliente) --- */}
-        <View
-          tag="avatar-section"
-          className="relative min-h-[190px] text-white"
+      <div className="client-perfil-page absolute top-0 w-full bg-slate-50 min-h-[100dvh] pb-32">
+        {/* --- CAPA HERO --- */}
+        <div
+          className="relative min-h-[180px] sm:min-h-[220px] text-white flex flex-col justify-end p-6"
           style={{ background: coverGradient }}
         >
-          <View
-            tag="client-links"
-            className="absolute bottom-4 left-0 z-20 w-full pt-0 pb-[2rem] px-6"
-          >
-            <View
-              tag="contact-shortcuts"
-              className="flex items-center justify-end w-full gap-3"
-            >
+          {/* Ações Rápidas Flutuantes */}
+          <div className="flex items-center justify-end w-full gap-2.5 z-20">
+            {client.whatsapp && (
               <Link
                 href={`https://wa.me/${client.whatsapp}`}
                 target="_blank"
-                className="bg-white/95 p-3 rounded-full shadow-lg backdrop-blur"
+                className="bg-white/90 hover:bg-white p-3 rounded-full shadow-lg backdrop-blur-md transition-transform active:scale-95"
               >
                 <WhatsappLogo
                   size={20}
                   weight="duotone"
-                  className="text-green-500"
+                  className="text-green-600"
                 />
               </Link>
+            )}
+            {client.whatsapp && (
               <Link
                 href={`tel:${client.whatsapp}`}
-                className="bg-white/95 p-3 rounded-full shadow-lg backdrop-blur"
+                className="bg-white/90 hover:bg-white p-3 rounded-full shadow-lg backdrop-blur-md transition-transform active:scale-95"
               >
-                <Phone size={20} weight="duotone" className="text-gray-800" />
+                <Phone size={20} weight="duotone" className="text-slate-800" />
               </Link>
+            )}
+            {client.email && (
               <Link
                 href={`mailto:${client.email}`}
-                className="bg-white/95 p-3 rounded-full shadow-lg backdrop-blur"
+                className="bg-white/90 hover:bg-white p-3 rounded-full shadow-lg backdrop-blur-md transition-transform active:scale-95"
               >
                 <EnvelopeSimple
                   size={20}
                   weight="duotone"
-                  className="text-blue-500"
+                  className="text-blue-600"
                 />
               </Link>
-            </View>
-          </View>
-        </View>
+            )}
+          </div>
+        </div>
 
-        {/* --- AVATAR SOBREPOSTO + NOME --- */}
-        <View
-          tag="avatar-section-bottom"
-          className="flex relative w-full h-24 mt-[-2rem] bg-slate-50 rounded-[2rem_2rem_0_0]"
-        >
-          <View className="flex w-full px-4 absolute top-[-40%] gap-4 items-center">
+        {/* --- AVATAR E IDENTIFICAÇÃO --- */}
+        <div className="relative w-full px-4 sm:px-6 max-w-5xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14 mb-4">
             <input
               ref={fileInputRef}
               type="file"
@@ -367,194 +381,408 @@ export default function ClientePerfilPainel() {
               className="hidden"
               onChange={handlePhotoUpload}
             />
-            <View className="z-30">
-              <ClientGhostAvatar
-                name={client.name}
-                gender={client.gender}
-                photoUrl={clientAvatar}
-                size={96}
-                onUploadClick={() => fileInputRef.current?.click()}
-                uploading={uploadingPhoto}
-              />
-            </View>
-            <View className="flex flex-col w-full h-24 justify-end flex-1 pb-0 min-w-0">
-              <h3 className="text-2xl text-slate-900 capitalize font-bold line-clamp-1 truncate">
-                {client.name}
-              </h3>
-              <p className="opacity-80 text-sm text-slate-400 capitalize font-bold line-clamp-1 truncate">
-                {client.city || client.cidade || 'Cidade não informada'}
-              </p>
-            </View>
-          </View>
-        </View>
 
-        {/* --- ESTATÍSTICAS PREMIUM --- */}
-        <View className="px-4 mt-3 mb-2">
-          <View className="grid grid-cols-2 gap-3">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              className="z-30 relative self-start"
+            >
+              <div className="p-1 bg-white rounded-3xl shadow-xl">
+                <ClientGhostAvatar
+                  name={client.name}
+                  gender={client.gender}
+                  photoUrl={clientAvatar}
+                  size={96}
+                  onUploadClick={() => fileInputRef.current?.click()}
+                  uploading={uploadingPhoto}
+                />
+              </div>
+            </motion.div>
+
+            <div className="flex-1 min-w-0 pb-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 capitalize tracking-tight truncate">
+                  {client.name}
+                </h1>
+                <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Ativo
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm font-medium text-slate-500 flex items-center gap-1.5 mt-0.5">
+                <MapPin size={15} className="text-slate-400" />
+                {client.city || client.cidade || 'Cidade não informada'}
+                {(client.neighborhood || client.bairro) &&
+                  ` • ${client.neighborhood || client.bairro}`}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  router.push('orcamentos.novo', { clienteId: client.id })
+                }
+                className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <Plus size={16} weight="bold" />
+                Novo Orçamento
+              </button>
+            </div>
+          </div>
+
+          {/* --- CARDS DE ESTATÍSTICAS / KPIS --- */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 my-5">
             <StatCard
-              icon={<Wallet size={18} weight="duotone" />}
-              label="Total investido"
+              icon={<Wallet size={20} weight="duotone" />}
+              label="Total em Propostas"
               value={formatCurrency(stats.totalInvestido)}
               accent="emerald"
             />
             <StatCard
-              icon={<Receipt size={18} weight="duotone" />}
+              icon={<Receipt size={20} weight="duotone" />}
               label="Orçamentos"
               value={String(stats.totalOrcamentos)}
               accent="indigo"
             />
             <StatCard
-              icon={<ChartLineUp size={18} weight="duotone" />}
-              label="Ticket médio"
+              icon={<ChartLineUp size={20} weight="duotone" />}
+              label="Ticket Médio"
               value={formatCurrency(stats.ticketMedio)}
               accent="amber"
             />
             <StatCard
-              icon={<Clock size={18} weight="duotone" />}
-              label="Última interação"
+              icon={<Clock size={20} weight="duotone" />}
+              label="Última Interação"
               value={formatShortDate(stats.ultimaInteracao)}
               accent="sky"
             />
-          </View>
+          </div>
 
-          {stats.clienteDesde && (
-            <View className="flex items-center gap-2 mt-3 text-xs text-slate-400 font-medium px-1">
-              <CalendarPlus size={14} weight="bold" />
-              Cliente desde {formatShortDate(stats.clienteDesde)}
-            </View>
-          )}
-        </View>
+          {/* --- NAVEGAÇÃO POR ABAS ANIMADAS --- */}
+          <div className="bg-slate-200/80 p-1 rounded-2xl flex gap-1 mb-5">
+            {[
+              {
+                id: 'infos',
+                label: 'Dados de Contato',
+                icon: <IdentificationCard size={18} weight="duotone" />,
+              },
+              {
+                id: 'budgets',
+                label: `Orçamentos (${historicoOrcamentos.length})`,
+                icon: <FileText size={18} weight="duotone" />,
+              },
+              {
+                id: 'notes',
+                label: `Notas Técnicas (${historicoNotas.length})`,
+                icon: <Note size={18} weight="duotone" />,
+              },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as Tab_)}
+                  className={`relative flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+                    isActive
+                      ? 'text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="clientActiveTab"
+                      className="absolute inset-0 bg-white rounded-xl shadow-sm"
+                      transition={{
+                        type: 'spring',
+                        bounce: 0.15,
+                        duration: 0.4,
+                      }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    {tab.icon}
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* --- ABAS --- */}
-        <View className="grid grid-cols-3 text-sm bg-[#e5e5e5] rounded-[1rem_1rem_0_0] px-3 pt-3 pb-[1rem] mt-4">
-          {(['infos', 'budgets', 'notes'] as Tab_[]).map((t) => (
-            <View
-              key={t}
-              className="grid place-items-center p-2 rounded-[.7rem_.7rem_0_0] transition-colors"
-              style={{
-                background: activeTab === t ? '#fff' : '#f5f5f5',
-                color: activeTab === t ? '#666' : '#999',
-                fontWeight: activeTab === t ? 'bold' : '600',
-              }}
-              onClick={() => setActiveTab(t)}
-            >
-              {t === 'infos'
-                ? 'Informações'
-                : t === 'budgets'
-                  ? 'Orçamentos'
-                  : 'Notas'}
-            </View>
-          ))}
-        </View>
-
-        <View className="flex flex-col gap-4 mt-[-1rem] rounded-[1rem_1rem_0_0] overflow-hidden">
-          {activeTab === 'infos' && (
-            <InfoSection
-              title="Dados do contato"
-              icon={<IdentificationCard size={18} weight="duotone" />}
-            >
-              <InfoItem
-                icon={
-                  <WhatsappLogo
-                    size={25}
-                    weight="duotone"
-                    className="text-green-500"
-                  />
-                }
-                txt={Mask.phone(client.whatsapp || '')}
-                fallTxt="Não informado"
-              />
-              <InfoItem
-                icon={
-                  <EnvelopeSimple
-                    size={25}
-                    weight="duotone"
-                    className="text-blue-500"
-                  />
-                }
-                txt={client.email}
-              />
-              <InfoItem
-                icon={
-                  <MapPin size={25} weight="duotone" className="text-red-500" />
-                }
-                txt={`${client.street || client.rua || ''}, ${client.number || client.num || ''} - ${client.neighborhood || client.bairro || ''}`}
-              />
-            </InfoSection>
-          )}
-
-          {activeTab === 'budgets' && (
-            <InfoSection
-              title="Orçamentos"
-              icon={<FileText size={18} weight="duotone" />}
-            >
-              {historicoOrcamentos.length > 0 ? (
-                historicoOrcamentos.map((orc) => {
-                  const total = Number(
-                    orc.financial_json?.total ?? orc.financial?.total ?? 0,
-                  );
-                  return (
-                    <View
-                      key={orc.id}
-                      className="py-3 border-b last:border-0 cursor-pointer flex items-center justify-between"
-                      onClick={() =>
-                        router.push('orcamentos.ver', { id: orc.id })
-                      }
-                    >
-                      <View>
-                        <p className="text-xs text-gray-400">
-                          {orc.issue_date ||
-                            orc.issueDate ||
-                            (orc as any).docTitle?.emissao ||
-                            'Data não informada'}
-                        </p>
-                        <p className="text-gray-600 font-medium">
-                          {orc.document_title ||
-                            orc.documentTitle ||
-                            orc.docTitle?.text}
-                        </p>
-                      </View>
-                      {total > 0 && (
-                        <span className="text-sm font-bold text-emerald-600">
-                          {formatCurrency(total)}
-                        </span>
-                      )}
-                    </View>
-                  );
-                })
-              ) : (
-                <p className="text-gray-400 text-sm">
-                  Nenhum orçamento encontrado.
-                </p>
-              )}
-            </InfoSection>
-          )}
-
-          {activeTab === 'notes' && (
-            <InfoSection
-              title="Notas técnicas"
-              icon={<Note size={18} weight="duotone" />}
-            >
-              {historicoNotas.length > 0 ? (
-                historicoNotas.map((n) => (
-                  <View
-                    key={n.id}
-                    className="py-3 border-b last:border-0 cursor-pointer"
-                    onClick={() => router.push('notas.ver', { id: n.id })}
+          {/* --- CONTEÚDO DAS ABAS COM ANIMAÇÃO --- */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'infos' && (
+              <motion.div
+                key="infos"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm flex flex-col gap-4"
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <IdentificationCard size={18} className="text-indigo-600" />
+                    Informações do Cadastro
+                  </h3>
+                  <button
+                    onClick={() =>
+                      router.push('clientes.novo', { id: client.id })
+                    }
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                   >
-                    <p className="text-xs text-gray-400">
-                      {new Date(n.date).toLocaleDateString('pt-BR')}
+                    <Pen size={14} />
+                    Editar Dados
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* WhatsApp */}
+                  <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 text-green-700 rounded-lg">
+                        <WhatsappLogo size={20} weight="duotone" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">
+                          WhatsApp
+                        </p>
+                        <p className="text-sm font-semibold text-slate-800">
+                          {client.whatsapp
+                            ? Mask.phone(client.whatsapp)
+                            : 'Não informado'}
+                        </p>
+                      </div>
+                    </div>
+                    {client.whatsapp && (
+                      <button
+                        onClick={() =>
+                          copyToClipboard(client.whatsapp!, 'WhatsApp')
+                        }
+                        className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition-all"
+                        title="Copiar"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* E-mail */}
+                  <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                        <EnvelopeSimple size={20} weight="duotone" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">
+                          E-mail
+                        </p>
+                        <p className="text-sm font-semibold text-slate-800 truncate max-w-[200px]">
+                          {client.email || 'Não informado'}
+                        </p>
+                      </div>
+                    </div>
+                    {client.email && (
+                      <button
+                        onClick={() => copyToClipboard(client.email!, 'E-mail')}
+                        className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition-all"
+                        title="Copiar"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Endereço */}
+                  <div className="md:col-span-2 flex items-start justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-red-100 text-red-700 rounded-lg mt-0.5">
+                        <MapPin size={20} weight="duotone" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">
+                          Endereço de Atendimento
+                        </p>
+                        <p className="text-sm font-semibold text-slate-800">
+                          {client.street || client.rua
+                            ? `${client.street || client.rua}, ${client.number || client.num || 'S/N'} - ${
+                                client.neighborhood || client.bairro || ''
+                              }, ${client.city || client.cidade || ''}`
+                            : 'Endereço não cadastrado'}
+                        </p>
+                        {client.zip && (
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            CEP: {client.zip}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {stats.clienteDesde && (
+                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100 text-xs text-slate-400">
+                    <CalendarPlus size={15} />
+                    Cliente cadastrado em {formatShortDate(stats.clienteDesde)}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'budgets' && (
+              <motion.div
+                key="budgets"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm flex flex-col gap-3"
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <FileText size={18} className="text-emerald-600" />
+                    Histórico de Propostas & Orçamentos
+                  </h3>
+                  <button
+                    onClick={() =>
+                      router.push('orcamentos.novo', { clienteId: client.id })
+                    }
+                    className="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1"
+                  >
+                    <Plus size={14} weight="bold" />
+                    Novo Orçamento
+                  </button>
+                </div>
+
+                {historicoOrcamentos.length > 0 ? (
+                  <div className="flex flex-col divide-y divide-slate-100">
+                    {historicoOrcamentos.map((orc) => {
+                      const total = Number(
+                        orc.financial_json?.total ?? orc.financial?.total ?? 0,
+                      );
+                      const title =
+                        orc.document_title ||
+                        orc.documentTitle ||
+                        orc.docTitle?.text ||
+                        'Orçamento de Serviços';
+
+                      return (
+                        <div
+                          key={orc.id}
+                          onClick={() =>
+                            router.push('orcamentos.ver', { id: orc.id })
+                          }
+                          className="py-3.5 px-2 hover:bg-slate-50 rounded-xl cursor-pointer flex items-center justify-between transition-all group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-emerald-50 text-emerald-700 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                              <FileText size={20} weight="duotone" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
+                                {title}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                Emitido em:{' '}
+                                {orc.issue_date ||
+                                  orc.issueDate ||
+                                  (orc as any).docTitle?.emissao ||
+                                  '—'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            {total > 0 && (
+                              <span className="text-sm font-extrabold text-emerald-600">
+                                {formatCurrency(total)}
+                              </span>
+                            )}
+                            <CaretRight
+                              size={16}
+                              className="text-slate-400 group-hover:translate-x-0.5 transition-transform"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-slate-400">
+                    <FileText size={32} className="mx-auto mb-2 opacity-40" />
+                    <p className="text-sm font-medium">
+                      Nenhum orçamento cadastrado para este cliente.
                     </p>
-                    <p className="text-gray-600 font-medium">{n.title}</p>
-                  </View>
-                ))
-              ) : (
-                <p className="text-gray-400 text-sm">Nenhuma nota vinculada.</p>
-              )}
-            </InfoSection>
-          )}
-        </View>
-      </View>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'notes' && (
+              <motion.div
+                key="notes"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm flex flex-col gap-3"
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <Note size={18} className="text-amber-600" />
+                    Notas Técnicas & Laudos
+                  </h3>
+                  <button
+                    onClick={() =>
+                      router.push('notas.novo', { clienteId: client.id })
+                    }
+                    className="text-xs font-bold text-amber-600 hover:text-amber-800 flex items-center gap-1"
+                  >
+                    <Plus size={14} weight="bold" />
+                    Nova Nota Técnica
+                  </button>
+                </div>
+
+                {historicoNotas.length > 0 ? (
+                  <div className="flex flex-col divide-y divide-slate-100">
+                    {historicoNotas.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => router.push('notas.ver', { id: n.id })}
+                        className="py-3.5 px-2 hover:bg-slate-50 rounded-xl cursor-pointer flex items-center justify-between transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-amber-50 text-amber-700 rounded-xl group-hover:bg-amber-100 transition-colors">
+                            <Note size={20} weight="duotone" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 group-hover:text-amber-700 transition-colors">
+                              {n.title}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {new Date(n.date).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                        </div>
+                        <CaretRight
+                          size={16}
+                          className="text-slate-400 group-hover:translate-x-0.5 transition-transform"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-slate-400">
+                    <Note size={32} className="mx-auto mb-2 opacity-40" />
+                    <p className="text-sm font-medium">
+                      Nenhuma nota técnica vinculada a este cliente.
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
       <DeleteClientModal
         isOpen={isDelOpen}
@@ -566,8 +794,7 @@ export default function ClientePerfilPainel() {
   );
 }
 
-/* --- Componentes auxiliares --- */
-
+/* --- Componente Auxiliar: StatCard --- */
 function StatCard({
   icon,
   label,
@@ -580,60 +807,31 @@ function StatCard({
   accent: 'emerald' | 'indigo' | 'amber' | 'sky';
 }) {
   const accentMap = {
-    emerald: 'bg-emerald-50 text-emerald-600',
-    indigo: 'bg-indigo-50 text-indigo-600',
-    amber: 'bg-amber-50 text-amber-600',
-    sky: 'bg-sky-50 text-sky-600',
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100',
+    sky: 'bg-sky-50 text-sky-600 border-sky-100',
   };
 
   return (
-    <View className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-      <View className={`w-fit p-2 rounded-xl mb-2 ${accentMap[accent]}`}>
+    <motion.div
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.15 }}
+      className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between"
+    >
+      <div
+        className={`w-fit p-2.5 rounded-xl mb-2 border ${accentMap[accent]}`}
+      >
         {icon}
-      </View>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-        {label}
-      </p>
-      <p className="text-sm font-black text-slate-800 mt-0.5 truncate">
-        {value}
-      </p>
-    </View>
-  );
-}
-
-function InfoSection({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <View className="flex flex-col px-6 py-4 bg-white shadow-sm">
-      <span className="flex items-center gap-2 pb-4 text-indigo-600 font-bold text-xs uppercase tracking-widest">
-        {icon} {title}
-      </span>
-      <View className="flex flex-col w-full">{children}</View>
-    </View>
-  );
-}
-
-function InfoItem({
-  icon,
-  txt,
-  fallTxt,
-}: {
-  icon: React.ReactNode;
-  txt?: string;
-  fallTxt?: string;
-}) {
-  if (!txt && !fallTxt) return null;
-  return (
-    <View className="flex items-center gap-3 py-2">
-      <View className="bg-green-50 p-2 rounded-xl">{icon}</View>
-      <View className="text-gray-600">{txt || fallTxt}</View>
-    </View>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+          {label}
+        </p>
+        <p className="text-base sm:text-lg font-black text-slate-800 mt-0.5 truncate tracking-tight">
+          {value}
+        </p>
+      </div>
+    </motion.div>
   );
 }

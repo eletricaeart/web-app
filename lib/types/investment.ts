@@ -22,6 +22,8 @@ export interface DetailedServiceItem {
   unitValue: number;
   laborValue: number;
   totalValue: number;
+  tipo?: 'servico' | 'insumo';
+  unidade?: string;
 }
 
 export interface SubClauseItem {
@@ -44,8 +46,22 @@ export interface CategoryBreakdown {
   subClauses?: SubClauseItem[]; // Sub-cláusulas ou itens detalhados
 }
 
+export interface BudgetOption {
+  id: string; // 'opcao_a' | 'opcao_b'
+  title: string; // ex: "Opção 1 - Convencional" | "Opção 2 - Completa com Material"
+  categories: CategoryBreakdown[];
+  totalLabor: number;
+  totalMaterials: number;
+  grandTotal: number;
+  description?: string;
+}
+
 export interface BudgetFinancialsV2 {
   schemaVersion: 2;
+  hasOptions?: boolean;
+  activeOptionId?: string; // ID da aba que está sendo editada no momento ('opcao_a' | 'opcao_b')
+  selectedOptionId?: string; // ID da opção escolhida pelo cliente (se houver)
+  options?: BudgetOption[];
   categories: CategoryBreakdown[];
   totalLabor: number;
   totalMaterials: number;
@@ -149,6 +165,26 @@ export function normalizeBudgetFinancials(
   // Se for o Schema V2 Novo
   if (investmentData.schemaVersion === 2) {
     const v2 = investmentData as BudgetFinancialsV2;
+
+    // Se tiver opções configuradas e uma selecionada (ou padrão)
+    if (v2.hasOptions && v2.options && v2.options.length > 0) {
+      const chosenOpt =
+        v2.options.find((o) => o.id === v2.selectedOptionId) ||
+        v2.options.find((o) => o.id === v2.activeOptionId) ||
+        v2.options[0];
+
+      return {
+        isV2: true,
+        totalLabor: chosenOpt.totalLabor,
+        totalMaterials: chosenOpt.totalMaterials,
+        grandTotal: chosenOpt.grandTotal,
+        categoriesCount: (chosenOpt.categories || []).length,
+        categoriesList: (chosenOpt.categories || []).map(
+          (c) => c.categoryLabel || c.category,
+        ),
+      };
+    }
+
     const categories = v2.categories || [];
 
     let calcLabor = 0;
@@ -212,6 +248,76 @@ export function buildInvestmentClause(
   v2Data?: BudgetFinancialsV2,
 ) {
   if (v2Data && v2Data.schemaVersion === 2) {
+    // Caso de Dupla Opção de Orçamento Ativada
+    if (v2Data.hasOptions && v2Data.options && v2Data.options.length > 0) {
+      const items = v2Data.options.map((opt, optIndex) => {
+        const isSelected = v2Data.selectedOptionId === opt.id;
+        const badgeSelected = isSelected
+          ? `<span style="display: inline-block; font-size: 0.72rem; color: #15803d; background: #dcfce7; border: 1px solid #86efac; padding: 2px 8px; border-radius: 9999px; font-weight: 800; margin-left: 8px;">★ OPÇÃO APROVADA PELO CLIENTE</span>`
+          : '';
+
+        let optHtml = `<div style="margin-bottom: 8px;">`;
+        if (opt.description) {
+          optHtml += `<p style="font-size: 0.85rem; color: #475569; margin-bottom: 8px;">${opt.description}</p>`;
+        }
+
+        (opt.categories || []).forEach((cat) => {
+          const catTotal =
+            cat.totalValue ||
+            Number(cat.laborValue || 0) + Number(cat.materialsValue || 0);
+          optHtml += `<div style="margin-bottom: 8px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">`;
+          optHtml += `<div style="display: flex; justify-content: space-between; font-weight: 700; color: #1e293b; font-size: 0.9rem;">
+            <span>${cat.categoryLabel || cat.category}</span>
+            <span style="color: #4f46e5;">${formatCurrency(catTotal)}</span>
+          </div>`;
+
+          if (cat.items && cat.items.length > 0) {
+            optHtml += `<ul style="list-style-type: none; padding: 0; margin-top: 6px; font-size: 0.82rem;">`;
+            cat.items.forEach((item) => {
+              const qtyUnit = item.unidade ? ` ${item.unidade}` : '';
+              const qtyText =
+                item.quantity > 1 || item.unidade
+                  ? ` (${item.quantity}${qtyUnit} x ${formatCurrency(item.unitValue)})`
+                  : '';
+              const badgeTipo =
+                item.tipo === 'insumo'
+                  ? `<span style="display: inline-block; font-size: 0.65rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1px 4px; border-radius: 4px; font-weight: 700; margin-right: 4px;">MATERIAL</span>`
+                  : '';
+              optHtml += `<li style="display: flex; justify-content: space-between; padding: 2px 0; color: #334155;">
+                <span>${badgeTipo}${item.name}${qtyText}</span>
+                <span style="font-weight: 600;">${formatCurrency(item.totalValue)}</span>
+              </li>`;
+            });
+            optHtml += `</ul>`;
+          }
+          optHtml += `</div>`;
+        });
+
+        const extensoTotal = valorPorExtenso(opt.grandTotal);
+        optHtml += `<div style="padding: 8px 12px; background: ${isSelected ? '#f0fdf4' : '#eef2ff'}; border: 1px solid ${isSelected ? '#bbf7d0' : '#c7d2fe'}; border-radius: 8px; font-weight: 700; color: #1e1b4b; display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+          <span>Investimento Total (${opt.title}):</span>
+          <span style="font-size: 1.05rem; color: ${isSelected ? '#15803d' : '#4338ca'}; font-weight: 800;">${formatCurrency(opt.grandTotal)}</span>
+        </div>`;
+        optHtml += `<p style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">Extenso: ${extensoTotal}</p>`;
+        optHtml += `</div>`;
+
+        return {
+          id: Date.now() + optIndex + Math.random(),
+          subtitulo: `${opt.title}${badgeSelected}`,
+          content: optHtml,
+          price: opt.grandTotal,
+          numbered: true,
+        };
+      });
+
+      return {
+        id: Date.now(),
+        titulo: 'Opções de Investimento',
+        items,
+        sourceType: 'investment' as const,
+      };
+    }
+
     const items = (v2Data.categories || []).map((cat) => {
       const total =
         cat.totalValue ||
@@ -226,13 +332,18 @@ export function buildInvestmentClause(
       if (cat.items && cat.items.length > 0) {
         descHtml += `<ul style="list-style-type: none; padding: 0; margin-top: 6px; margin-bottom: 6px; font-size: 0.85rem;">`;
         cat.items.forEach((item) => {
+          const qtyUnit = item.unidade ? ` ${item.unidade}` : '';
           const qtyText =
-            item.quantity > 1
-              ? ` (${item.quantity}x ${formatCurrency(item.unitValue)})`
+            item.quantity > 1 || item.unidade
+              ? ` (${item.quantity}${qtyUnit} x ${formatCurrency(item.unitValue)})`
+              : '';
+          const badgeTipo =
+            item.tipo === 'insumo'
+              ? `<span style="display: inline-block; font-size: 0.68rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1px 5px; border-radius: 4px; font-weight: 700; margin-right: 6px;">MATERIAL</span>`
               : '';
           descHtml += `<li style="margin-bottom: 4px; padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span><strong>${item.name}</strong>${qtyText}</span>
+              <span>${badgeTipo}<strong>${item.name}</strong>${qtyText}</span>
               <span style="font-weight: 600; color: #1e1b4b;">${formatCurrency(item.totalValue)}</span>
             </div>
             ${item.description ? `<div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">${item.description}</div>` : ''}
@@ -314,6 +425,53 @@ export function buildSummaryClause(
 ) {
   if (financials.v2Data && financials.v2Data.schemaVersion === 2) {
     const v2 = financials.v2Data;
+
+    // Resumo de Dupla Opção
+    if (v2.hasOptions && v2.options && v2.options.length > 0) {
+      let summaryHtml = `<div style="font-size: 0.9rem; line-height: 1.6;">`;
+      summaryHtml += `<p style="font-size: 0.85rem; color: #475569; margin-bottom: 8px;">Esta proposta apresenta <strong>${v2.options.length} opções de investimento</strong> para sua escolha:</p>`;
+
+      v2.options.forEach((opt, idx) => {
+        const isSelected = v2.selectedOptionId === opt.id;
+        summaryHtml += `<div style="margin-bottom: 8px; padding: 10px 14px; background: ${isSelected ? '#f0fdf4' : '#f8fafc'}; border: 1px solid ${isSelected ? '#86efac' : '#e2e8f0'}; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; color: #1e293b;">${opt.title} ${isSelected ? '<span style="font-size: 0.7rem; color: #15803d; background: #dcfce7; padding: 1px 6px; border-radius: 4px; font-weight: 800;">APROVADA</span>' : ''}</span>
+            <span style="font-size: 1rem; font-weight: 800; color: ${isSelected ? '#15803d' : '#4338ca'};">${formatCurrency(opt.grandTotal)}</span>
+          </div>
+          <p style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Extenso: ${valorPorExtenso(opt.grandTotal)}</p>
+        </div>`;
+      });
+
+      if (v2.selectedOptionId) {
+        const chosen = v2.options.find((o) => o.id === v2.selectedOptionId);
+        if (chosen) {
+          summaryHtml += `<p style="font-size: 0.95rem; color: #15803d; font-weight: bold; margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 6px;">
+            VALOR TOTAL APROVADO: ${formatCurrency(chosen.grandTotal)} (${valorPorExtenso(chosen.grandTotal)})
+          </p>`;
+        }
+      }
+
+      if (v2.generalNotes) {
+        summaryHtml += `<p style="margin-top: 8px; font-size: 0.8rem; color: #64748b; font-style: italic;">${v2.generalNotes}</p>`;
+      }
+
+      summaryHtml += `</div>`;
+
+      return {
+        id: Date.now(),
+        titulo: 'Resumo Financeiro',
+        items: [
+          {
+            id: Date.now() + 1,
+            subtitulo: '',
+            content: summaryHtml,
+            numbered: true,
+          },
+        ],
+        sourceType: 'summary' as const,
+      };
+    }
+
     const grandTotal = v2.grandTotal || 0;
     const extensoGrandTotal = valorPorExtenso(grandTotal);
 

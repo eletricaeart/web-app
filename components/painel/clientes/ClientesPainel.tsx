@@ -2,10 +2,12 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import FAB from '@/components/ui/FAB';
-import AppBar from '@/components/layout/AppBar';
+import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
+import PageHeader from '@/components/layout/PageHeader';
 import View from '@/components/layout/View';
 import EntityToolbar from '@/components/EntityToolbar';
 import { useSearch } from '@/hooks/useSearch';
@@ -157,132 +159,162 @@ export default function ClientesPainel() {
 
   return (
     <>
-      <AppBar title="Clientes" />
+      <PainelAppBar title="Clientes" backAction={() => router.push('home')} />
 
       <Page
         tag="clients-list"
         hasBottomNavBar={true}
-        bg="#f5f5f5"
+        bg="#f8fafc"
         pd="0 0 90px 0"
       >
-        <header className="pt-4">
-          <EntityToolbar
-            placeholder="Buscar cliente..."
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            showAction={true}
-            actionIcon={
-              <EntitySortFilter
-                sortOptions={sortOptions}
-                currentSort={sort}
-                onSortChange={(val) => updatePrefs(val, filter)}
-              />
+        {/* Header estático com título da página */}
+        <div className="pt-4 px-4 sm:px-6 max-w-5xl mx-auto w-full">
+          <PageHeader
+            title="Clientes"
+            subtitle="Cadastro e histórico de relacionamentos da empresa"
+            badge={
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                {allClients.length}{' '}
+                {allClients.length === 1 ? 'cliente' : 'clientes'}
+              </span>
             }
           />
+        </div>
 
-          {/* --- CHIPS DE CATEGORIA --- */}
-          <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
-            <CategoryChip
-              label="Todos"
-              active={categoryFilter === 'all'}
-              onClick={() => setCategoryFilter('all')}
+        {/* Toolbar de Busca e Filtros FIXA/STICKY imediatamente abaixo da AppBar */}
+        <div className="sticky top-[64px] sm:top-[68px] z-30 w-full bg-slate-50/95 backdrop-blur-md transition-all border-b border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex flex-col gap-2">
+            <EntityToolbar
+              placeholder="Buscar cliente..."
+              searchValue={searchTerm}
+              onSearchChange={setSearchTerm}
+              showAction={true}
+              actionIcon={
+                <EntitySortFilter
+                  sortOptions={sortOptions}
+                  currentSort={sort}
+                  onSortChange={(val) => updatePrefs(val, filter)}
+                />
+              }
             />
-            {CLIENT_CATEGORIES.map((c) => (
+
+            {/* --- CHIPS DE CATEGORIA --- */}
+            <div className="flex gap-2 pb-0.5 overflow-x-auto no-scrollbar">
               <CategoryChip
-                key={c.value}
-                label={c.label}
-                active={categoryFilter === c.value}
-                onClick={() => setCategoryFilter(c.value)}
+                label="Todos"
+                active={categoryFilter === 'all'}
+                onClick={() => setCategoryFilter('all')}
               />
-            ))}
+              {CLIENT_CATEGORIES.map((c) => (
+                <CategoryChip
+                  key={c.value}
+                  label={c.label}
+                  active={categoryFilter === c.value}
+                  onClick={() => setCategoryFilter(c.value)}
+                />
+              ))}
+            </div>
           </div>
-        </header>
+        </div>
 
         <View tag="clients-container" className="flex flex-col gap-2 py-2">
-          {categorizedData.map((c) => {
-            const currentName = getClientName(c);
-            const isTop = c.id === topClientId;
+          <AnimatePresence mode="popLayout">
+            {categorizedData.map((c, index) => {
+              const currentName = getClientName(c);
+              const isTop = c.id === topClientId;
 
-            return (
-              <div
-                key={c.id}
-                className="client-card-wrapper"
-                style={{ position: 'relative', padding: '0 1rem' }}
-              >
-                <ClientCard
-                  client={{
-                    ...c,
-                    name: currentName,
-                    cidade: c.city || c['Cidade'] || 'Cidade não informada',
-                    bairro: c.neighborhood || c['Bairro'] || '',
+              return (
+                <motion.div
+                  key={c.id}
+                  layout
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{
+                    duration: 0.25,
+                    delay: Math.min(index * 0.03, 0.3),
                   }}
-                  isTopClient={isTop}
-                  category={c.category}
-                  onClick={() => router.push('clientes.perfil', { id: c.id })}
-                  options={
-                    <div className="options-container">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <View
-                            tag="vmenu-btn"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#777',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <DotsThreeOutlineVertical
-                              size={24}
-                              weight="duotone"
-                            />
-                          </View>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-40 p-0 bg-white"
-                          style={{
-                            border: 'none',
-                            boxShadow: '#e5e5e5 0 0 10px 2px',
-                          }}
-                          align="end"
-                        >
-                          <div className="flex flex-col">
-                            <button
-                              className="menu-item"
-                              onClick={() =>
-                                router.push('clientes.novo', { id: c.id })
-                              }
-                              style={menuItemStyle}
-                            >
-                              <PencilSimple size={18} weight="duotone" /> Editar
-                            </button>
-                            <button
-                              className="menu-item delete"
-                              onClick={() =>
-                                handleDeleteRequest(c.id, currentName)
-                              }
+                  className="client-card-wrapper"
+                  style={{ position: 'relative', padding: '0 1rem' }}
+                >
+                  <ClientCard
+                    client={{
+                      ...c,
+                      name: currentName,
+                      cidade: c.city || c['Cidade'] || 'Cidade não informada',
+                      bairro: c.neighborhood || c['Bairro'] || '',
+                    }}
+                    isTopClient={isTop}
+                    category={c.category}
+                    onClick={() => router.push('clientes.perfil', { id: c.id })}
+                    options={
+                      <div className="options-container">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <View
+                              tag="vmenu-btn"
                               style={{
-                                ...menuItemStyle,
-                                color: '#ff4444',
-                                borderTop: '1px solid #f5f5f5',
+                                background: 'none',
+                                border: 'none',
+                                color: '#777',
+                                cursor: 'pointer',
                               }}
                             >
-                              <Trash size={18} weight="duotone" /> Excluir
-                            </button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  }
-                />
-              </div>
-            );
-          })}
+                              <DotsThreeOutlineVertical
+                                size={24}
+                                weight="duotone"
+                              />
+                            </View>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-40 p-0 bg-white shadow-xl rounded-xl border border-slate-100 overflow-hidden"
+                            align="end"
+                          >
+                            <div className="flex flex-col">
+                              <button
+                                className="menu-item"
+                                onClick={() =>
+                                  router.push('clientes.novo', { id: c.id })
+                                }
+                                style={menuItemStyle}
+                              >
+                                <PencilSimple size={18} weight="duotone" />{' '}
+                                Editar
+                              </button>
+                              <button
+                                className="menu-item delete"
+                                onClick={() =>
+                                  handleDeleteRequest(c.id, currentName)
+                                }
+                                style={{
+                                  ...menuItemStyle,
+                                  color: '#ff4444',
+                                  borderTop: '1px solid #f5f5f5',
+                                }}
+                              >
+                                <Trash size={18} weight="duotone" /> Excluir
+                              </button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    }
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
           {categorizedData.length === 0 && (
-            <div className="text-center py-20 opacity-40">
-              <p>Nenhum cliente encontrado.</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20 opacity-60"
+            >
+              <p className="text-sm font-medium text-slate-500">
+                Nenhum cliente encontrado.
+              </p>
+            </motion.div>
           )}
         </View>
       </Page>

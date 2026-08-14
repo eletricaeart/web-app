@@ -5,6 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { usePainelAuth } from '@/components/painel/auth/PainelAuthContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
+import { useScrollThreshold } from '@/hooks/useScrollThreshold';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -21,6 +22,9 @@ import {
   CalculatorIcon,
   TrendUp,
   Wallet,
+  Toolbox,
+  PaintBrush,
+  Wall,
 } from '@phosphor-icons/react';
 import Page from '@/components/layout/Page';
 import Section from '@/components/layout/Section';
@@ -35,6 +39,7 @@ export default function HomePainel() {
   const { data: notes } = useEASyncSupabase<any>('notas');
   const { data: orcamentos } = useEASyncSupabase<any>('orcamentos');
   const { data: recibos } = useEASyncSupabase<any>('recibos');
+  const isScrolled = useScrollThreshold(30);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -132,10 +137,33 @@ export default function HomePainel() {
         greeting={greeting}
         firstName={firstName}
         randomPhrase={randomPhrase}
-        onAvatarClick={() => router.push('perfil')}
       />
       <Page hasBottomNavBar={true}>
         <main className="p-4 sm:p-6 max-w-5xl mx-auto w-full space-y-6">
+          {/* Título da Página Home (Elétrica & Art) com efeito de transição para a AppBar no Scroll */}
+          <div className="pt-1 pb-1">
+            <div
+              className={`transition-all duration-300 ease-out origin-left ${
+                isScrolled
+                  ? 'opacity-0 scale-[0.88] -translate-y-3 pointer-events-none'
+                  : 'opacity-100 scale-100 translate-y-0'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  Elétrica <span className="text-amber-500 font-bold">&</span>{' '}
+                  Art
+                </h1>
+                <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                  Painel de Gestão
+                </span>
+              </div>
+              <p className="text-slate-500 text-sm mt-0.5 font-medium leading-relaxed">
+                Gestão de propostas, clientes e controle financeiro
+              </p>
+            </div>
+          </div>
+
           {/* Ação Rápida */}
           <section>
             <QuickAction
@@ -215,6 +243,12 @@ export default function HomePainel() {
                 count={`${orcamentos?.length || 0} registros`}
               />
               <MenuCard
+                onClick={() => router.push('servicos')}
+                icon={<Toolbox size={24} weight="duotone" />}
+                title="Serviços e Insumos"
+                count="Catálogo Base"
+              />
+              <MenuCard
                 onClick={() => router.push('notas')}
                 icon={<Notebook size={24} weight="duotone" />}
                 title="Notas"
@@ -241,26 +275,81 @@ export default function HomePainel() {
             </div>
           </Section>
 
-          {/* Seção 2: Ferramentas Técnicas */}
-          <Section label="Ferramentas Técnicas">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          {/* Seção 2: Ferramentas Técnicas & Engenharia */}
+          <Section
+            label="Ferramentas Técnicas"
+            quickAction={
+              <div
+                onClick={() => router.push('ferramentas')}
+                className="flex text-xs font-semibold text-amber-600 hover:text-amber-800 items-center gap-1 transition-colors cursor-pointer"
+              >
+                <span>Abrir calculadoras</span>
+                <ArrowRight size={14} weight="bold" />
+              </div>
+            }
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               <div
                 className="cursor-pointer"
-                onClick={() => router.push('ferramentas.drywall')}
+                onClick={() => router.push('ferramentas')}
               >
-                <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-4 rounded-2xl sm:rounded-[2rem] shadow-md sm:shadow-lg active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-4 rounded-2xl sm:rounded-[2rem] shadow-md active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
                   <div className="absolute -right-2 -top-2 w-16 h-16 bg-white/10 rounded-full" />
-                  <CalculatorIcon
+                  <Lightning
                     size={28}
                     weight="duotone"
                     className="text-white mb-2"
                   />
                   <div className="flex flex-col min-w-0">
                     <span className="text-white font-black text-xs sm:text-sm uppercase truncate">
-                      Drywall
+                      Elétrica NBR 5410
                     </span>
-                    <span className="text-indigo-100 text-[10px] truncate">
-                      Calculadora Materiais
+                    <span className="text-amber-100 text-[10px] truncate">
+                      Condutores & Cargas
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="cursor-pointer"
+                onClick={() => router.push('ferramentas')}
+              >
+                <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-4 rounded-2xl sm:rounded-[2rem] shadow-md active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
+                  <div className="absolute -right-2 -top-2 w-16 h-16 bg-white/10 rounded-full" />
+                  <PaintBrush
+                    size={28}
+                    weight="duotone"
+                    className="text-white mb-2"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-white font-black text-xs sm:text-sm uppercase truncate">
+                      Pintura
+                    </span>
+                    <span className="text-violet-100 text-[10px] truncate">
+                      Rendimento & Latas
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="cursor-pointer col-span-2 sm:col-span-1"
+                onClick={() => router.push('ferramentas')}
+              >
+                <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-4 rounded-2xl sm:rounded-[2rem] shadow-md active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
+                  <div className="absolute -right-2 -top-2 w-16 h-16 bg-white/10 rounded-full" />
+                  <Wall
+                    size={28}
+                    weight="duotone"
+                    className="text-white mb-2"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-white font-black text-xs sm:text-sm uppercase truncate">
+                      Drywall & Forro
+                    </span>
+                    <span className="text-emerald-100 text-[10px] truncate">
+                      Placas, Guias & F530
                     </span>
                   </div>
                 </div>

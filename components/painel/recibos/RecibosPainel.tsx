@@ -5,7 +5,8 @@ import React, { useState } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import FAB from '@/components/ui/FAB';
-import AppBar from '@/components/layout/AppBar';
+import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
+import PageHeader from '@/components/layout/PageHeader';
 import Page from '@/components/layout/Page';
 import EntityToolbar from '@/components/EntityToolbar';
 import {
@@ -53,15 +54,31 @@ export default function RecibosPainel() {
 
   return (
     <>
-      <AppBar title="Recibos" />
-      <Page tag="receipts" bg="#f5f5f5">
-        <header className="pt-4">
-          <EntityToolbar
-            placeholder="Buscar recibo ou cliente..."
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
+      <PainelAppBar title="Recibos" backAction={() => router.push('home')} />
+      <Page tag="receipts" bg="#f8fafc">
+        {/* Header estático com título da página */}
+        <div className="pt-4 px-4 sm:px-6 max-w-5xl mx-auto w-full">
+          <PageHeader
+            title="Recibos"
+            subtitle="Emissão e controle de comprovantes e quitações financeiras"
+            badge={
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                {recibos.length} {recibos.length === 1 ? 'recibo' : 'recibos'}
+              </span>
+            }
           />
-        </header>
+        </div>
+
+        {/* Toolbar de Busca FIXA/STICKY imediatamente abaixo da AppBar */}
+        <div className="sticky top-[64px] sm:top-[68px] z-30 w-full bg-slate-50/95 backdrop-blur-md transition-all border-b border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2">
+            <EntityToolbar
+              placeholder="Buscar recibo ou cliente..."
+              searchValue={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </div>
+        </div>
         <main className="flex flex-col px-4 py-4 gap-2 pb-32">
           {filteredRecibos.length > 0 ? (
             filteredRecibos.map((r: any) => (

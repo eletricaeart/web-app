@@ -17,6 +17,7 @@ export default function PainelNavWrapper() {
     'recibos',
     'equipe',
     'perfil',
+    'ferramentas',
   ];
 
   // Verifica se a seção atual está na lista acima

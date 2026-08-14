@@ -4,7 +4,8 @@
 import React, { useState, useMemo } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
-import AppBar from '@/components/layout/AppBar';
+import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
+import PageHeader from '@/components/layout/PageHeader';
 import FAB from '@/components/ui/FAB';
 import EntityToolbar from '@/components/EntityToolbar';
 import { useSearch } from '@/hooks/useSearch';
@@ -64,16 +65,35 @@ export default function NotasPainel() {
 
   return (
     <>
-      <AppBar title="Notas Técnicas" backAction={() => router.push('home')} />
+      <PainelAppBar
+        title="Notas Técnicas"
+        backAction={() => router.push('home')}
+      />
 
-      <Page tag="notes-page" hasBottomNavBar bg="#f5f5f5">
-        <header className="pt-4">
-          <EntityToolbar
-            placeholder="Buscar notas..."
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
+      <Page tag="notes-page" hasBottomNavBar bg="#f8fafc">
+        {/* Header estático com título da página */}
+        <div className="pt-4 px-4 sm:px-6 max-w-5xl mx-auto w-full">
+          <PageHeader
+            title="Notas Técnicas"
+            subtitle="Registros de visitas técnicas, laudos e anotações de campo"
+            badge={
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                {notes.length} {notes.length === 1 ? 'nota' : 'notas'}
+              </span>
+            }
           />
-        </header>
+        </div>
+
+        {/* Toolbar de Busca FIXA/STICKY imediatamente abaixo da AppBar */}
+        <div className="sticky top-[64px] sm:top-[68px] z-30 w-full bg-slate-50/95 backdrop-blur-md transition-all border-b border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2">
+            <EntityToolbar
+              placeholder="Buscar notas ou cliente..."
+              searchValue={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </div>
+        </div>
 
         <main className="p-4 pb-24 flex flex-col gap-3">
           {filteredData.map((nota) => {

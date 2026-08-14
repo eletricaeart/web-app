@@ -5,7 +5,8 @@ import React, { useState, useRef } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import FAB from '@/components/ui/FAB';
-import AppBar from '@/components/layout/AppBar';
+import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
+import PageHeader from '@/components/layout/PageHeader';
 import BudgetShareMenu from '@/components/orcamentos/BudgetShareMenu';
 import BudgetCard from '@/components/layout/BudgetCard';
 import EntityToolbar from '@/components/EntityToolbar';
@@ -163,7 +164,7 @@ export default function OrcamentosPainel() {
 
   return (
     <>
-      <AppBar title="Orçamentos" />
+      <PainelAppBar title="Orçamentos" backAction={() => router.push('home')} />
 
       {shareData.orc && (
         <BudgetShareMenu
@@ -176,27 +177,44 @@ export default function OrcamentosPainel() {
         />
       )}
 
-      <Page tag="budgets" bg="#f5f5f5">
-        <header className="pt-4">
-          <EntityToolbar
-            placeholder="Buscar orçamento..."
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            showAction={true}
-            actionIcon={
-              <EntitySortFilter
-                sortOptions={budgetSort}
-                currentSort={sort}
-                onSortChange={(val) => updatePrefs(val, filter)}
-                filterLabel="Status"
-                filterOptions={[
-                  { label: 'Todos', value: 'all' },
-                  { label: 'Vencidos', value: 'expired' },
-                ]}
-              />
+      <Page tag="budgets" bg="#f8fafc">
+        {/* Header estático com título da página */}
+        <div className="pt-4 px-4 sm:px-6 max-w-5xl mx-auto w-full">
+          <PageHeader
+            title="Orçamentos"
+            subtitle="Gerenciamento de propostas comerciais e orçamentos de obras"
+            badge={
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                {orcamentos.length}{' '}
+                {orcamentos.length === 1 ? 'proposta' : 'propostas'}
+              </span>
             }
           />
-        </header>
+        </div>
+
+        {/* Toolbar de Busca e Filtros FIXA/STICKY imediatamente abaixo da AppBar */}
+        <div className="sticky top-[64px] sm:top-[68px] z-30 w-full bg-slate-50/95 backdrop-blur-md transition-all border-b border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2">
+            <EntityToolbar
+              placeholder="Buscar orçamento..."
+              searchValue={searchTerm}
+              onSearchChange={setSearchTerm}
+              showAction={true}
+              actionIcon={
+                <EntitySortFilter
+                  sortOptions={budgetSort}
+                  currentSort={sort}
+                  onSortChange={(val) => updatePrefs(val, filter)}
+                  filterLabel="Status"
+                  filterOptions={[
+                    { label: 'Todos', value: 'all' },
+                    { label: 'Vencidos', value: 'expired' },
+                  ]}
+                />
+              }
+            />
+          </div>
+        </div>
         <main
           className="flex flex-col px-0 py-4 gap-2"
           style={{ paddingBottom: '190px' }}

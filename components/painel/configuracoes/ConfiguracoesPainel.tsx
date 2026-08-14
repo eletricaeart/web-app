@@ -5,7 +5,8 @@ import React from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { usePainelAuth } from '@/components/painel/auth/PainelAuthContext';
 import { useTheme } from '@/providers/ThemeProvider';
-import AppBar from '@/components/layout/AppBar';
+import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
+import PageHeader from '@/components/layout/PageHeader';
 import View from '@/components/layout/View';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -26,9 +27,20 @@ export default function ConfiguracoesPainel() {
 
   return (
     <>
-      <AppBar title="Configurações" backAction={() => router.push('perfil')} />
+      <PainelAppBar
+        title="Configurações"
+        backAction={() => router.push('home')}
+      />
 
-      <View tag="page" className="p-4 bg-slate-50 min-h-screen">
+      <View
+        tag="page"
+        className="p-4 sm:p-6 bg-slate-50 min-h-screen max-w-3xl mx-auto w-full"
+      >
+        <PageHeader
+          title="Configurações"
+          subtitle="Preferências do sistema, dados da conta e segurança"
+        />
+
         <View className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
           <SettingsRow
             icon={

@@ -8,7 +8,7 @@ import ClientForm from '@/components/forms/ClientForm';
 import ClauseManager from '@/components/forms/ClauseManager';
 import InvestmentDrawer, { PEEK_HEIGHT } from './InvestmentDrawer';
 import View from '@/components/layout/View';
-import { CircleNotch, Calculator } from '@phosphor-icons/react';
+import { CircleNotch, Calculator, CalendarBlank } from '@phosphor-icons/react';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import * as Default_Divider from '@/components/Divider';
 import FinancialInvestmentV2Editor from './FinancialInvestmentV2Editor';
@@ -38,7 +38,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon } from 'lucide-react';
 
 import './orcamentosNovo.css';
 import Pressable from '@/components/Pressable';
@@ -391,9 +390,9 @@ export default function OrcamentoNovoPainel() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full h-[45px] justify-start border-[#ccc0] bg-[#f5f5f5] text-slate-800"
+                      className="w-full h-[45px] justify-start border-[#ccc]"
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <CalendarBlank size={18} className="mr-2" />
                       {format(getSelectedDate(), 'dd/MM/yyyy')}
                     </Button>
                   </PopoverTrigger>
@@ -420,7 +419,7 @@ export default function OrcamentoNovoPainel() {
                   value={budget.expiration}
                   onValueChange={(v) => setBudget({ ...budget, expiration: v })}
                 >
-                  <SelectTrigger className="w-full h-[45px_!important] border-[#ccc0] bg-[#f5f5f5] text-sla800">
+                  <SelectTrigger className="w-full h-[45px] border-[#ccc]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
