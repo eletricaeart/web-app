@@ -115,8 +115,12 @@ export default function ServicosPainel() {
 
           {filteredServicos.map((item) => (
             <div
-              key={item.id}
-              onClick={() => router.push('servicos.editar', { id: item.id })}
+              key={item.id || item.nome}
+              onClick={() => {
+                if (item.id) {
+                  router.push('servicos.editar', { id: item.id });
+                }
+              }}
               className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3 cursor-pointer active:scale-[0.98] hover:border-slate-200 transition-all"
             >
               <div
