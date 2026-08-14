@@ -159,7 +159,7 @@ export default function ClientesPainel() {
 
   return (
     <>
-      <PainelAppBar title="Clientes" backAction={() => router.push('home')} />
+      <PainelAppBar title="Clientes" />
 
       <Page
         tag="clients-list"

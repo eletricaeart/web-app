@@ -8,20 +8,23 @@ import PainelBottomNavbar from './PainelBottomNavbar';
 export default function PainelNavWrapper() {
   const router = usePainelRouter();
 
-  // DEFINA AQUI: As únicas seções que mostram a barra (Listagens)
+  // DEFINA AQUI: As únicas seções que mostram a barra (Listagens e Hubs)
   const showOnSections = [
     'home',
-    'orcamentos',
     'clientes',
+    'documentos',
+    'ferramentas',
+    'orcamentos',
     'notas',
     'recibos',
     'equipe',
     'perfil',
-    'ferramentas',
   ];
 
-  // Verifica se a seção atual está na lista acima
-  const shouldShow = showOnSections.includes(router.section);
+  // Verifica se a seção atual está na lista acima ou é sub-rota de uma delas
+  const shouldShow = showOnSections.some(
+    (s) => router.section === s || router.section.startsWith(`${s}.`),
+  );
 
   if (!shouldShow) return null;
 

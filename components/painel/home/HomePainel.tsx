@@ -291,7 +291,7 @@ export default function HomePainel() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               <div
                 className="cursor-pointer"
-                onClick={() => router.push('ferramentas')}
+                onClick={() => router.push('ferramentas.eletrica')}
               >
                 <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-4 rounded-2xl sm:rounded-[2rem] shadow-md active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
                   <div className="absolute -right-2 -top-2 w-16 h-16 bg-white/10 rounded-full" />
@@ -313,7 +313,7 @@ export default function HomePainel() {
 
               <div
                 className="cursor-pointer"
-                onClick={() => router.push('ferramentas')}
+                onClick={() => router.push('ferramentas.pintura')}
               >
                 <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-4 rounded-2xl sm:rounded-[2rem] shadow-md active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
                   <div className="absolute -right-2 -top-2 w-16 h-16 bg-white/10 rounded-full" />
@@ -335,7 +335,7 @@ export default function HomePainel() {
 
               <div
                 className="cursor-pointer col-span-2 sm:col-span-1"
-                onClick={() => router.push('ferramentas')}
+                onClick={() => router.push('ferramentas.drywall')}
               >
                 <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-4 rounded-2xl sm:rounded-[2rem] shadow-md active:scale-95 transition-all border border-white/20 relative overflow-hidden group">
                   <div className="absolute -right-2 -top-2 w-16 h-16 bg-white/10 rounded-full" />
@@ -356,19 +356,6 @@ export default function HomePainel() {
               </div>
             </div>
           </Section>
-
-          <footer className="mt-8 pb-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-red-500 hover:bg-red-50 gap-3 h-12 sm:h-14 rounded-2xl"
-              onClick={signOut}
-            >
-              <SignOut size={22} />
-              <span className="font-bold text-sm sm:text-base">
-                Sair do Sistema
-              </span>
-            </Button>
-          </footer>
         </main>
       </Page>
     </>

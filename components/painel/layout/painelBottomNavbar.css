@@ -8,7 +8,7 @@
   z-index: 50;
   display: flex;
   justify-content: center;
-  padding: 0 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 0 2rem calc(14px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
 }
 
@@ -25,12 +25,11 @@
   pointer-events: auto;
   max-width: 420px;
   width: 100%;
+  height: 64px; /* Fixed height for animation container */
+  overflow: hidden;
 }
 
-/* Pílula deslizante: largura e posição calculadas só por porcentagem
-   (100% / número de itens), nunca por medição em pixels via JS.
-   Isso garante que nenhum item vizinho seja espremido, em qualquer
-   largura de tela. */
+/* Pílula deslizante */
 .painel-navdock-indicator {
   position: absolute;
   top: 6px;
@@ -52,59 +51,109 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 9px 4px;
   cursor: pointer;
   user-select: none;
   color: #94a3b8;
-  transition: color 0.25s ease;
   -webkit-tap-highlight-color: transparent;
+  overflow: hidden; /* For the overflowing icon */
+  border-radius: 22px; /* Match indicator radius for internal overflow */
 }
 
 .painel-navdock-item.is-active {
   color: #ffffff;
 }
 
-.painel-navdock-item.is-pressed .painel-navdock-icon {
-  animation: painel-nav-bounce 0.26s ease;
-}
-
-@keyframes painel-nav-bounce {
-  0% {
-    transform: scale(1);
-  }
-  40% {
-    transform: scale(0.8);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
+/* Base states for icon and text */
 .painel-navdock-icon {
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-
-.painel-navdock-item.is-active .painel-navdock-icon {
-  transform: translateY(-1px);
+  transition: all 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+  top: 50%;
+  left: 50%;
+  transform: translate(
+    -50%,
+    -50%
+  ); /* Centered initially when text is hidden, or stacked */
+  z-index: 1;
 }
 
 .painel-navdock-label {
-  font-size: 0.62rem;
+  position: absolute;
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  transition: all 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0; /* Hidden by default if we want only icon when inactive, or text below */
+}
+
+/* INACTIVE state layout */
+.painel-navdock-item:not(.is-active) .painel-navdock-icon {
+  transform: translate(-50%, -10px); /* Move icon slightly up */
+}
+.painel-navdock-item:not(.is-active) .painel-navdock-label {
+  transform: translate(-50%, 10px); /* Move text slightly down */
+  opacity: 1;
+}
+
+/* ACTIVE state layout & animation */
+.painel-navdock-item.is-active .painel-navdock-icon {
+  animation: slideIconDiagonal 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  opacity: 0.15;
+}
+
+@keyframes slideIconDiagonal {
+  0% {
+    top: 140%;
+    left: -40%;
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  100% {
+    top: 100%;
+    left: 100%;
+    transform: translate(-78%, -78%) scale(2.975);
+    opacity: 0.15;
+  }
+}
+
+.painel-navdock-item.is-active .painel-navdock-label {
+  /* text slides from left to center */
+  animation: slideTextIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  font-size: 0.85rem;
+  font-weight: 800;
+  opacity: 1;
+}
+
+@keyframes slideTextIn {
+  0% {
+    transform: translate(-100%, -50%);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+.painel-navdock-item.is-pressed:not(.is-active) .painel-navdock-icon {
+  transform: translate(-50%, -10px) scale(0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .painel-navdock-indicator,
-  .painel-navdock-icon {
+  .painel-navdock-icon,
+  .painel-navdock-label {
     transition: none;
   }
-  .painel-navdock-item.is-pressed .painel-navdock-icon {
+  .painel-navdock-item.is-active .painel-navdock-label {
     animation: none;
+    transform: translate(-50%, -50%);
   }
 }
