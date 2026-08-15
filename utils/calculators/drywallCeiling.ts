@@ -10,11 +10,14 @@ export interface CeilingSection {
 
 export interface CeilingOptions {
   sections: CeilingSection[];
+  boardType?: 'ST' | 'RU' | 'RF';
 }
 
-export function calculateCeilingMaterials({ sections }: CeilingOptions) {
-  const safetyMargin = 1.05; // 5%
-
+export function calculateCeilingMaterials({
+  sections,
+  boardType = 'ST',
+}: CeilingOptions) {
+  const safetyMargin = 1.05;
   let totalArea = 0;
   let totalPerimeter = 0;
   let totalF530LinearMeters = 0;
@@ -32,9 +35,19 @@ export function calculateCeilingMaterials({ sections }: CeilingOptions) {
     totalF530LinearMeters += numLinhas * menorLado;
   });
 
+  const boardLabel = {
+    ST: 'Placa Drywall ST (1.20x1.80)',
+    RU: 'Placa Drywall RU (Umidade) (1.20x1.80)',
+    RF: 'Placa Drywall RF (Fogo) (1.20x1.80)',
+  }[boardType];
+
+  // Emendas F530 (estimativa)
+  const totalF530Bars = Math.ceil((totalF530LinearMeters / 3) * safetyMargin);
+  const emendasF530 = Math.ceil(totalF530Bars * 0.2); // 20% das barras
+
   return [
     {
-      item: 'Placa Drywall ST (1.20x1.80)',
+      item: boardLabel,
       qtd: Math.ceil((totalArea / 2.16) * safetyMargin),
       unit: 'un',
     },
@@ -49,8 +62,13 @@ export function calculateCeilingMaterials({ sections }: CeilingOptions) {
       unit: 'br',
     },
     {
+      item: 'Emenda para Perfil F530',
+      qtd: emendasF530,
+      unit: 'un',
+    },
+    {
       item: 'Regulador / Tirante',
-      qtd: Math.ceil(totalArea * 2 * safetyMargin),
+      qtd: Math.ceil(totalArea * 1.2 * safetyMargin), // ajustado de 2 para 1.2
       unit: 'un',
     },
     {
@@ -59,7 +77,7 @@ export function calculateCeilingMaterials({ sections }: CeilingOptions) {
       unit: 'un',
     },
     {
-      item: 'Parafuso Lentilha',
+      item: 'Parafuso LB 9,5 (ponta broca)',
       qtd: Math.ceil(totalArea * 8 * safetyMargin),
       unit: 'un',
     },

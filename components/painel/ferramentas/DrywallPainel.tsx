@@ -8,157 +8,131 @@ import View from '@/components/layout/View';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
-  Wall,
-  HardHat,
-  Calculator,
-  Plus,
-  Trash,
-  Package,
-  Door,
-  Browser,
   Check,
   SquareHalf,
   X,
-  PencilSimple,
   ShareNetwork,
-  CaretDown,
   Lightning,
-  Sparkle,
+  Plus,
 } from '@phosphor-icons/react';
 import { calculateWallMaterials } from '@/utils/calculators/drywallWall';
 import { calculateCeilingMaterials } from '@/utils/calculators/drywallCeiling';
+import { calculateSancaMaterials } from '@/utils/calculators/drywallSanca';
 import FAB from '@/components/ui/FAB';
 import Pressable from '@/components/Pressable';
 import DrywallCalculadora from './calculadoras/DrywallCalculadora';
+import { useRoomEditor, ServiceInstance } from '@/hooks/useRoomEditor';
+import { useServiceForm } from '@/hooks/useServiceForm';
+import { ServiceForm } from './ServiceForm';
+import { RoomList } from './RoomList';
+import { MaterialSummary } from './MaterialSummary';
 import './Drywall.css';
-
-/** --- interfaces --- */
-interface Opening {
-  id: string;
-  type: 'door' | 'window';
-  w: number;
-  h: number;
-}
-
-interface ServiceInstance {
-  id: string;
-  type: 'wall' | 'ceiling';
-  tag: string;
-  useInsulation?: boolean;
-  measures: { w: number; h: number; openings: Opening[] }[];
-  totalArea: number;
-}
-
-interface Room {
-  id: string;
-  name: string;
-  services: ServiceInstance[];
-}
 
 export default function DrywallPainel() {
   const router = usePainelRouter();
   const [activeMode, setActiveMode] = useState<'completa' | 'rapida'>(
     'completa',
   );
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const {
+    rooms,
+    setRooms,
+    editingRoomId,
+    setEditingRoomId,
+    isDrawerOpen,
+    setIsDrawerOpen,
+    removeRoom,
+    startEditRoom,
+    closeDrawer,
+  } = useRoomEditor();
 
-  // Estados do Formulário (Ambiente)
+  // Estados do formulário de ambiente
   const [currentRoomName, setCurrentRoomName] = useState('');
   const [tempServices, setTempServices] = useState<ServiceInstance[]>([]);
-
-  // Estado para Edição
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
-  // Estado para o serviço atual
-  const [activeType, setActiveType] = useState<'wall' | 'ceiling'>('wall');
-  const [activeTag, setActiveTag] = useState('');
-  const [activeInsulation, setActiveInsulation] = useState(false);
-  const [activeMeasures, setActiveMeasures] = useState<
-    { w: number; h: number; openings: Opening[] }[]
-  >([{ w: 0, h: 0, openings: [] }]);
-
-  // FAB Configs
-  const fabConfig = [
-    {
-      icon: <Plus size={28} weight="duotone" />,
-      label: 'Novo Serviço',
-      action: () => setIsDrawerOpen(true),
-    },
-  ];
-
-  /** --- Funções de Manipulação --- */
-  const addMeasureField = () =>
-    setActiveMeasures([...activeMeasures, { w: 0, h: 0, openings: [] }]);
-
-  const addOpening = (measureIndex: number, type: 'door' | 'window') => {
-    const newMeasures = [...activeMeasures];
-    newMeasures[0].openings.push({
-      id: Math.random().toString(),
-      type,
-      w: 0,
-      h: 0,
-    });
-    setActiveMeasures(newMeasures);
-  };
-
-  const updateOpening = (
-    mIdx: number,
-    oIdx: number,
-    field: 'w' | 'h',
-    val: number,
-  ) => {
-    const newMeasures = [...activeMeasures];
-    newMeasures[mIdx].openings[oIdx][field] = val;
-    setActiveMeasures(newMeasures);
-  };
+  // Hook do formulário de serviço
+  const serviceForm = useServiceForm();
 
   const handleEditTempService = (service: ServiceInstance) => {
     setEditingServiceId(service.id);
-    setActiveType(service.type);
-    setActiveTag(service.tag);
-    setActiveInsulation(service.useInsulation || false);
-    setActiveMeasures(service.measures);
-  };
-
-  // Função de Edição de Ambiente
-  const handleEditSavedRoom = (room: Room) => {
-    setEditingRoomId(room.id);
-    setCurrentRoomName(room.name);
-    setTempServices(room.services); // Carrega todos os serviços do ambiente para o rascunho
-    setIsDrawerOpen(true); // Abre a View SPA
+    serviceForm.loadService(service);
   };
 
   const cancelEditing = () => {
     setEditingServiceId(null);
-    setActiveTag('');
-    setActiveInsulation(false);
-    setActiveMeasures([{ w: 0, h: 0, openings: [] }]);
+    serviceForm.resetForm();
   };
 
   const addServiceToTempList = () => {
-    if (!activeMeasures.every((m) => m.w > 0 && m.h > 0)) {
-      toast.warning('Preencha as medidas principais do serviço.');
-      return;
+    // Validação básica
+    if (
+      serviceForm.activeType === 'wall' ||
+      serviceForm.activeType === 'ceiling'
+    ) {
+      if (!serviceForm.activeMeasures.every((m) => m.w > 0 && m.h > 0)) {
+        toast.warning('Preencha as medidas principais do serviço.');
+        return;
+      }
+    }
+    if (serviceForm.activeType === 'sanca') {
+      if (serviceForm.activePerimeter <= 0 || serviceForm.activeHeight <= 0) {
+        toast.warning('Preencha perímetro e altura da sanca.');
+        return;
+      }
     }
 
-    const totalArea = activeMeasures.reduce((acc, m) => {
-      const grossArea = m.w * m.h;
-      const openingsArea = m.openings.reduce((oAcc, o) => oAcc + o.w * o.h, 0);
-      return acc + (grossArea - openingsArea);
-    }, 0);
+    // Calcula área
+    let totalArea = 0;
+    if (
+      serviceForm.activeType === 'wall' ||
+      serviceForm.activeType === 'ceiling'
+    ) {
+      totalArea = serviceForm.activeMeasures.reduce((acc, m) => {
+        const grossArea = m.w * m.h;
+        const openingsArea = m.openings.reduce(
+          (oAcc, o) => oAcc + o.w * o.h,
+          0,
+        );
+        return acc + (grossArea - openingsArea);
+      }, 0);
+    } else if (serviceForm.activeType === 'sanca') {
+      totalArea = serviceForm.activePerimeter * serviceForm.activeHeight;
+    }
 
     const serviceData: ServiceInstance = {
       id: editingServiceId || Math.random().toString(36),
-      type: activeType,
-      tag: activeTag || (activeType === 'wall' ? 'Parede' : 'Forro'),
-      useInsulation: activeType === 'wall' ? activeInsulation : false,
-      measures: [...activeMeasures],
+      type: serviceForm.activeType,
+      tag:
+        serviceForm.activeTag ||
+        (serviceForm.activeType === 'wall'
+          ? 'Parede'
+          : serviceForm.activeType === 'ceiling'
+            ? 'Forro'
+            : 'Sanca'),
+      useInsulation:
+        serviceForm.activeType === 'wall'
+          ? serviceForm.activeInsulation
+          : false,
+      measures: serviceForm.activeMeasures,
       totalArea,
+      boardType: serviceForm.activeBoardType,
+      profileSize:
+        serviceForm.activeType === 'wall'
+          ? serviceForm.activeProfileSize
+          : undefined,
+      studSpacing:
+        serviceForm.activeType === 'wall'
+          ? serviceForm.activeStudSpacing
+          : undefined,
+      perimeter:
+        serviceForm.activeType === 'sanca'
+          ? serviceForm.activePerimeter
+          : undefined,
+      height:
+        serviceForm.activeType === 'sanca'
+          ? serviceForm.activeHeight
+          : undefined,
     };
 
     if (editingServiceId) {
@@ -172,9 +146,7 @@ export default function DrywallPainel() {
       toast.success('Serviço adicionado à lista!');
     }
 
-    setActiveTag('');
-    setActiveMeasures([{ w: 0, h: 0, openings: [] }]);
-    setActiveInsulation(false);
+    serviceForm.resetForm();
   };
 
   const handleFinalSave = () => {
@@ -184,7 +156,6 @@ export default function DrywallPainel() {
       return toast.error('Adicione pelo menos um serviço.');
 
     setRooms((prev) => {
-      // Se estivermos editando um ID existente
       if (editingRoomId) {
         return prev.map((r) =>
           r.id === editingRoomId
@@ -192,8 +163,6 @@ export default function DrywallPainel() {
             : r,
         );
       }
-
-      // Lógica original para novos ambientes ou adição em nomes iguais
       const roomIndex = prev.findIndex(
         (r) => r.name.toLowerCase() === currentRoomName.toLowerCase(),
       );
@@ -215,13 +184,11 @@ export default function DrywallPainel() {
     setIsDrawerOpen(false);
     setTempServices([]);
     setCurrentRoomName('');
-    setEditingRoomId(null); // Limpa o estado de edição
+    setEditingRoomId(null);
     toast.success(editingRoomId ? 'Ambiente atualizado!' : 'Ambiente salvo!');
   };
 
-  // Calcula os materiais de um conjunto de serviços (usado tanto para o
-  // total geral quanto para o cálculo específico de cada ambiente —
-  // garante que os dois nunca desalinhem, porque é a mesma função).
+  // Cálculo de materiais
   const computeMaterialsForServices = (services: ServiceInstance[]) => {
     const totalsMap: Record<
       string,
@@ -230,7 +197,6 @@ export default function DrywallPainel() {
 
     services.forEach((s) => {
       let res: any[] = [];
-
       if (s.type === 'wall') {
         res = calculateWallMaterials({
           sections: s.measures.map((m) => ({
@@ -238,8 +204,10 @@ export default function DrywallPainel() {
             wallHeight: m.h,
             openings: m.openings.map((o) => ({ width: o.w, height: o.h })),
           })),
+          studSpacing: s.studSpacing || 0.6,
+          boardType: s.boardType || 'ST',
+          profileSize: s.profileSize || 48,
         });
-
         if (s.useInsulation) {
           const totalNetArea = s.measures.reduce((acc, m) => {
             const net =
@@ -252,9 +220,16 @@ export default function DrywallPainel() {
             unit: 'm²',
           });
         }
-      } else {
+      } else if (s.type === 'ceiling') {
         res = calculateCeilingMaterials({
           sections: s.measures.map((m) => ({ width: m.w, length: m.h })),
+          boardType: s.boardType || 'ST',
+        });
+      } else if (s.type === 'sanca') {
+        res = calculateSancaMaterials({
+          perimeter: s.perimeter || 0,
+          height: s.height || 0,
+          boardType: s.boardType || 'ST',
         });
       }
 
@@ -278,13 +253,11 @@ export default function DrywallPainel() {
     }));
   };
 
-  // TAREFA 4: CÁLCULO CONSOLIDADO (todos os ambientes juntos)
   const consolidatedMaterials = useMemo(() => {
     const allServices = rooms.flatMap((r) => r.services);
     return computeMaterialsForServices(allServices);
   }, [rooms]);
 
-  // Materiais específicos de cada ambiente, individualmente
   const roomMaterials = useMemo(() => {
     const map: Record<
       string,
@@ -296,13 +269,9 @@ export default function DrywallPainel() {
     return map;
   }, [rooms]);
 
-  const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
-
-  // Monta o texto formatado (regras de negrito do WhatsApp com *asteriscos*)
-  // para compartilhamento do documento completo.
+  // Compartilhamento
   const buildShareText = () => {
     let text = `*ELÉTRICA & ART*\n*Estimativa de Materiais — Drywall*\n\n`;
-
     rooms.forEach((room) => {
       text += `*${room.name.toUpperCase()}*\n`;
       (roomMaterials[room.id] || []).forEach((m) => {
@@ -310,12 +279,10 @@ export default function DrywallPainel() {
       });
       text += `\n`;
     });
-
     text += `*TOTAL GERAL*\n`;
     consolidatedMaterials.forEach((m) => {
       text += `• ${m.item}: ${m.qtd} ${m.unit}\n`;
     });
-
     return text;
   };
 
@@ -324,28 +291,23 @@ export default function DrywallPainel() {
       toast.warning('Adicione ao menos um ambiente antes de compartilhar.');
       return;
     }
-
     const text = buildShareText();
-
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
       try {
         await (navigator as any).share({ text });
         return;
-      } catch {
-        // Usuário cancelou o compartilhamento nativo — segue pro fallback
-      }
+      } catch {}
     }
-
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const currentLiveArea = useMemo(() => {
-    return activeMeasures.reduce((acc, m) => {
-      const grossArea = m.w * m.h;
-      const openingsArea = m.openings.reduce((oAcc, o) => oAcc + o.w * o.h, 0);
-      return acc + (grossArea - openingsArea);
-    }, 0);
-  }, [activeMeasures]);
+  const fabConfig = [
+    {
+      icon: <Plus size={28} weight="duotone" />,
+      label: 'Novo Serviço',
+      action: () => setIsDrawerOpen(true),
+    },
+  ];
 
   return (
     <>
@@ -354,7 +316,6 @@ export default function DrywallPainel() {
         backAction={() => router.push('ferramentas')}
       />
 
-      {/* Seletor de Modo (Calculadora Completa / Calculadora Rápida) */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10 shadow-xs">
         <div className="max-w-md mx-auto flex p-1 bg-slate-100 rounded-xl">
           <button
@@ -363,7 +324,7 @@ export default function DrywallPainel() {
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               activeMode === 'completa'
                 ? 'bg-white text-indigo-950 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                : 'text-slate-500'
             }`}
           >
             <SquareHalf size={16} weight="duotone" />
@@ -375,7 +336,7 @@ export default function DrywallPainel() {
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               activeMode === 'rapida'
                 ? 'bg-white text-indigo-950 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                : 'text-slate-500'
             }`}
           >
             <Lightning size={16} weight="duotone" className="text-amber-500" />
@@ -389,7 +350,6 @@ export default function DrywallPainel() {
           <DrywallCalculadora />
         </div>
       ) : (
-        /* VIEW PRINCIPAL LISTAGEM */
         <View
           tag="page"
           className={`p-4 bg-slate-50 min-h-[calc(100dvh_-_120px)] pb-40 ${isDrawerOpen ? 'hidden' : 'block'}`}
@@ -406,7 +366,6 @@ export default function DrywallPainel() {
             <p className="text-slate-500 text-sm italic">
               Cálculos baseados em padrões técnicos ABNT
             </p>
-
             {rooms.length > 0 && (
               <Button
                 onClick={handleShareDocument}
@@ -418,157 +377,22 @@ export default function DrywallPainel() {
             )}
           </header>
 
-          <View tag="listagem-de-ambientes" className="space-y-6 mb-12">
-            {rooms.map((room) => (
-              <View
-                key={room.id}
-                className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden group"
-              >
-                {/* Detalhe visual lateral */}
-                <div className="absolute left-0 top-0 w-1 h-full bg-indigo-500" />
-
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-sm font-black text-indigo-900 uppercase tracking-tighter">
-                    {room.name}
-                  </h2>
-
-                  {/* BOTÕES DE AÇÃO DO AMBIENTE (Tarefa 5) */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                      onClick={() => handleEditSavedRoom(room)}
-                    >
-                      <PencilSimple size={18} weight="bold" />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                      onClick={() => {
-                        setRooms(rooms.filter((r) => r.id !== room.id));
-                        toast.success(`Ambiente "${room.name}" removido`);
-                      }}
-                    >
-                      <Trash size={18} weight="bold" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Serviços dentro deste ambiente */}
-                <div className="space-y-3 mb-3">
-                  {room.services.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100"
-                    >
-                      <div>
-                        <div className="text-xs font-black capitalize text-indigo-400 mb-1 flex items-center gap-1">
-                          {s.type === 'wall' ? (
-                            <Wall size={12} />
-                          ) : (
-                            <HardHat size={12} />
-                          )}{' '}
-                          {s.type === 'wall' ? 'Parede' : 'Forro'}
-                          {s.useInsulation && (
-                            <span className="bg-emerald-100 text-emerald-700 px-1 rounded ml-1 text-[9px]">
-                              C/ LÃ
-                            </span>
-                          )}
-                        </div>
-                        <div className="font-bold text-slate-700 text-sm">
-                          {s.tag}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-black text-slate-900">
-                          {s.totalArea.toFixed(2)} m²
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">
-                          {s.measures.length}{' '}
-                          {s.measures.length > 1 ? 'seções' : 'seção'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Materiais específicos deste ambiente (colapsável) */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setExpandedRoomId(
-                      expandedRoomId === room.id ? null : room.id,
-                    )
-                  }
-                  className="w-full flex items-center justify-between text-[11px] font-bold text-indigo-500 uppercase tracking-widest py-2"
-                >
-                  Materiais deste ambiente
-                  <CaretDown
-                    size={14}
-                    weight="bold"
-                    className={`transition-transform ${expandedRoomId === room.id ? 'rotate-180' : ''}`}
-                  />
-                </button>
-
-                {expandedRoomId === room.id && (
-                  <div className="bg-indigo-50/50 rounded-xl p-3 space-y-2 mt-1">
-                    {(roomMaterials[room.id] || []).map((m, idx) => (
-                      <div
-                        key={idx}
-                        className="flex justify-between items-center text-xs"
-                      >
-                        <span className="text-slate-600">{m.item}</span>
-                        <span className="font-bold text-indigo-700">
-                          {m.qtd} {m.unit}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </View>
-            ))}
-          </View>
-
-          {consolidatedMaterials.length > 0 && (
-            <View className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2 tracking-widest">
-                  <Package size={18} weight="bold" /> Lista Total de Materiais
-                </h2>
-              </div>
-              <div className="space-y-4">
-                {consolidatedMaterials.map((item, idx) => (
-                  <View
-                    key={idx}
-                    className="flex justify-between items-center border-b border-b-emerald-100 pb-3 last:border-0"
-                  >
-                    <span className="text-slate-700 text-sm font-medium">
-                      {item.item}
-                    </span>
-                    <span className="font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
-                      {item.qtd}{' '}
-                      <small className="text-[12px]">{item.unit}</small>
-                    </span>
-                  </View>
-                ))}
-              </div>
-            </View>
-          )}
+          <RoomList
+            rooms={rooms}
+            roomMaterials={roomMaterials}
+            onEditRoom={startEditRoom}
+            onRemoveRoom={removeRoom}
+          />
+          <MaterialSummary materials={consolidatedMaterials} />
         </View>
       )}
 
-      {/* VIEW SPA FORMULÁRIO */}
+      {/* Drawer de criação/edição de ambiente */}
       {isDrawerOpen && (
         <View className="fixed inset-0 bg-white z-[9999] flex flex-col animate-in slide-in-from-bottom duration-300">
           <header className="flex items-center justify-between p-4 border-b bg-white">
             <button
-              onClick={() => {
-                setIsDrawerOpen(false);
-                cancelEditing();
-              }}
+              onClick={closeDrawer}
               className="p-2 bg-slate-100 rounded-full"
             >
               <X size={24} weight="bold" className="text-slate-600" />
@@ -599,7 +423,6 @@ export default function DrywallPainel() {
                 />
               </label>
 
-              {/* LISTA TEMPORÁRIA (Rascunhos) */}
               {tempServices.length > 0 && (
                 <View tag="temp-services" className="space-y-3">
                   <span className="text-[10px] font-bold text-indigo-500 uppercase ml-1">
@@ -612,10 +435,10 @@ export default function DrywallPainel() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                          {s.type === 'wall' ? (
-                            <Wall size={24} />
-                          ) : (
-                            <HardHat size={24} />
+                          {s.type === 'wall' && <Wall size={24} />}
+                          {s.type === 'ceiling' && <HardHat size={24} />}
+                          {s.type === 'sanca' && (
+                            <span className="text-2xl">⎔</span>
                           )}
                         </div>
                         <div>
@@ -623,8 +446,8 @@ export default function DrywallPainel() {
                             {s.tag}
                           </div>
                           <div className="text-[10px] text-slate-500 font-bold">
-                            {s.totalArea.toFixed(2)} m² |{' '}
-                            {s.type === 'wall' ? 'Parede' : 'Forro'}
+                            {s.totalArea.toFixed(2)} m² | {s.boardType}
+                            {s.type === 'wall' && ` | ${s.profileSize}mm`}
                           </div>
                         </div>
                       </div>
@@ -655,252 +478,11 @@ export default function DrywallPainel() {
                 </View>
               )}
 
-              {/* service-card: FORMULÁRIO */}
-              <View
-                tag="service-card"
-                className="flex flex-col gap-4 bg-slate-50 px-4 pt-4 rounded-2xl border border-slate-200"
-              >
-                {editingServiceId && (
-                  <div className="flex justify-between items-center bg-indigo-600 text-white px-3 py-1.5 rounded-lg">
-                    <span className="text-[10px] font-bold uppercase tracking-widest">
-                      Editando Serviço
-                    </span>
-                    <X
-                      size={14}
-                      onClick={cancelEditing}
-                      className="cursor-pointer"
-                    />
-                  </div>
-                )}
-
-                <View
-                  tag="tab-grid"
-                  className="flex bg-white rounded-xl p-1 border"
-                >
-                  <Button
-                    variant={activeType === 'wall' ? 'default' : 'outline'}
-                    onClick={() => setActiveType('wall')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0.9rem_0_0_0.9rem] text-[12px] font-bold uppercase transition-all ${activeType === 'wall' ? 'bg-[#00559c] text-white' : 'text-slate-400'}`}
-                  >
-                    <Wall size={18} /> Parede
-                  </Button>
-                  <Button
-                    variant={activeType === 'ceiling' ? 'default' : 'outline'}
-                    onClick={() => setActiveType('ceiling')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[0_0.9rem_0.9rem_0] text-[12px] font-bold uppercase transition-all ${activeType === 'ceiling' ? 'bg-[#00559c] text-white' : 'text-slate-400'}`}
-                  >
-                    <HardHat size={18} /> Forro
-                  </Button>
-                </View>
-
-                <Input
-                  placeholder="Identificação (Ex: Parede Leste)"
-                  value={activeTag}
-                  onChange={(e) => setActiveTag(e.target.value)}
-                  className="bg-white"
-                />
-
-                {activeType === 'wall' && (
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 shadow-sm">
-                    <Label
-                      htmlFor="incluir-la-mode"
-                      className="flex items-center justify-between w-full text-[12px] font-bold text-slate-700 capitalize cursor-pointer"
-                    >
-                      Incluir Lã de Vidro/Pet
-                      <Switch
-                        id="incluir-la-mode"
-                        checked={activeInsulation}
-                        onCheckedChange={setActiveInsulation}
-                        className="data-[state=checked]:bg-[#00559C]"
-                      />
-                    </Label>
-                  </div>
-                )}
-
-                <View tag="medidas-dinamicas" className="space-y-4">
-                  <span className="text-[10px] font-bold text-indigo-500 uppercase ml-1">
-                    Medidas (Soma Automática)
-                  </span>
-                  <View
-                    tag="measures"
-                    className="flex flex-col space-y-2 p-3 bg-white rounded-xl border border-slate-100 relative shadow-sm"
-                  >
-                    {activeMeasures.map((m, mIdx) => (
-                      <View tag="measure-card" key={mIdx} className="space-y-3">
-                        <View
-                          tag="main-measure-inputs"
-                          className="grid grid-cols-2 gap-2"
-                        >
-                          <label>
-                            <span className="text-[10px] font-bold text-slate-400 capitalize">
-                              Largura (m)
-                            </span>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              value={m.w || ''}
-                              onChange={(e) => {
-                                const nm = [...activeMeasures];
-                                nm[mIdx].w = parseFloat(e.target.value) || 0;
-                                setActiveMeasures(nm);
-                              }}
-                            />
-                          </label>
-                          <label>
-                            <span className="text-[10px] font-bold text-slate-400 capitalize">
-                              {activeType === 'wall'
-                                ? 'Altura (m)'
-                                : 'Comprimento (m)'}
-                            </span>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              value={m.h || ''}
-                              onChange={(e) => {
-                                const nm = [...activeMeasures];
-                                nm[mIdx].h = parseFloat(e.target.value) || 0;
-                                setActiveMeasures(nm);
-                              }}
-                            />
-                          </label>
-                        </View>
-                        {mIdx < activeMeasures.length - 1 && (
-                          <div className="border-b border-slate-50 my-2" />
-                        )}
-                      </View>
-                    ))}
-                    <Button
-                      variant="ghost"
-                      onClick={addMeasureField}
-                      className="w-full text-indigo-600 font-bold text-[12px] uppercase border-2 border-dashed border-indigo-100 rounded-xl mt-2"
-                    >
-                      Adicionar Medida (Irregular)
-                    </Button>
-                  </View>
-
-                  {activeType === 'wall' && (
-                    <View
-                      tag="add-portas-e-janelas"
-                      className="space-y-2 mt-2 px-1"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-orange-500 capitalize">
-                          Descontar Vãos da Parede
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => addOpening(0, 'door')}
-                            className="p-1 bg-orange-50 text-orange-600 rounded flex items-center gap-1 text-[10px] font-bold"
-                          >
-                            <Door size={16} /> + Porta
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => addOpening(0, 'window')}
-                            className="p-1 bg-blue-50 text-blue-600 rounded flex items-center gap-1 text-[10px] font-bold"
-                          >
-                            <Browser size={16} /> + Janela
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        {activeMeasures[0].openings?.map((o, oIdx) => (
-                          <div
-                            key={o.id}
-                            className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm animate-in slide-in-from-right-2"
-                          >
-                            <span className="text-[10px] uppercase font-bold text-slate-400 w-4">
-                              {o.type === 'door' ? 'P' : 'J'}
-                            </span>
-                            <Input
-                              className="h-8 text-[12px]"
-                              type="number"
-                              placeholder="L"
-                              value={o.w || ''}
-                              onChange={(e) =>
-                                updateOpening(
-                                  0,
-                                  oIdx,
-                                  'w',
-                                  parseFloat(e.target.value),
-                                )
-                              }
-                            />
-                            <Input
-                              className="h-8 text-[12px]"
-                              type="number"
-                              placeholder="A"
-                              value={o.h || ''}
-                              onChange={(e) =>
-                                updateOpening(
-                                  0,
-                                  oIdx,
-                                  'h',
-                                  parseFloat(e.target.value),
-                                )
-                              }
-                            />
-                            <View
-                              className="grid items-center justify-center bg-red-100 rounded-full p-1 cursor-pointer"
-                              onClick={() => {
-                                const nm = [...activeMeasures];
-                                nm[0].openings.splice(oIdx, 1);
-                                setActiveMeasures(nm);
-                              }}
-                            >
-                              <Trash
-                                size={14}
-                                weight="duotone"
-                                className="text-red-600"
-                              />
-                            </View>
-                          </div>
-                        ))}
-                      </div>
-                    </View>
-                  )}
-                </View>
-
-                {/* Visor de Área ao Vivo */}
-                <View
-                  tag="visor-area"
-                  className="bg-indigo-600 p-3 rounded-xl text-white flex justify-between items-center shadow-inner"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase opacity-80">
-                      Área Calculada
-                    </span>
-                    <span className="text-xs italic opacity-70">
-                      (Bruta - Vãos)
-                    </span>
-                  </div>
-                  <div className="text-xl font-black">
-                    {currentLiveArea.toFixed(2)} m²
-                  </div>
-                </View>
-
-                {/* BOTÃO ORIGINAL RESTAURADO */}
-                <Button
-                  variant="ghost"
-                  onClick={addServiceToTempList}
-                  className={`w-full font-bold text-[12px] uppercase h-12 border-2 border-dashed rounded-xl ${editingServiceId ? 'text-indigo-700 border-indigo-200 bg-indigo-50' : 'text-indigo-800 border-indigo-100'}`}
-                >
-                  {editingServiceId
-                    ? 'Atualizar Serviço no Rascunho'
-                    : 'Salvar o serviço na lista'}
-                </Button>
-
-                {editingServiceId && (
-                  <Button
-                    variant="ghost"
-                    onClick={cancelEditing}
-                    className="w-full text-slate-400 font-bold text-[10px] uppercase h-8"
-                  >
-                    Cancelar Edição
-                  </Button>
-                )}
-              </View>
+              <ServiceForm
+                editingServiceId={editingServiceId}
+                onSave={addServiceToTempList}
+                onCancelEdit={cancelEditing}
+              />
             </div>
           </div>
 
