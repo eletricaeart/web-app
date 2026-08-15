@@ -1,7 +1,7 @@
 // utils/calculators/drywallSanca.ts
 export interface SancaOptions {
-  perimeter: number; // metros lineares
-  height: number; // altura da sanca (metros)
+  perimeter: number;
+  height: number;
   boardType?: 'ST' | 'RU' | 'RF';
 }
 
@@ -11,15 +11,11 @@ export function calculateSancaMaterials({
   boardType = 'ST',
 }: SancaOptions) {
   const safetyMargin = 1.05;
-  const sheetArea = 2.16; // 1.20 x 1.80
+  const sheetArea = 2.16;
   const barLength = 3.0;
 
-  // Área de placas (considerando apenas a face vertical da sanca)
   const area = perimeter * height;
 
-  // Estimativa de perfis: usa-se perfil U (guia) e montante, similar a parede, mas em menor escala
-  // Para sanca, normalmente usa-se perfil 48mm, mas pode ser adaptado.
-  // Vamos simplificar: guias = 2 * perímetro (superior e inferior), montantes = a cada 0.6m
   const runnersLinear = perimeter * 2;
   const studsCount = Math.ceil(perimeter / 0.6) + 1;
   const studsLinear = studsCount * height;
@@ -47,7 +43,7 @@ export function calculateSancaMaterials({
       unit: 'br',
     },
     {
-      item: 'Parafuso GN25 (Gesso)',
+      item: 'Parafuso GN25', // Nome padronizado
       qtd: Math.ceil((area / sheetArea) * 30 * safetyMargin),
       unit: 'un',
     },

@@ -41,9 +41,8 @@ export function calculateCeilingMaterials({
     RF: 'Placa Drywall RF (Fogo) (1.20x1.80)',
   }[boardType];
 
-  // Emendas F530 (estimativa)
   const totalF530Bars = Math.ceil((totalF530LinearMeters / 3) * safetyMargin);
-  const emendasF530 = Math.ceil(totalF530Bars * 0.2); // 20% das barras
+  const emendasF530 = Math.ceil(totalF530Bars * 0.2);
 
   return [
     {
@@ -68,11 +67,11 @@ export function calculateCeilingMaterials({
     },
     {
       item: 'Regulador / Tirante',
-      qtd: Math.ceil(totalArea * 1.2 * safetyMargin), // ajustado de 2 para 1.2
+      qtd: Math.ceil(totalArea * 1.2 * safetyMargin),
       unit: 'un',
     },
     {
-      item: 'Parafuso GN25',
+      item: 'Parafuso GN25', // Nome padronizado
       qtd: Math.ceil(totalArea * 25 * safetyMargin),
       unit: 'un',
     },

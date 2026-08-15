@@ -22,7 +22,7 @@ export interface WallSection {
 
 export interface WallOptions {
   sections: WallSection[];
-  studSpacing?: 0.4 | 0.6; // em metros
+  studSpacing?: 0.4 | 0.6;
   boardType?: 'ST' | 'RU' | 'RF';
   profileSize?: 48 | 70 | 90;
 }
@@ -76,10 +76,9 @@ export function calculateWallMaterials({
     (totalRunnersLinearMeters / barLength) * safetyMargin,
   );
   const studsBarsCount = Math.ceil(
-    (totalStudsLinearMeters / barLength) * heightLossFactor, // usa fator dinâmico
+    (totalStudsLinearMeters / barLength) * heightLossFactor,
   );
 
-  // Mapeamento de tipo de chapa
   const boardLabel = {
     ST: 'Placa Drywall ST (1.20x1.80)',
     RU: 'Placa Drywall RU (Umidade) (1.20x1.80)',
@@ -89,7 +88,6 @@ export function calculateWallMaterials({
   const profileLabel = `Guia ${profileSize}mm (3m)`;
   const studLabel = `Montante ${profileSize}mm (3m)`;
 
-  // Fita banda acústica
   const acousticTape = totalRunnersLinearMeters;
 
   return [
@@ -101,7 +99,7 @@ export function calculateWallMaterials({
     { item: profileLabel, qtd: runnersCount, unit: 'br' },
     { item: studLabel, qtd: studsBarsCount, unit: 'br' },
     {
-      item: 'Parafuso GN25 (Gesso)',
+      item: 'Parafuso GN25', // Nome padronizado
       qtd: Math.ceil((totalBoardArea / sheetArea) * 30 * safetyMargin),
       unit: 'un',
     },
