@@ -15,6 +15,8 @@ import {
   ShareNetwork,
   Lightning,
   Plus,
+  Wall,
+  HardHat,
 } from '@phosphor-icons/react';
 import { calculateWallMaterials } from '@/utils/calculators/drywallWall';
 import { calculateCeilingMaterials } from '@/utils/calculators/drywallCeiling';
