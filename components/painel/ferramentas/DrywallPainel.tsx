@@ -17,6 +17,7 @@ import {
   Plus,
   Wall,
   HardHat,
+  PencilSimple,
 } from '@phosphor-icons/react';
 import { calculateWallMaterials } from '@/utils/calculators/drywallWall';
 import { calculateCeilingMaterials } from '@/utils/calculators/drywallCeiling';
