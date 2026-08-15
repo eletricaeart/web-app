@@ -1,25 +1,31 @@
-// components/painel/ferramentas/ServiceForm.tsx
+// components/painel/ferramentas/SerrviceForm.tsx
 'use client';
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Wall, HardHat, Door, Browser, Trash, X } from '@phosphor-icons/react';
 import View from '@/components/layout/View';
+import { X, Check } from '@phosphor-icons/react';
+import { ServiceTypeSelector } from './ServiceTypeSelector';
+import { AdvancedOptions } from './AdvancedOptions';
+import { MeasureInput } from './MeasureInput';
+import { ServiceInstance } from '@/hooks/useRoomEditor';
 import { useServiceForm } from '@/hooks/useServiceForm';
 
 interface ServiceFormProps {
   editingServiceId: string | null;
   onSave: (serviceData: any) => void;
   onCancelEdit: () => void;
+  roomName?: string; // para validação de ambiente molhado
 }
 
 export function ServiceForm({
   editingServiceId,
   onSave,
   onCancelEdit,
+  roomName = '',
 }: ServiceFormProps) {
   const {
     activeType,
@@ -40,25 +46,97 @@ export function ServiceForm({
     setActivePerimeter,
     activeHeight,
     setActiveHeight,
-    addMeasureField,
     addOpening,
     updateOpening,
     removeOpening,
+    resetForm,
+    loadService,
   } = useServiceForm();
 
-  // Cálculo da área ao vivo (apenas para parede/forro)
-  const currentLiveArea = React.useMemo(() => {
-    if (activeType === 'sanca') return 0;
-    return activeMeasures.reduce((acc, m) => {
-      const grossArea = m.w * m.h;
-      const openingsArea = m.openings.reduce((oAcc, o) => oAcc + o.w * o.h, 0);
-      return acc + (grossArea - openingsArea);
-    }, 0);
-  }, [activeMeasures, activeType]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [validationWarning, setValidationWarning] = useState<string | null>(
+    null,
+  );
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Scroll automático ao focar em input mobile
+  useEffect(() => {
+    const handleFocus = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' && window.innerWidth < 768) {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    };
+    document.addEventListener('focusin', handleFocus);
+    return () => document.removeEventListener('focusin', handleFocus);
+  }, []);
+
+  // Validação em tempo real
+  const validateMeasures = () => {
+    if (activeType === 'wall' || activeType === 'ceiling') {
+      const hasInvalid = activeMeasures.some((m) => m.w <= 0 || m.h <= 0);
+      if (hasInvalid) return 'Preencha todas as medidas.';
+    }
+    if (activeType === 'sanca') {
+      if (activePerimeter <= 0 || activeHeight <= 0)
+        return 'Preencha perímetro e altura.';
+    }
+    return null;
+  };
+
+  const getSuggestions = () => {
+    const warnings: string[] = [];
+    if (activeType === 'wall') {
+      const maxHeight = Math.max(...activeMeasures.map((m) => m.h));
+      if (maxHeight > 3.0 && activeStudSpacing === 0.6) {
+        warnings.push(
+          'Altura > 3m – recomendamos espaçamento 40cm para maior rigidez.',
+        );
+      }
+      if (maxHeight > 3.5 && activeProfileSize === 48) {
+        warnings.push(
+          'Altura > 3,5m – recomendamos perfil 70mm para maior estabilidade.',
+        );
+      }
+      if (
+        activeBoardType === 'ST' &&
+        (roomName.toLowerCase().includes('banheiro') ||
+          roomName.toLowerCase().includes('cozinha') ||
+          roomName.toLowerCase().includes('área'))
+      ) {
+        warnings.push(
+          'Ambiente molhado – recomendamos placa RU (resistente à umidade).',
+        );
+      }
+    }
+    return warnings;
+  };
 
   const handleSubmit = () => {
-    // Monta o objeto de serviço
-    let serviceData: any = {
+    const error = validateMeasures();
+    if (error) {
+      setValidationWarning(error);
+      return;
+    }
+    setValidationWarning(null);
+
+    let totalArea = 0;
+    if (activeType === 'wall' || activeType === 'ceiling') {
+      totalArea = activeMeasures.reduce((acc, m) => {
+        const grossArea = m.w * m.h;
+        const openingsArea = m.openings.reduce(
+          (oAcc, o) => oAcc + o.w * o.h,
+          0,
+        );
+        return acc + (grossArea - openingsArea);
+      }, 0);
+    } else if (activeType === 'sanca') {
+      totalArea = activePerimeter * activeHeight;
+    }
+
+    const serviceData: Partial<ServiceInstance> = {
       type: activeType,
       tag:
         activeTag ||
@@ -68,38 +146,23 @@ export function ServiceForm({
             ? 'Forro'
             : 'Sanca'),
       boardType: activeBoardType,
+      measures: activeMeasures,
+      totalArea,
+      useInsulation: activeType === 'wall' ? activeInsulation : false,
+      profileSize: activeType === 'wall' ? activeProfileSize : undefined,
+      studSpacing: activeType === 'wall' ? activeStudSpacing : undefined,
+      perimeter: activeType === 'sanca' ? activePerimeter : undefined,
+      height: activeType === 'sanca' ? activeHeight : undefined,
     };
 
-    if (activeType === 'wall') {
-      serviceData = {
-        ...serviceData,
-        useInsulation: activeInsulation,
-        measures: activeMeasures,
-        profileSize: activeProfileSize,
-        studSpacing: activeStudSpacing,
-        totalArea: currentLiveArea,
-      };
-    } else if (activeType === 'ceiling') {
-      serviceData = {
-        ...serviceData,
-        measures: activeMeasures,
-        totalArea: currentLiveArea,
-      };
-    } else if (activeType === 'sanca') {
-      serviceData = {
-        ...serviceData,
-        perimeter: activePerimeter,
-        height: activeHeight,
-        totalArea: activePerimeter * activeHeight, // área aproximada
-        measures: [], // sanca não usa medidas múltiplas
-      };
-    }
-
     onSave(serviceData);
+    resetForm();
   };
 
+  const suggestions = getSuggestions();
+
   return (
-    <div className="flex flex-col gap-4 bg-slate-50 px-4 pt-4 rounded-2xl border border-slate-200">
+    <div className="flex flex-col gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
       {editingServiceId && (
         <div className="flex justify-between items-center bg-indigo-600 text-white px-3 py-1.5 rounded-lg">
           <span className="text-[10px] font-bold uppercase tracking-widest">
@@ -109,332 +172,111 @@ export function ServiceForm({
         </div>
       )}
 
-      {/* Tipo de serviço */}
-      <View tag="tab-grid" className="flex bg-white rounded-xl p-1 border">
-        {(['wall', 'ceiling', 'sanca'] as const).map((type) => (
-          <Button
-            key={type}
-            variant={activeType === type ? 'default' : 'outline'}
-            onClick={() => setActiveType(type)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-bold uppercase transition-all ${
-              activeType === type ? 'bg-[#00559c] text-white' : 'text-slate-400'
-            } 
-               ${type === 'wall' && 'rounded-[.9rem_.2rem_.2rem_.9rem]'}
-               ${type === 'ceiling' && 'rounded-[.2rem]'}
-               ${type === 'sanca' && 'rounded-[.2rem_.9rem_.9rem_.2rem]'}
-            `}
-          >
-            {type === 'wall' && <Wall size={18} />}
-            {type === 'ceiling' && <HardHat size={18} />}
-            {type === 'sanca' && <span className="text-lg">⎔</span>}
-            {type === 'wall'
-              ? 'Parede'
-              : type === 'ceiling'
-                ? 'Forro'
-                : 'Sanca'}
-          </Button>
-        ))}
-      </View>
+      <ServiceTypeSelector value={activeType} onChange={setActiveType} />
 
-      {/* Opções de placa */}
-      <div className="flex flex-col gap-1">
-        <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-          Tipo de Placa
-        </span>
-        <div className="flex bg-white rounded-xl p-1 border gap-1">
-          {(['ST', 'RU', 'RF'] as const).map((type) => (
-            <Button
-              key={type}
-              variant={activeBoardType === type ? 'default' : 'outline'}
-              onClick={() => setActiveBoardType(type)}
-              className={`flex-1 text-[10px] font-bold uppercase h-8 ${
-                activeBoardType === type
-                  ? 'bg-[#00559c] text-white'
-                  : 'text-slate-400'
-              }`}
-            >
-              {type}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Opções específicas para parede */}
-      {activeType === 'wall' && (
-        <>
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-              Perfil (mm)
-            </span>
-            <div className="flex bg-white rounded-xl p-1 border gap-1">
-              {([48, 70, 90] as const).map((size) => (
-                <Button
-                  key={size}
-                  variant={activeProfileSize === size ? 'default' : 'outline'}
-                  onClick={() => setActiveProfileSize(size)}
-                  className={`flex-1 text-[10px] font-bold uppercase h-8 ${
-                    activeProfileSize === size
-                      ? 'bg-[#00559c] text-white'
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {size}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-              Espaçamento Montantes
-            </span>
-            <div className="flex bg-white rounded-xl p-1 border gap-1">
-              {([0.4, 0.6] as const).map((spacing) => (
-                <Button
-                  key={spacing}
-                  variant={
-                    activeStudSpacing === spacing ? 'default' : 'outline'
-                  }
-                  onClick={() => setActiveStudSpacing(spacing)}
-                  className={`flex-1 text-[10px] font-bold uppercase h-8 ${
-                    activeStudSpacing === spacing
-                      ? 'bg-[#00559c] text-white'
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {spacing === 0.4 ? '40cm' : '60cm'}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 shadow-sm">
-            <Label
-              htmlFor="incluir-la-mode"
-              className="flex items-center justify-between w-full text-[12px] font-bold text-slate-700 capitalize cursor-pointer"
-            >
-              Incluir Lã de Vidro/Pet
-              <Switch
-                id="incluir-la-mode"
-                checked={activeInsulation}
-                onCheckedChange={setActiveInsulation}
-                className="data-[state=checked]:bg-[#00559C]"
-              />
-            </Label>
-          </div>
-        </>
-      )}
-
-      {/* Identificação */}
       <Input
+        ref={inputRef}
         placeholder="Identificação (Ex: Parede Leste, Forro Sala, Sanca Iluminação)"
         value={activeTag}
         onChange={(e) => setActiveTag(e.target.value)}
         className="bg-white"
       />
 
-      {/* Campos específicos para Sanca */}
-      {activeType === 'sanca' && (
-        <div className="grid grid-cols-2 gap-2">
-          <label>
-            <span className="text-[10px] font-bold text-slate-400">
-              Perímetro (m)
-            </span>
-            <Input
-              type="number"
-              placeholder="0.00"
-              value={activePerimeter || ''}
-              onChange={(e) =>
-                setActivePerimeter(parseFloat(e.target.value) || 0)
-              }
+      {activeType === 'wall' && (
+        <AdvancedOptions
+          boardType={activeBoardType}
+          setBoardType={setActiveBoardType}
+          profileSize={activeProfileSize}
+          setProfileSize={setActiveProfileSize}
+          studSpacing={activeStudSpacing}
+          setStudSpacing={setActiveStudSpacing}
+          isOpen={showAdvanced}
+          onOpenChange={setShowAdvanced}
+        />
+      )}
+
+      {activeType === 'wall' && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 shadow-sm">
+          <Label
+            htmlFor="incluir-la-mode"
+            className="flex items-center justify-between w-full text-[12px] font-bold text-slate-700 capitalize cursor-pointer"
+          >
+            Incluir Lã de Vidro/Pet
+            <Switch
+              id="incluir-la-mode"
+              checked={activeInsulation}
+              onCheckedChange={setActiveInsulation}
+              className="data-[state=checked]:bg-[#00559C]"
             />
-          </label>
-          <label>
-            <span className="text-[10px] font-bold text-slate-400">
-              Altura (m)
-            </span>
-            <Input
-              type="number"
-              placeholder="0.00"
-              value={activeHeight || ''}
-              onChange={(e) => setActiveHeight(parseFloat(e.target.value) || 0)}
-            />
-          </label>
+          </Label>
         </div>
       )}
 
-      {/* Medidas para parede/forro */}
-      {(activeType === 'wall' || activeType === 'ceiling') && (
-        <View tag="medidas-dinamicas" className="space-y-4">
-          <span className="text-[10px] font-bold text-indigo-500 uppercase ml-1">
-            Medidas (Soma Automática)
+      <MeasureInput
+        type={activeType}
+        measures={activeMeasures}
+        setMeasures={setActiveMeasures}
+        perimeter={activePerimeter}
+        setPerimeter={setActivePerimeter}
+        height={activeHeight}
+        setHeight={setActiveHeight}
+        addOpening={addOpening}
+        updateOpening={updateOpening}
+        removeOpening={removeOpening}
+      />
+
+      {validationWarning && (
+        <div className="text-red-500 text-[12px] font-bold bg-red-50 p-2 rounded-lg border border-red-200">
+          {validationWarning}
+        </div>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="text-amber-600 text-[11px] font-medium bg-amber-50 p-2 rounded-lg border border-amber-200 space-y-1">
+          {suggestions.map((s, i) => (
+            <div key={i}>💡 {s}</div>
+          ))}
+        </div>
+      )}
+
+      {/* Visor de área ao vivo */}
+      <View
+        tag="visor-area"
+        className="bg-indigo-600 p-3 rounded-xl text-white flex justify-between items-center shadow-inner"
+      >
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase opacity-80">
+            Área Calculada
           </span>
-          <View
-            tag="measures"
-            className="flex flex-col space-y-2 p-3 bg-white rounded-xl border border-slate-100 relative shadow-sm"
-          >
-            {activeMeasures.map((m, mIdx) => (
-              <View tag="measure-card" key={mIdx} className="space-y-3">
-                <View
-                  tag="main-measure-inputs"
-                  className="grid grid-cols-2 gap-2"
-                >
-                  <label>
-                    <span className="text-[10px] font-bold text-slate-400 capitalize">
-                      Largura (m)
-                    </span>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={m.w || ''}
-                      onChange={(e) => {
-                        const nm = [...activeMeasures];
-                        nm[mIdx].w = parseFloat(e.target.value) || 0;
-                        setActiveMeasures(nm);
-                      }}
-                    />
-                  </label>
-                  <label>
-                    <span className="text-[10px] font-bold text-slate-400 capitalize">
-                      {activeType === 'wall' ? 'Altura (m)' : 'Comprimento (m)'}
-                    </span>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={m.h || ''}
-                      onChange={(e) => {
-                        const nm = [...activeMeasures];
-                        nm[mIdx].h = parseFloat(e.target.value) || 0;
-                        setActiveMeasures(nm);
-                      }}
-                    />
-                  </label>
-                </View>
+          <span className="text-xs italic opacity-70">(Bruta - Vãos)</span>
+        </div>
+        <div className="text-xl font-black">
+          {activeType === 'sanca'
+            ? (activePerimeter * activeHeight).toFixed(2)
+            : activeMeasures
+                .reduce((acc, m) => {
+                  const gross = m.w * m.h;
+                  const openings = m.openings.reduce(
+                    (a, o) => a + o.w * o.h,
+                    0,
+                  );
+                  return acc + (gross - openings);
+                }, 0)
+                .toFixed(2)}{' '}
+          m²
+        </div>
+      </View>
 
-                {activeType === 'wall' && (
-                  <View
-                    tag="add-portas-e-janelas"
-                    className="space-y-2 mt-2 px-1"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-orange-500 capitalize">
-                        Descontar Vãos
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => addOpening(mIdx, 'door')}
-                          className="p-1 bg-orange-50 text-orange-600 rounded flex items-center gap-1 text-[10px] font-bold"
-                        >
-                          <Door size={16} /> + Porta
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => addOpening(mIdx, 'window')}
-                          className="p-1 bg-blue-50 text-blue-600 rounded flex items-center gap-1 text-[10px] font-bold"
-                        >
-                          <Browser size={16} /> + Janela
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {m.openings?.map((o, oIdx) => (
-                        <div
-                          key={o.id}
-                          className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm animate-in slide-in-from-right-2"
-                        >
-                          <span className="text-[10px] uppercase font-bold text-slate-400 w-4">
-                            {o.type === 'door' ? 'P' : 'J'}
-                          </span>
-                          <Input
-                            className="h-8 text-[12px]"
-                            type="number"
-                            placeholder="L"
-                            value={o.w || ''}
-                            onChange={(e) =>
-                              updateOpening(
-                                mIdx,
-                                oIdx,
-                                'w',
-                                parseFloat(e.target.value),
-                              )
-                            }
-                          />
-                          <Input
-                            className="h-8 text-[12px]"
-                            type="number"
-                            placeholder="A"
-                            value={o.h || ''}
-                            onChange={(e) =>
-                              updateOpening(
-                                mIdx,
-                                oIdx,
-                                'h',
-                                parseFloat(e.target.value),
-                              )
-                            }
-                          />
-                          <View
-                            className="grid items-center justify-center bg-red-100 rounded-full p-1 cursor-pointer"
-                            onClick={() => removeOpening(mIdx, oIdx)}
-                          >
-                            <Trash
-                              size={14}
-                              weight="duotone"
-                              className="text-red-600"
-                            />
-                          </View>
-                        </div>
-                      ))}
-                    </div>
-                  </View>
-                )}
-
-                {mIdx < activeMeasures.length - 1 && (
-                  <div className="border-b border-slate-50 my-2" />
-                )}
-              </View>
-            ))}
-            <Button
-              variant="ghost"
-              onClick={addMeasureField}
-              className="w-full text-indigo-600 font-bold text-[12px] uppercase border-2 border-dashed border-indigo-100 rounded-xl mt-2"
-            >
-              Adicionar Medida (Irregular)
-            </Button>
-          </View>
-        </View>
-      )}
-
-      {/* Visor de Área (apenas parede/forro) */}
-      {(activeType === 'wall' || activeType === 'ceiling') && (
-        <View
-          tag="visor-area"
-          className="bg-indigo-600 p-3 rounded-xl text-white flex justify-between items-center shadow-inner"
-        >
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase opacity-80">
-              Área Calculada
-            </span>
-            <span className="text-xs italic opacity-70">(Bruta - Vãos)</span>
-          </div>
-          <div className="text-xl font-black">
-            {currentLiveArea.toFixed(2)} m²
-          </div>
-        </View>
-      )}
-
-      {/* Botão Salvar */}
       <Button
         variant="ghost"
         onClick={handleSubmit}
-        className={`w-full mb-4 font-bold text-[12px] uppercase h-12 border-2 border-dashed rounded-xl ${
+        className={`w-full font-bold text-[12px] uppercase h-12 border-2 border-dashed rounded-xl ${
           editingServiceId
             ? 'text-indigo-700 border-indigo-200 bg-indigo-50'
             : 'text-indigo-800 border-indigo-100'
         }`}
       >
-        {editingServiceId
-          ? 'Atualizar Serviço no Rascunho'
-          : 'Salvar o serviço na lista'}
+        {editingServiceId ? 'Atualizar Serviço' : 'Adicionar Serviço'}
       </Button>
 
       {editingServiceId && (
