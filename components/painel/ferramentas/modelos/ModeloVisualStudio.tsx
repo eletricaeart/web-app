@@ -1,7 +1,7 @@
 // components/painel/ferramentas/modelos/ModeloVisualStudio.tsx
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Eye,
@@ -21,6 +21,7 @@ import {
   CaretRight,
   ArrowsHorizontal,
   ArrowsVertical,
+  Download,
 } from '@phosphor-icons/react';
 import {
   calculateWallMaterials,
@@ -32,6 +33,8 @@ import {
 } from '@/utils/calculators/drywallCeiling';
 import { calculateSancaMaterials } from '@/utils/calculators/drywallSanca';
 import { toast } from 'sonner';
+import { toPng } from 'html-to-image';
+import { saveAs } from 'file-saver';
 
 // Interfaces (compatíveis com as do DrywallPainel)
 interface Opening {
@@ -85,6 +88,58 @@ export default function ModeloVisualStudio() {
   const [viewMode, setViewMode] = useState<'estrutura' | 'chapas' | 'ambos'>(
     'estrutura',
   );
+
+  const blueprintRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPNG = async () => {
+    if (!blueprintRef.current) return;
+    try {
+      const dataUrl = await toPng(blueprintRef.current, {
+        backgroundColor: '#0f172a',
+        pixelRatio: 2,
+        quality: 0.95,
+      });
+      saveAs(dataUrl, `blueprint-${selectedRoom?.name || 'projeto'}.png`);
+      toast.success('Blueprint exportado!');
+    } catch (error) {
+      toast.error('Erro ao exportar.');
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    if (!blueprintRef.current) return;
+    try {
+      const dataUrl = await toPng(blueprintRef.current, {
+        backgroundColor: '#0f172a',
+        pixelRatio: 2,
+        quality: 0.95,
+      });
+      const blob = await fetch(dataUrl).then((r) => r.blob());
+      const file = new File(
+        [blob],
+        `blueprint-${selectedRoom?.name || 'projeto'}.png`,
+        { type: 'image/png' },
+      );
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({ title: 'Blueprint Drywall', files: [file] });
+      } else {
+        // fallback: baixar e abrir WhatsApp com texto
+        const text = `*Blueprint - ${selectedRoom?.name}*\n${selectedRoom?.type}`;
+        window.open(
+          `https://wa.me/?text=${encodeURIComponent(text)}`,
+          '_blank',
+        );
+        saveAs(blob, `blueprint-${selectedRoom?.name || 'projeto'}.png`);
+      }
+      toast.success('Blueprint compartilhado!');
+    } catch (error) {
+      toast.error('Erro ao compartilhar.');
+    }
+  };
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId) || rooms[0];
 
@@ -242,6 +297,7 @@ export default function ModeloVisualStudio() {
       width: 0,
       height: 0,
       posX: 0,
+      posY: 0,
     };
     updateSelectedRoom({ openings: [...selectedRoom.openings, newOpening] });
     toast.success('Abertura adicionada!');
@@ -648,6 +704,34 @@ export default function ModeloVisualStudio() {
                                 m
                               </span>
                             </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-slate-400">
+                                PosY:
+                              </span>
+                              <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={op.posY ?? 0}
+                                onChange={(e) =>
+                                  updateSelectedRoom({
+                                    openings: selectedRoom.openings.map((o) =>
+                                      o.id === op.id
+                                        ? {
+                                            ...o,
+                                            posY:
+                                              parseFloat(e.target.value) || 0,
+                                          }
+                                        : o,
+                                    ),
+                                  })
+                                }
+                                className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
+                              />
+                              <span className="text-[10px] text-slate-400">
+                                m
+                              </span>
+                            </div>
                             <button
                               onClick={() => removeOpening(op.id)}
                               className="p-1 text-rose-500 hover:bg-rose-100 rounded transition"
@@ -847,6 +931,20 @@ export default function ModeloVisualStudio() {
                     ))}
                   </div>
                 )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleExportPNG}
+                    className="px-3 py-1.5 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <Download size={14} /> PNG
+                  </button>
+                  <button
+                    onClick={handleShareWhatsApp}
+                    className="px-3 py-1.5 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <ShareNetwork size={14} /> WhatsApp
+                  </button>
+                </div>
               </div>
 
               {/* Blueprints em cards separados para cada serviço (aqui temos apenas um serviço por "room", mas pode ser adaptado) */}
@@ -866,7 +964,10 @@ export default function ModeloVisualStudio() {
                             : `${selectedRoom.sancaPerimeter}m`}
                       </span>
                     </div>
-                    <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800/60 min-h-[200px] flex items-center justify-center relative overflow-hidden">
+                    <div
+                      ref={blueprintRef}
+                      className="bg-slate-950/80 rounded-xl p-3 border border-slate-800/60 min-h-[200px] flex items-center justify-center relative overflow-hidden"
+                    >
                       {/* Grade de fundo */}
                       <div
                         className="absolute inset-0 opacity-10 pointer-events-none"
