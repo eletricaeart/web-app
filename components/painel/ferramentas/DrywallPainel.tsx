@@ -17,7 +17,7 @@ import {
   Plus,
   DownloadSimple,
   Door,
-  Window,
+  // Window,
   Square,
   ArrowsVertical,
   PencilSimple,
