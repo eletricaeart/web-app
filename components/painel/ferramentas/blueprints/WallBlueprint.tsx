@@ -128,7 +128,11 @@ export function WallBlueprint({ service, viewMode }: WallBlueprintProps) {
         type: 'image/png',
       });
 
-      if (navigator.share && navigator.canShare) {
+      if (
+        navigator.share &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] })
+      ) {
         await navigator.share({
           title: `Blueprint - ${serviceName}`,
           files: [file],
