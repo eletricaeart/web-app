@@ -22,6 +22,10 @@ import {
   ArrowsHorizontal,
   ArrowsVertical,
   Download,
+  Door,
+  Browser,
+  Square,
+  CaretDown,
 } from '@phosphor-icons/react';
 import {
   calculateWallMaterials,
@@ -40,6 +44,7 @@ import { saveAs } from 'file-saver';
 interface Opening {
   id: string;
   name: string;
+  type: 'door' | 'window' | 'opening';
   width: number;
   height: number;
   posX: number; // posição horizontal
@@ -88,6 +93,11 @@ export default function ModeloVisualStudio() {
   const [selectedRoomId, setSelectedRoomId] = useState<string>('1');
   const [viewMode, setViewMode] = useState<'estrutura' | 'chapas' | 'ambos'>(
     'estrutura',
+  );
+
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [expandedOpeningId, setExpandedOpeningId] = useState<string | null>(
+    null,
   );
 
   const blueprintRef = useRef<HTMLDivElement>(null);
@@ -290,20 +300,27 @@ export default function ModeloVisualStudio() {
   }, [selectedRoom]);
 
   // --- Ações de abertura ---
-  const addOpening = () => {
+  const addOpening = (type: 'door' | 'window' | 'opening') => {
     if (!selectedRoom) return;
+    const typeNames = {
+      door: 'Porta',
+      window: 'Janela',
+      opening: 'Vão',
+    };
     const newOpening: Opening = {
       id: Date.now().toString(),
-      name: `Vão ${selectedRoom.openings.length + 1}`,
+      name: `${typeNames[type]} ${selectedRoom.openings.length + 1}`,
+      type,
       width: 0,
       height: 0,
       posX: 0,
       posY: 0,
     };
     updateSelectedRoom({ openings: [...selectedRoom.openings, newOpening] });
-    toast.success('Abertura adicionada!');
+    setExpandedOpeningId(newOpening.id);
+    setIsAddMenuOpen(false);
+    toast.success(`${newOpening.name} adicionada!`);
   };
-
   const removeOpening = (id: string) => {
     if (!selectedRoom) return;
     updateSelectedRoom({
@@ -588,162 +605,274 @@ export default function ModeloVisualStudio() {
                       <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1">
                         Vãos ({selectedRoom.openings.length})
                       </label>
-                      <button
-                        onClick={addOpening}
-                        className="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-bold flex items-center gap-1 transition"
-                      >
-                        <Plus size={14} weight="bold" /> Adicionar
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
+                          className="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                        >
+                          <Plus size={14} weight="bold" /> Adicionar
+                        </button>
+                        {isAddMenuOpen && (
+                          <div className="absolute right-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-200 p-1 z-10 min-w-[130px]">
+                            <button
+                              onClick={() => {
+                                addOpening('door');
+                                setIsAddMenuOpen(false);
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-orange-50 rounded-lg flex items-center gap-2"
+                            >
+                              <Door size={16} className="text-orange-500" />{' '}
+                              Porta
+                            </button>
+                            <button
+                              onClick={() => {
+                                addOpening('window');
+                                setIsAddMenuOpen(false);
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-blue-50 rounded-lg flex items-center gap-2"
+                            >
+                              <Browser size={16} className="text-blue-500" />{' '}
+                              Janela
+                            </button>
+                            <button
+                              onClick={() => {
+                                addOpening('opening');
+                                setIsAddMenuOpen(false);
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 rounded-lg flex items-center gap-2"
+                            >
+                              <Square size={16} className="text-slate-500" />{' '}
+                              Vão
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
+
                     {selectedRoom.openings.length === 0 ? (
                       <p className="text-xs text-slate-400 italic py-2">
                         Nenhum vão cadastrado.
                       </p>
                     ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {selectedRoom.openings.map((op) => (
-                          <div
-                            key={op.id}
-                            className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs"
-                          >
-                            <input
-                              type="text"
-                              value={op.name}
-                              onChange={(e) =>
-                                updateSelectedRoom({
-                                  openings: selectedRoom.openings.map((o) =>
-                                    o.id === op.id
-                                      ? { ...o, name: e.target.value }
-                                      : o,
-                                  ),
-                                })
-                              }
-                              className="w-20 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-xs font-bold"
-                              placeholder="Nome"
-                            />
-                            <div className="flex items-center gap-1">
-                              <span className="text-[10px] text-slate-400">
-                                L:
-                              </span>
-                              <input
-                                type="number"
-                                step="0.05"
-                                min="0"
-                                value={op.width || ''}
-                                onChange={(e) =>
-                                  updateSelectedRoom({
-                                    openings: selectedRoom.openings.map((o) =>
-                                      o.id === op.id
-                                        ? {
-                                            ...o,
-                                            width:
-                                              parseFloat(e.target.value) || 0,
-                                          }
-                                        : o,
-                                    ),
-                                  })
-                                }
-                                className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
-                              />
-                              <span className="text-[10px] text-slate-400">
-                                m
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-[10px] text-slate-400">
-                                A:
-                              </span>
-                              <input
-                                type="number"
-                                step="0.05"
-                                min="0"
-                                value={op.height || ''}
-                                onChange={(e) =>
-                                  updateSelectedRoom({
-                                    openings: selectedRoom.openings.map((o) =>
-                                      o.id === op.id
-                                        ? {
-                                            ...o,
-                                            height:
-                                              parseFloat(e.target.value) || 0,
-                                          }
-                                        : o,
-                                    ),
-                                  })
-                                }
-                                className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
-                              />
-                              <span className="text-[10px] text-slate-400">
-                                m
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-[10px] text-slate-400">
-                                PosX:
-                              </span>
-                              <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={op.posX || ''}
-                                onChange={(e) =>
-                                  updateSelectedRoom({
-                                    openings: selectedRoom.openings.map((o) =>
-                                      o.id === op.id
-                                        ? {
-                                            ...o,
-                                            posX:
-                                              parseFloat(e.target.value) || 0,
-                                          }
-                                        : o,
-                                    ),
-                                  })
-                                }
-                                className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
-                              />
-                              <span className="text-[10px] text-slate-400">
-                                m
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-[10px] text-slate-400">
-                                PosY:
-                              </span>
-                              <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={op.posY ?? 0}
-                                onChange={(e) =>
-                                  updateSelectedRoom({
-                                    openings: selectedRoom.openings.map((o) =>
-                                      o.id === op.id
-                                        ? {
-                                            ...o,
-                                            posY:
-                                              parseFloat(e.target.value) || 0,
-                                          }
-                                        : o,
-                                    ),
-                                  })
-                                }
-                                className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
-                              />
-                              <span className="text-[10px] text-slate-400">
-                                m
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => removeOpening(op.id)}
-                              className="p-1 text-rose-500 hover:bg-rose-100 rounded transition"
+                      <div className="space-y-2">
+                        {selectedRoom.openings.map((op) => {
+                          const isExpanded = expandedOpeningId === op.id;
+                          const icon =
+                            op.type === 'door'
+                              ? '🚪'
+                              : op.type === 'window'
+                                ? '🪟'
+                                : '▢';
+                          const colorClass =
+                            op.type === 'door'
+                              ? 'text-orange-500'
+                              : op.type === 'window'
+                                ? 'text-blue-500'
+                                : 'text-slate-500';
+
+                          return (
+                            <div
+                              key={op.id}
+                              className={`bg-white rounded-xl border transition-all ${
+                                isExpanded
+                                  ? 'border-indigo-300 shadow-md'
+                                  : 'border-slate-200'
+                              }`}
                             >
-                              <Trash size={14} />
-                            </button>
-                          </div>
-                        ))}
+                              {/* Cabeçalho do card (sempre visível) */}
+                              <div
+                                className="flex items-center justify-between p-2.5 cursor-pointer hover:bg-slate-50 rounded-xl"
+                                onClick={() =>
+                                  setExpandedOpeningId(
+                                    isExpanded ? null : op.id,
+                                  )
+                                }
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`text-xs font-bold ${colorClass}`}
+                                  >
+                                    {icon}
+                                  </span>
+                                  <span className="text-xs font-bold text-slate-700">
+                                    {op.name}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400">
+                                    {op.width > 0 && op.height > 0
+                                      ? `${op.width}x${op.height}m`
+                                      : 'sem medidas'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeOpening(op.id);
+                                    }}
+                                    className="p-1 text-rose-500 hover:bg-rose-100 rounded transition"
+                                  >
+                                    <Trash size={14} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExpandedOpeningId(
+                                        isExpanded ? null : op.id,
+                                      );
+                                    }}
+                                    className="p-1 text-slate-400 hover:bg-slate-100 rounded transition"
+                                  >
+                                    <CaretDown
+                                      size={14}
+                                      className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                    />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Conteúdo expandido */}
+                              {isExpanded && (
+                                <div className="p-3 pt-0 border-t border-slate-100 space-y-2">
+                                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                                    <input
+                                      type="text"
+                                      value={op.name}
+                                      onChange={(e) =>
+                                        updateSelectedRoom({
+                                          openings: selectedRoom.openings.map(
+                                            (o) =>
+                                              o.id === op.id
+                                                ? { ...o, name: e.target.value }
+                                                : o,
+                                          ),
+                                        })
+                                      }
+                                      className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold"
+                                      placeholder="Nome"
+                                    />
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-slate-400">L:</span>
+                                      <input
+                                        type="number"
+                                        step="0.05"
+                                        min="0"
+                                        value={op.width || ''}
+                                        onChange={(e) =>
+                                          updateSelectedRoom({
+                                            openings: selectedRoom.openings.map(
+                                              (o) =>
+                                                o.id === op.id
+                                                  ? {
+                                                      ...o,
+                                                      width:
+                                                        parseFloat(
+                                                          e.target.value,
+                                                        ) || 0,
+                                                    }
+                                                  : o,
+                                            ),
+                                          })
+                                        }
+                                        className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
+                                      />
+                                      <span className="text-slate-400">m</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-slate-400">A:</span>
+                                      <input
+                                        type="number"
+                                        step="0.05"
+                                        min="0"
+                                        value={op.height || ''}
+                                        onChange={(e) =>
+                                          updateSelectedRoom({
+                                            openings: selectedRoom.openings.map(
+                                              (o) =>
+                                                o.id === op.id
+                                                  ? {
+                                                      ...o,
+                                                      height:
+                                                        parseFloat(
+                                                          e.target.value,
+                                                        ) || 0,
+                                                    }
+                                                  : o,
+                                            ),
+                                          })
+                                        }
+                                        className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
+                                      />
+                                      <span className="text-slate-400">m</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-slate-400">
+                                        PosX:
+                                      </span>
+                                      <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        value={op.posX || ''}
+                                        onChange={(e) =>
+                                          updateSelectedRoom({
+                                            openings: selectedRoom.openings.map(
+                                              (o) =>
+                                                o.id === op.id
+                                                  ? {
+                                                      ...o,
+                                                      posX:
+                                                        parseFloat(
+                                                          e.target.value,
+                                                        ) || 0,
+                                                    }
+                                                  : o,
+                                            ),
+                                          })
+                                        }
+                                        className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
+                                      />
+                                      <span className="text-slate-400">m</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-slate-400">
+                                        PosY:
+                                      </span>
+                                      <input
+                                        type="number"
+                                        step="0.05"
+                                        min="0"
+                                        value={op.posY ?? 0}
+                                        onChange={(e) => {
+                                          const val = parseFloat(
+                                            e.target.value,
+                                          );
+                                          updateSelectedRoom({
+                                            openings: selectedRoom.openings.map(
+                                              (o) =>
+                                                o.id === op.id
+                                                  ? {
+                                                      ...o,
+                                                      posY: isNaN(val)
+                                                        ? 0
+                                                        : val,
+                                                    }
+                                                  : o,
+                                            ),
+                                          });
+                                        }}
+                                        className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-bold"
+                                      />
+                                      <span className="text-slate-400">m</span>
+                                    </div>{' '}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
-                  </div>
+                  </div>{' '}
                 </div>
               )}
 
@@ -1130,54 +1259,101 @@ function WallBlueprintSVG({
             />
           ))}
         {/* Aberturas */}
-        {openings.map((op: any) => (
-          <g key={op.id}>
-            <rect
-              x={op.posX}
-              y={height - op.height}
-              width={op.width}
-              height={op.height}
-              fill="#0f172a"
-              stroke="#f59e0b"
-              strokeWidth="0.03"
-              strokeDasharray="0.05,0.03"
-            />
-            <rect
-              x={op.posX - 0.03}
-              y="0"
-              width="0.03"
-              height={height}
-              fill="#f59e0b"
-              opacity="0.8"
-            />
-            <rect
-              x={op.posX + op.width}
-              y="0"
-              width="0.03"
-              height={height}
-              fill="#f59e0b"
-              opacity="0.8"
-            />
-            <rect
-              x={op.posX}
-              y={height - op.height - 0.04}
-              width={op.width}
-              height="0.04"
-              fill="#f59e0b"
-            />
-            <text
-              x={op.posX + op.width / 2}
-              y={height - op.height / 2}
-              fill="#f59e0b"
-              fontSize="0.2"
-              textAnchor="middle"
-              fontWeight="bold"
-              fontFamily="monospace"
-            >
-              {op.width}x{op.height}
-            </text>
-          </g>
-        ))}
+        {openings.map((op: any) => {
+          const isDoor = op.type === 'door';
+          const isWindow = op.type === 'window';
+          const isOpening = op.type === 'opening';
+
+          let strokeColor = '#94a3b8';
+          let fillColor = '#1e293b';
+          let label = 'Vão';
+          if (isDoor) {
+            strokeColor = '#f59e0b';
+            fillColor = '#451a03';
+            label = 'Porta';
+          } else if (isWindow) {
+            strokeColor = '#0ea5e9';
+            fillColor = '#0c4a6e';
+            label = 'Janela';
+          } else {
+            strokeColor = '#94a3b8';
+            fillColor = '#1e293b';
+            label = 'Vão';
+          }
+
+          // posY agora é distância do chão até o topo do vão
+          const posX = op.posX ?? 0;
+          const posY = op.posY ?? height - op.height; // distância do chão
+
+          const baseY = op.posY ?? 0; // altura do peitoril (base)
+          const topY = height - (baseY + op.height); // coordenada Y do topo do vão
+          const y = height - posY - op.height; // posY é a distância da base até o peitoril (altura do peitoril)
+          const x = posX;
+
+          return (
+            <g key={op.id}>
+              {/* Área do vão */}
+              <rect
+                x={x}
+                y={topY}
+                width={op.width}
+                height={op.height}
+                fill={fillColor}
+                stroke={strokeColor}
+                strokeWidth="0.04"
+                strokeDasharray="0.06, 0.04"
+              />
+              {/* Reforços laterais */}
+              <rect
+                x={posX - 0.04}
+                y="0"
+                width="0.04"
+                height={height}
+                fill={strokeColor}
+                opacity="0.8"
+              />
+              <rect
+                x={posX + op.width}
+                y="0"
+                width="0.04"
+                height={height}
+                fill={strokeColor}
+                opacity="0.8"
+              />
+              {/* Verga superior */}
+              <rect
+                x={posX}
+                y={topY - 0.06}
+                width={op.width}
+                height="0.06"
+                fill={strokeColor}
+                opacity="0.9"
+              />
+              {/* Texto */}
+              <text
+                x={posX + op.width / 2}
+                y={topY + op.height / 2}
+                fill={strokeColor}
+                fontSize="0.2"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontWeight="bold"
+                fontFamily="monospace"
+              >
+                {op.name || label}
+                <tspan
+                  x={posX + op.width / 2}
+                  dy="0.25"
+                  fontSize="0.15"
+                  fill="#cbd5e1"
+                >
+                  {op.width}x{op.height}m
+                </tspan>
+              </text>
+              {/* ... resto do código ... */}
+            </g>
+          );
+        })}
       </svg>
       <div className="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
         <span>Comprimento: {length}m</span>
