@@ -1,7 +1,7 @@
 // components/painel/ferramentas/DrywallPainel.tsx
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
 import View from '@/components/layout/View';
@@ -15,6 +15,14 @@ import {
   ShareNetwork,
   Lightning,
   Plus,
+  DownloadSimple,
+  Door,
+  Window,
+  Square,
+  ArrowsVertical,
+  PencilSimple,
+  Trash,
+  Sparkle,
 } from '@phosphor-icons/react';
 import { calculateWallMaterials } from '@/utils/calculators/drywallWall';
 import { calculateCeilingMaterials } from '@/utils/calculators/drywallCeiling';
@@ -22,18 +30,26 @@ import { calculateSancaMaterials } from '@/utils/calculators/drywallSanca';
 import FAB from '@/components/ui/FAB';
 import Pressable from '@/components/Pressable';
 import DrywallCalculadora from './calculadoras/DrywallCalculadora';
-import { useRoomEditor, ServiceInstance } from '@/hooks/useRoomEditor';
+import { useRoomEditor, ServiceInstance, Opening } from '@/hooks/useRoomEditor';
 import { ServiceForm } from './ServiceForm';
-import { RoomList } from './RoomList';
 import { MaterialSummary } from './MaterialSummary';
 import { ServiceList } from './ServiceList';
+import { WallBlueprint } from './blueprints/WallBlueprint';
+import { CeilingBlueprint } from './blueprints/CeilingBlueprint';
+import { SancaBlueprint } from './blueprints/SancaBlueprint';
+import ModeloVisualStudio from './modelos/ModeloVisualStudio';
+import ModeloMobilePro from './modelos/ModeloMobilePro';
+import ModeloComercialBIM from './modelos/ModeloComercialBIM';
 import './Drywall.css';
+
+import { toPng } from 'html-to-image';
+import { saveAs } from 'file-saver';
 
 export default function DrywallPainel() {
   const router = usePainelRouter();
-  const [activeMode, setActiveMode] = useState<'completa' | 'rapida'>(
-    'completa',
-  );
+  const [activeMode, setActiveMode] = useState<
+    'completa' | 'rapida' | 'modelo1' | 'modelo2' | 'modelo3'
+  >('completa');
   const {
     rooms,
     setRooms,
@@ -50,22 +66,22 @@ export default function DrywallPainel() {
   const [tempServices, setTempServices] = useState<ServiceInstance[]>([]);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
+  // Estado para visualização do blueprint
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'estrutura' | 'chapas' | 'ambos'>(
+    'estrutura',
+  );
+  const blueprintRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  const selectedRoom = useMemo(() => {
+    return rooms.find((r) => r.id === selectedRoomId) || rooms[0] || null;
+  }, [rooms, selectedRoomId]);
+
+  // --- Funções de serviço ---
   const handleEditTempService = (service: ServiceInstance) => {
     setEditingServiceId(service.id);
-    // O ServiceForm agora carrega o serviço internamente via hook, mas precisamos passar os dados
-    // Para simplificar, vamos recarregar o formulário com o serviço selecionado
-    // Como o ServiceForm usa o hook useServiceForm, precisamos de uma forma de injetar os dados.
-    // Vamos usar uma prop "initialService" ou forçar uma atualização.
-    // Alternativa: passar o serviço para o ServiceForm via prop.
-    // Como o ServiceForm agora é controlado pelo hook, podemos expor uma função "load" via ref?
-    // Para este exemplo, vou usar uma prop "editingService" que o ServiceForm irá consumir.
-    // Mas para manter simples, vou passar o serviço via estado e o ServiceForm irá observar.
+    // ServiceForm irá carregar via initialService
   };
-
-  // Vamos modificar o ServiceForm para aceitar um "editingService" opcional.
-  // Para não complicar, farei uma pequena alteração no ServiceForm: ele receberá uma prop "initialService" e usará useEffect para carregar.
-
-  // Atualizarei o ServiceForm para aceitar "initialService" e chamar loadService quando mudar.
 
   const handleRemoveTempService = (id: string) => {
     setTempServices(tempServices.filter((s) => s.id !== id));
@@ -85,6 +101,7 @@ export default function DrywallPainel() {
       studSpacing: serviceData.studSpacing,
       perimeter: serviceData.perimeter,
       height: serviceData.height,
+      tiranteOffset: serviceData.tiranteOffset,
     };
 
     if (editingServiceId) {
@@ -138,7 +155,7 @@ export default function DrywallPainel() {
     toast.success(editingRoomId ? 'Ambiente atualizado!' : 'Ambiente salvo!');
   };
 
-  // Cálculo de materiais (mesmo de antes)
+  // --- Cálculo de materiais ---
   const computeMaterialsForServices = (services: ServiceInstance[]) => {
     const totalsMap: Record<
       string,
@@ -219,6 +236,7 @@ export default function DrywallPainel() {
     return map;
   }, [rooms]);
 
+  // --- Compartilhamento de documento ---
   const buildShareText = () => {
     let text = `*ELÉTRICA & ART*\n*Estimativa de Materiais — Drywall*\n\n`;
     rooms.forEach((room) => {
@@ -250,6 +268,44 @@ export default function DrywallPainel() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  // --- Compartilhar blueprint como PNG ---
+  const handleShareBlueprint = async (
+    serviceId: string,
+    serviceName: string,
+  ) => {
+    const ref = blueprintRefs.current[serviceId];
+    if (!ref) {
+      toast.error('Blueprint não encontrado.');
+      return;
+    }
+
+    try {
+      const dataUrl = await toPng(ref, {
+        quality: 0.95,
+        backgroundColor: '#0f172a', // fundo escuro
+      });
+      // Baixar ou compartilhar
+      if (typeof navigator !== 'undefined' && (navigator as any).share) {
+        const blob = await fetch(dataUrl).then((res) => res.blob());
+        const file = new File([blob], `blueprint-${serviceName}.png`, {
+          type: 'image/png',
+        });
+        await (navigator as any).share({
+          files: [file],
+          title: `Blueprint - ${serviceName}`,
+        });
+      } else {
+        // Fallback: download
+        saveAs(dataUrl, `blueprint-${serviceName}.png`);
+        toast.success('Blueprint baixado!');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar imagem:', error);
+      toast.error('Erro ao compartilhar blueprint.');
+    }
+  };
+
+  // --- FAB ---
   const fabConfig = [
     {
       icon: <Plus size={28} weight="duotone" />,
@@ -270,36 +326,81 @@ export default function DrywallPainel() {
         backAction={() => router.push('ferramentas')}
       />
 
-      <div className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10 shadow-xs">
-        <div className="max-w-md mx-auto flex p-1 bg-slate-100 rounded-xl">
+      <div className="bg-white border-b border-slate-200 px-3 py-2.5 sticky top-0 z-20 shadow-xs">
+        <div className="max-w-4xl mx-auto flex items-center gap-1.5 overflow-x-auto p-1 bg-slate-100/90 rounded-2xl scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveMode('completa')}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
               activeMode === 'completa'
                 ? 'bg-white text-indigo-950 shadow-xs'
-                : 'text-slate-500'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            <SquareHalf size={16} weight="duotone" />
-            <span>Por Ambientes (Completa)</span>
+            <SquareHalf size={15} weight="duotone" />
+            <span>Versão Original</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveMode('rapida')}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
               activeMode === 'rapida'
                 ? 'bg-white text-indigo-950 shadow-xs'
-                : 'text-slate-500'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            <Lightning size={16} weight="duotone" className="text-amber-500" />
-            <span>Calculadora Rápida</span>
+            <Lightning size={15} weight="duotone" className="text-amber-500" />
+            <span>Rápida</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMode('modelo1')}
+            className={`py-2 px-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
+              activeMode === 'modelo1'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-indigo-900 bg-indigo-50/70 hover:bg-indigo-100'
+            }`}
+          >
+            <span>📐 Teste 1: Blueprint 2D</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMode('modelo2')}
+            className={`py-2 px-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
+              activeMode === 'modelo2'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-amber-900 bg-amber-50/70 hover:bg-amber-100'
+            }`}
+          >
+            <span>📱 Teste 2: Canteiro Ágil</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMode('modelo3')}
+            className={`py-2 px-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
+              activeMode === 'modelo3'
+                ? 'bg-emerald-700 text-white shadow-xs'
+                : 'text-emerald-900 bg-emerald-50/70 hover:bg-emerald-100'
+            }`}
+          >
+            <span>💼 Teste 3: Orçamento & Embalagens</span>
           </button>
         </div>
       </div>
 
-      {activeMode === 'rapida' ? (
+      {activeMode === 'modelo1' ? (
+        <div className="p-4 sm:p-6 bg-slate-50 min-h-[calc(100dvh_-_120px)] pb-32 max-w-7xl mx-auto w-full">
+          <ModeloVisualStudio />
+        </div>
+      ) : activeMode === 'modelo2' ? (
+        <div className="p-4 sm:p-6 bg-slate-50 min-h-[calc(100dvh_-_120px)] pb-32 max-w-5xl mx-auto w-full">
+          <ModeloMobilePro />
+        </div>
+      ) : activeMode === 'modelo3' ? (
+        <div className="p-4 sm:p-6 bg-slate-50 min-h-[calc(100dvh_-_120px)] pb-32 max-w-7xl mx-auto w-full">
+          <ModeloComercialBIM />
+        </div>
+      ) : activeMode === 'rapida' ? (
         <div className="p-4 sm:p-6 bg-slate-50 min-h-[calc(100dvh_-_120px)] pb-32 max-w-5xl mx-auto w-full">
           <DrywallCalculadora />
         </div>
@@ -331,13 +432,221 @@ export default function DrywallPainel() {
             )}
           </header>
 
-          <RoomList
-            rooms={rooms}
-            roomMaterials={roomMaterials}
-            onEditRoom={startEditRoom}
-            onRemoveRoom={removeRoom}
-          />
-          <MaterialSummary materials={consolidatedMaterials} />
+          {/* Lista de ambientes com cards de blueprint */}
+          <div className="space-y-8">
+            {rooms.map((room) => (
+              <div
+                key={room.id}
+                className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-sm font-black text-indigo-900 uppercase tracking-tighter">
+                    {room.name}
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+                      onClick={() => startEditRoom(room)}
+                    >
+                      <PencilSimple size={18} weight="bold" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 bg-red-50 rounded-lg hover:bg-red-100"
+                      onClick={() => removeRoom(room.id)}
+                    >
+                      <Trash size={18} weight="bold" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Lista de serviços do ambiente com blueprints */}
+                <div className="space-y-4">
+                  {room.services.map((service) => {
+                    const isSelected = selectedRoomId === room.id;
+                    return (
+                      <div
+                        key={service.id}
+                        className="border border-slate-100 rounded-xl p-3 bg-slate-50/50"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <div>
+                            <span className="text-xs font-bold text-indigo-600 uppercase">
+                              {service.tag}
+                            </span>
+                            <span className="ml-2 text-[10px] text-slate-500">
+                              {service.type} | {service.totalArea.toFixed(2)} m²
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-indigo-600"
+                            onClick={() => {
+                              setSelectedRoomId(isSelected ? null : room.id);
+                              setViewMode('estrutura');
+                            }}
+                          >
+                            {isSelected ? 'Ocultar Blueprint' : 'Ver Blueprint'}
+                          </Button>
+                        </div>
+
+                        {isSelected && (
+                          <div className="mt-3 pt-3 border-t border-slate-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-slate-500 uppercase">
+                                  Blueprint
+                                </span>
+                                <div className="flex gap-1 bg-slate-200 rounded-lg p-0.5">
+                                  {(
+                                    ['estrutura', 'chapas', 'ambos'] as const
+                                  ).map((mode) => (
+                                    <button
+                                      key={mode}
+                                      onClick={() => setViewMode(mode)}
+                                      className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition ${
+                                        viewMode === mode
+                                          ? 'bg-white shadow-sm text-indigo-600'
+                                          : 'text-slate-500'
+                                      }`}
+                                    >
+                                      {mode === 'estrutura'
+                                        ? 'Estrutura'
+                                        : mode === 'chapas'
+                                          ? 'Chapas'
+                                          : 'Ambos'}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs text-emerald-600"
+                                onClick={() =>
+                                  handleShareBlueprint(service.id, service.tag)
+                                }
+                              >
+                                <DownloadSimple size={14} className="mr-1" />
+                                Exportar PNG
+                              </Button>
+                            </div>
+
+                            <div
+                              ref={(el) => {
+                                blueprintRefs.current[service.id] = el;
+                              }}
+                              className="bg-slate-900 rounded-xl p-4 border border-slate-800 min-h-[200px] flex items-center justify-center relative overflow-hidden"
+                            >
+                              {/* Grade de fundo */}
+                              <div
+                                className="absolute inset-0 opacity-10 pointer-events-none"
+                                style={{
+                                  backgroundImage: `radial-gradient(circle, #6366f1 1px, transparent 1px)`,
+                                  backgroundSize: '20px 20px',
+                                }}
+                              />
+                              {service.type === 'wall' && (
+                                <WallBlueprint
+                                  service={service}
+                                  viewMode={viewMode}
+                                />
+                              )}
+                              {service.type === 'ceiling' && (
+                                <CeilingBlueprint
+                                  service={service}
+                                  viewMode={viewMode}
+                                />
+                              )}
+                              {service.type === 'sanca' && (
+                                <SancaBlueprint service={service} />
+                              )}
+                            </div>
+
+                            {/* Informações adicionais do blueprint */}
+                            <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-500">
+                              {service.type === 'wall' && (
+                                <>
+                                  <span>
+                                    Comprimento: {service.measures[0]?.w || 0}m
+                                  </span>
+                                  <span>
+                                    Altura: {service.measures[0]?.h || 0}m
+                                  </span>
+                                  <span>
+                                    Perfil: {service.profileSize || 48}mm
+                                  </span>
+                                  <span>
+                                    Espaçamento:{' '}
+                                    {(service.studSpacing || 0.6) * 100}cm
+                                  </span>
+                                </>
+                              )}
+                              {service.type === 'ceiling' && (
+                                <>
+                                  <span>
+                                    Largura: {service.measures[0]?.w || 0}m
+                                  </span>
+                                  <span>
+                                    Comprimento: {service.measures[0]?.h || 0}m
+                                  </span>
+                                  <span>
+                                    Offset Tirantes:{' '}
+                                    {service.tiranteOffset || 0.6}m
+                                  </span>
+                                </>
+                              )}
+                              {service.type === 'sanca' && (
+                                <>
+                                  <span>
+                                    Perímetro: {service.perimeter || 0}m
+                                  </span>
+                                  <span>Altura: {service.height || 0}m</span>
+                                </>
+                              )}
+                              <span>Placa: {service.boardType}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Lista total de materiais (estilizada como no ModeloVisualStudio) */}
+          {consolidatedMaterials.length > 0 && (
+            <div className="mt-8 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <h4 className="text-xs font-black uppercase text-indigo-600 tracking-wider flex items-center gap-2 mb-4">
+                <Sparkle size={16} weight="fill" />
+                Total Consolidado da Obra
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {consolidatedMaterials.map((mat, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-slate-50 p-2 rounded-xl border border-slate-100"
+                  >
+                    <span className="text-[11px] text-slate-700 font-medium line-clamp-1">
+                      {mat.item}
+                    </span>
+                    <span className="text-sm font-black text-indigo-700">
+                      {mat.qtd}{' '}
+                      <span className="text-[10px] font-normal text-slate-500">
+                        {mat.unit}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </View>
       )}
 
@@ -388,6 +697,12 @@ export default function DrywallPainel() {
 
               <ServiceForm
                 editingServiceId={editingServiceId}
+                initialService={
+                  editingServiceId
+                    ? tempServices.find((s) => s.id === editingServiceId) ||
+                      null
+                    : null
+                }
                 onSave={handleAddService}
                 onCancelEdit={() => {
                   setEditingServiceId(null);
@@ -421,3 +736,7 @@ export default function DrywallPainel() {
     </>
   );
 }
+
+// Importação de ícones faltantes (adicione ao Phosphor)
+// Nota: Você precisa instalar os ícones que faltam: PencilSimple, Trash, Sparkle
+// Eles já devem estar disponíveis em @phosphor-icons/react

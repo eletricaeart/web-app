@@ -5,9 +5,12 @@ import { toast } from 'sonner';
 
 export interface Opening {
   id: string;
-  type: 'door' | 'window';
+  type: 'door' | 'window' | 'opening';
   w: number;
   h: number;
+  posX: number; // posição horizontal em metros
+  posY?: number;
+  name?: string;
 }
 
 export interface ServiceInstance {
@@ -21,8 +24,9 @@ export interface ServiceInstance {
   profileSize?: 48 | 70 | 90; // apenas parede
   studSpacing?: 0.4 | 0.6; // apenas parede
   // para sanca
-  perimeter?: number;
-  height?: number;
+  tiranteOffset?: number; // para forro
+  perimeter?: number; // para sanca
+  height?: number; // para sanca
 }
 
 export interface Room {
