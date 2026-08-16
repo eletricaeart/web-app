@@ -9,7 +9,7 @@ export interface Opening {
   w: number;
   h: number;
   posX: number; // posição horizontal em metros
-  posY?: number;
+  posY?: number; // posição vertical (opcional, para janelas/vãos)
   name?: string;
 }
 

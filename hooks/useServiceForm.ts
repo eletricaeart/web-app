@@ -47,11 +47,16 @@ export function useServiceForm() {
   );
 
   const updateOpening = useCallback(
-    (mIdx: number, oIdx: number, field: 'w' | 'h' | 'posX', val: number) => {
+    (
+      mIdx: number,
+      oIdx: number,
+      field: 'w' | 'h' | 'posX' | 'posY',
+      val: number,
+    ) => {
       setActiveMeasures((prev) => {
         const newMeasures = [...prev];
         if (newMeasures[mIdx] && newMeasures[mIdx].openings[oIdx]) {
-          (newMeasures[mIdx].openings[oIdx] as any)[field] = val;
+          newMeasures[mIdx].openings[oIdx][field] = val;
         }
         return newMeasures;
       });
