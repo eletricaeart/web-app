@@ -43,6 +43,7 @@ interface Opening {
   width: number;
   height: number;
   posX: number; // posição horizontal
+  posY?: number; // posição vertical (opcional, para janelas/vãos)
 }
 
 interface Room {
