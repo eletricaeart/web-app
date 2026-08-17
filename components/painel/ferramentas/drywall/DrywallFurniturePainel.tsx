@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
+  SquaresFour,
   Check,
   X,
   Plus,
@@ -338,10 +339,11 @@ export default function DrywallFurniturePainel() {
                       <div className="font-bold text-slate-700">{item.tag}</div>
                       <div className="text-xs text-slate-400">
                         {item.width}x{item.height}x{item.depth}m
-                        {item.shelves > 0 && ` | ${item.shelves} prat.`}
-                        {item.dividers > 0 && ` | ${item.dividers} div.`}
-                        {item.hasDoors && ` | ${item.doorsQuantity} portas`}
-                      </div>
+                        {(item.shelves ?? 0) > 0 && ` | ${item.shelves} prat.`}
+                        {(item.dividers ?? 0) > 0 && ` | ${item.dividers} div.`}
+                        {item.hasDoors &&
+                          ` | ${item.doorsQuantity ?? 2} portas`}
+                      </div>{' '}
                     </div>
                     <div className="text-xs font-bold text-amber-600">
                       {item.boardType} | {item.profileSize}mm
@@ -659,6 +661,8 @@ export default function DrywallFurniturePainel() {
                         hasDoors: itemHasDoors,
                         doorsQuantity: itemDoorsQty,
                         useWoodReinforcement: itemUseWood,
+                        boardType: itemBoardType,
+                        profileSize: itemProfileSize,
                         name: 'Prévia',
                       }}
                     />

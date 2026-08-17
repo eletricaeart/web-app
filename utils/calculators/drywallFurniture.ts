@@ -9,6 +9,9 @@ export interface FurnitureDimensions {
   hasBase?: boolean; // se tem base (geralmente 0.10m de altura)
   hasDoors?: boolean; // se tem portas (simplifica: portas de abrir)
   doorsQuantity?: number; // quantidade de portas (se tiver, padrão = 2)
+  useWoodReinforcement?: boolean;
+  boardType?: 'ST' | 'RU' | 'RF';
+  profileSize?: 48 | 70 | 90;
 }
 
 export interface FurnitureOptions extends FurnitureDimensions {

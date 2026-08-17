@@ -10,7 +10,7 @@ import {
   Wall,
   HardHat,
   SquareHalf,
-  Cabinet,
+  SquaresFour,
   Ruler,
   ArrowRight,
 } from '@phosphor-icons/react';
@@ -33,7 +33,7 @@ export default function DrywallToolsPage() {
       title: 'Móveis / Armários em Drywall',
       description:
         'Projete móveis planejados com cálculo de chapas, perfis, ferragens e blueprint.',
-      icon: <Cabinet size={28} weight="duotone" />,
+      icon: <SquaresFour size={28} weight="duotone" />,
       route: 'drywall/moveis',
       color: 'bg-amber-50 border-amber-200',
     },

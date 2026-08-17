@@ -1,0 +1,801 @@
+
+> web-app@0.1.0 tsx-check /home/nkoten/NoteBook/ea/web-app
+> tsc --noEmit && eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+
+
+/home/nkoten/NoteBook/ea/web-app/app/api/admin/[id]/route.ts
+  53:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/app/api/admin/create-admin/route.ts
+  94:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/app/api/auth/login/route.ts
+  34:12  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  34:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/app/api/data/[entity]/route.ts
+  14:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:29  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  96:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/app/api/print/[id]/route.ts
+  46:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/app/blueprint/page.tsx
+  34:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/app/blueprint/page.tsx:34:9
+  32 |       try {
+  33 |         const decoded = JSON.parse(decodeURIComponent(encoded));
+> 34 |         setData(decoded);
+     |         ^^^^^^^ Avoid calling setState() directly within an effect
+  35 |       } catch (e) {
+  36 |         console.error('Erro ao decodificar dados', e);
+  37 |       }  react-hooks/set-state-in-effect
+
+/home/nkoten/NoteBook/ea/web-app/app/landinggx/components/Module.tsx
+  17:3   warning  'ChatCircleDots' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  19:3   warning  'RulerIcon' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  39:47  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  40:45  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  41:50  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  42:47  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  92:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/app/landinggx/components/Module.tsx:92:9
+  90 |       const { phrase, date } = JSON.parse(savedData);
+  91 |       if (date === today) {
+> 92 |         setRandomPhrase(phrase);
+     |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  93 |         return;
+  94 |       }
+  95 |     }  react-hooks/set-state-in-effect
+
+/home/nkoten/NoteBook/ea/web-app/app/landinggx/p.tsx
+   32:7   warning  'WHATSAPP_LINK' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   79:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/app/landinggx/p.tsx:79:7
+  77 |
+  78 |     if (alreadySeen || prefersReduced) {
+> 79 |       setPhase('done');
+     |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  80 |       return;
+  81 |     }
+  82 |  react-hooks/set-state-in-effect
+  215:23  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react/jsx-no-comment-textnodes
+  268:17  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react/no-unescaped-entities
+  273:17  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react/no-unescaped-entities
+  310:50  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react/jsx-no-comment-textnodes
+  347:46  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react/jsx-no-comment-textnodes
+
+/home/nkoten/NoteBook/ea/web-app/app/landinggx/page.tsx
+   26:7   warning  'rajdhani' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   97:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/app/landinggx/page.tsx:97:7
+   95 |
+   96 |     if (alreadySeen || prefersReduced) {
+>  97 |       setPhase('done');
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+   98 |       return;
+   99 |     }
+  100 |  react-hooks/set-state-in-effect
+  153:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @next/next/no-img-element
+  249:23  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/jsx-no-comment-textnodes
+  316:19  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react/no-unescaped-entities
+  319:19  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react/no-unescaped-entities
+  368:85  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/jsx-no-comment-textnodes
+  408:82  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/jsx-no-comment-textnodes
+  480:87  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/jsx-no-comment-textnodes
+  530:44  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/jsx-no-comment-textnodes
+  584:46  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react/jsx-no-comment-textnodes
+
+/home/nkoten/NoteBook/ea/web-app/app/layout.tsx
+  7:8  warning  'BottomNavbar' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/app/login/page.tsx
+   7:3  warning  'Lightning' is defined but never used  @typescript-eslint/no-unused-vars
+  22:8  warning  'EAText' is defined but never used     @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/app/painel/_router/routes.tsx
+  75:18  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  75:28  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/nkoten/NoteBook/ea/web-app/app/painel/ac3f58v-f64f6d-6f46d/login/page.tsx
+   7:3  warning  'Lightning' is defined but never used  @typescript-eslint/no-unused-vars
+  22:8  warning  'EAText' is defined but never used     @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/app/validar/[id]/page.tsx
+   16:3   warning  'ArrowRight' is defined but never used    @typescript-eslint/no-unused-vars
+   29:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   39:11  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:28  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/app/visualizar-materiais/page.tsx
+   7:24  warning  'FilePdf' is defined but never used  @typescript-eslint/no-unused-vars
+  42:16  warning  'e' is defined but never used        @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/ModalConfirm.tsx
+  58:23  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/editor/TipTapEditor.tsx
+  50:3  warning  'bg' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/forms/AvatarUpload.tsx
+  62:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/forms/ClauseManager.tsx
+   17:3   warning  'ListNumbers' is defined but never used   @typescript-eslint/no-unused-vars
+   25:18  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:12  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/forms/ClientForm.tsx
+  26:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  76:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/layout/AppBar.tsx
+  26:3  warning  'title' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/layout/BottomNavbar.tsx
+  29:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/layout/BottomNavbar.tsx:29:5
+  27 |
+  28 |   useEffect(() => {
+> 29 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |   }, []);
+  31 |
+  32 |   if (!mounted) return null;  react-hooks/set-state-in-effect
+
+/home/nkoten/NoteBook/ea/web-app/components/layout/PageHeader.tsx
+  11:3  warning  'DropdownMenuSeparator' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/layout/View.tsx
+  45:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/orcamentos/BudgetShareMenu.tsx
+   15:8   warning  'html2pdf' is defined but never used          @typescript-eslint/no-unused-vars
+   24:18  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   39:3   warning  'data' is defined but never used              @typescript-eslint/no-unused-vars
+   58:13  warning  'baseUrl' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  109:14  warning  'err' is defined but never used               @typescript-eslint/no-unused-vars
+  109:19  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  184:14  warning  'err' is defined but never used               @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/admins/AdminsPainel.tsx
+  114:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/auth/PainelAuthContext.tsx
+   23:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+  119:6   warning  React Hook useCallback has a missing dependency: 'supabase'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/exhaustive-deps
+  122:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/auth/PainelAuthContext.tsx:122:5
+  120 |
+  121 |   useEffect(() => {
+> 122 |     load();
+      |     ^^^^ Avoid calling setState() directly within an effect
+  123 |
+  124 |     // Mantém em sincronia caso a sessão mude (ex: logout em outra aba)
+  125 |     const { data: listener } = supabase.auth.onAuthStateChange((event) => {  react-hooks/set-state-in-effect
+  136:6   warning  React Hook useEffect has a missing dependency: 'supabase.auth'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+  142:6   warning  React Hook useCallback has a missing dependency: 'supabase.auth'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/clientes/ClienteNovoPainel.tsx
+   88:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:14  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+  152:24  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/clientes/ClientePerfilPainel.tsx
+   31:3   warning  'CheckCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  688:43  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/clientes/ClientesPainel.tsx
+  52:18  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  71:5   warning  'loading' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  90:9   warning  'getClientDoc' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/configuracoes/ConfiguracoesPainel.tsx
+  12:10  warning  'Label' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/equipe/EquipeEditarPainel.tsx
+  30:9  warning  'supabase' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  55:9  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/equipe/EquipeEditarPainel.tsx:55:9
+  53 |       const found = users.find((u) => String(u.id) === String(editId));
+  54 |       if (found) {
+> 55 |         setFormData({ ...found, photo_url: found.photo_url || '' });
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |       }
+  57 |     }
+  58 |   }, [editId, users]);  react-hooks/set-state-in-effect
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/DrywallPainel.tsx
+    4:44  warning  'useCallback' is defined but never used                   @typescript-eslint/no-unused-vars
+   20:3   warning  'Door' is defined but never used                          @typescript-eslint/no-unused-vars
+   21:3   warning  'Square' is defined but never used                        @typescript-eslint/no-unused-vars
+   22:3   warning  'ArrowsVertical' is defined but never used                @typescript-eslint/no-unused-vars
+   31:8   warning  'Pressable' is defined but never used                     @typescript-eslint/no-unused-vars
+   33:42  warning  'Opening' is defined but never used                       @typescript-eslint/no-unused-vars
+   35:10  warning  'MaterialSummary' is defined but never used               @typescript-eslint/no-unused-vars
+   43:10  warning  'ShareBlueprintButton' is defined but never used          @typescript-eslint/no-unused-vars
+   77:9   warning  'selectedRoom' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  170:16  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  268:9   warning  'handleShareDocument' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  274:59  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  276:29  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  300:61  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  305:29  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/EletricaPainel.tsx
+  9:21  warning  'HardHat' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/FerramentasPainel.tsx
+  16:3  warning  'Wrench' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/MeasureInput.tsx
+  17:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/RoomList.tsx
+  18:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/ServiceForm.tsx
+   49:3   warning  'roomName' is assigned a value but never used      @typescript-eslint/no-unused-vars
+   71:5   warning  'addOpening' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  100:11  warning  'measureIndex' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/ShareBlueprintButton.tsx
+   7:24  warning  'Download' is defined but never used      @typescript-eslint/no-unused-vars
+  11:10  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/ShareDrywallMenu.tsx
+    4:27  warning  'useRef' is defined but never used            @typescript-eslint/no-unused-vars
+  154:13  warning  'baseUrl' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  172:19  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/blueprints/CeilingBlueprint.tsx
+   2:17  warning  'useMemo' is defined but never used         @typescript-eslint/no-unused-vars
+  10:45  warning  'viewMode' is defined but never used        @typescript-eslint/no-unused-vars
+  20:9   warning  'menor' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/blueprints/WallBlueprint.tsx
+    5:27  warning  'Opening' is defined but never used                                                                                                                                                        @typescript-eslint/no-unused-vars
+   46:25  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+   64:18  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+   78:6   warning  React Hook useMemo has missing dependencies: 'boardCols' and 'boardRows'. Either include them or remove the dependency array                                                               react-hooks/exhaustive-deps
+  292:37  error    Unexpected any. Specify a different type                                                                                                                                                   @typescript-eslint/no-explicit-any
+  293:37  error    Unexpected any. Specify a different type                                                                                                                                                   @typescript-eslint/no-explicit-any
+  296:23  warning  'isOpening' is assigned a value but never used                                                                                                                                             @typescript-eslint/no-unused-vars
+  316:39  error    Unexpected any. Specify a different type                                                                                                                                                   @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/calculadoras/DrywallCalculadora.tsx
+   13:3   warning  'Sparkle' is defined but never used              @typescript-eslint/no-unused-vars
+   14:3   warning  'Package' is defined but never used              @typescript-eslint/no-unused-vars
+   15:3   warning  'Wrench' is defined but never used               @typescript-eslint/no-unused-vars
+   21:3   warning  'DrywallCeilingInput' is defined but never used  @typescript-eslint/no-unused-vars
+  212:71  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  229:75  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  247:62  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  278:67  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  292:67  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  467:72  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  481:67  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/calculadoras/EletricaCalculadora.tsx
+    5:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+   11:3   warning  'ArrowsClockwise' is defined but never used  @typescript-eslint/no-unused-vars
+   16:3   warning  'CaretRight' is defined but never used       @typescript-eslint/no-unused-vars
+  250:69  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  621:64  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/calculadoras/PinturaCalculadora.tsx
+   12:3   warning  'Sliders' is defined but never used       @typescript-eslint/no-unused-vars
+   13:3   warning  'Drop' is defined but never used          @typescript-eslint/no-unused-vars
+   14:3   warning  'Sparkle' is defined but never used       @typescript-eslint/no-unused-vars
+   15:3   warning  'Door' is defined but never used          @typescript-eslint/no-unused-vars
+  261:65  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  283:67  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/drywall/DrywallFurniturePainel.tsx
+   4:27  warning  'useMemo' is defined but never used      @typescript-eslint/no-unused-vars
+  12:3   warning  'SquaresFour' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/drywall/DrywallPainel.tsx
+    4:44  warning  'useCallback' is defined but never used                   @typescript-eslint/no-unused-vars
+   20:3   warning  'Door' is defined but never used                          @typescript-eslint/no-unused-vars
+   21:3   warning  'Square' is defined but never used                        @typescript-eslint/no-unused-vars
+   22:3   warning  'ArrowsVertical' is defined but never used                @typescript-eslint/no-unused-vars
+   31:8   warning  'Pressable' is defined but never used                     @typescript-eslint/no-unused-vars
+   33:42  warning  'Opening' is defined but never used                       @typescript-eslint/no-unused-vars
+   35:10  warning  'MaterialSummary' is defined but never used               @typescript-eslint/no-unused-vars
+   43:10  warning  'ShareBlueprintButton' is defined but never used          @typescript-eslint/no-unused-vars
+   77:9   warning  'selectedRoom' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  170:16  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  268:9   warning  'handleShareDocument' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  274:59  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  276:29  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  300:61  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  305:29  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/drywall/DrywallToolsPage.tsx
+  11:3  warning  'HardHat' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/drywall/page.tsx
+  11:3  warning  'HardHat' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/modelos/ModeloComercialBIM.tsx
+    5:10  warning  'motion' is defined but never used                    @typescript-eslint/no-unused-vars
+    5:18  warning  'AnimatePresence' is defined but never used           @typescript-eslint/no-unused-vars
+   10:3   warning  'FilePdf' is defined but never used                   @typescript-eslint/no-unused-vars
+   16:3   warning  'CheckCircle' is defined but never used               @typescript-eslint/no-unused-vars
+   17:3   warning  'PencilSimple' is defined but never used              @typescript-eslint/no-unused-vars
+   18:3   warning  'Buildings' is defined but never used                 @typescript-eslint/no-unused-vars
+   19:3   warning  'ChartPieSlice' is defined but never used             @typescript-eslint/no-unused-vars
+   21:3   warning  'ArrowSquareOut' is defined but never used            @typescript-eslint/no-unused-vars
+   22:3   warning  'Info' is defined but never used                      @typescript-eslint/no-unused-vars
+  263:11  error    'unitPrice' is never reassigned. Use 'const' instead  prefer-const
+  275:9   warning  'packageCount' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  276:9   warning  'packageUnit' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  632:74  error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/modelos/ModeloMobilePro.tsx
+    5:10  warning  'motion' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+    5:18  warning  'AnimatePresence' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   15:3   warning  'Sliders' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   18:3   warning  'Sparkle' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   22:3   warning  'Fire' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+   27:10  warning  'calculateSancaMaterials' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+   84:24  warning  'setSafetyMargin' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  285:6   warning  React Hook useMemo has an unnecessary dependency: 'safetyMargin'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  442:69  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  701:74  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/ferramentas/modelos/ModeloVisualStudio.tsx
+     5:10  warning  'motion' is defined but never used                      @typescript-eslint/no-unused-vars
+     5:18  warning  'AnimatePresence' is defined but never used             @typescript-eslint/no-unused-vars
+    12:3   warning  'ArrowsOutCardinal' is defined but never used           @typescript-eslint/no-unused-vars
+    13:3   warning  'GridFour' is defined but never used                    @typescript-eslint/no-unused-vars
+    15:3   warning  'Copy' is defined but never used                        @typescript-eslint/no-unused-vars
+    17:3   warning  'Info' is defined but never used                        @typescript-eslint/no-unused-vars
+    19:3   warning  'Ruler' is defined but never used                       @typescript-eslint/no-unused-vars
+    20:3   warning  'Stack' is defined but never used                       @typescript-eslint/no-unused-vars
+    21:3   warning  'CaretRight' is defined but never used                  @typescript-eslint/no-unused-vars
+    22:3   warning  'ArrowsHorizontal' is defined but never used            @typescript-eslint/no-unused-vars
+    23:3   warning  'ArrowsVertical' is defined but never used              @typescript-eslint/no-unused-vars
+    42:10  warning  'ShareBlueprintButton' is defined but never used        @typescript-eslint/no-unused-vars
+   120:14  warning  'error' is defined but never used                       @typescript-eslint/no-unused-vars
+   155:14  warning  'error' is defined but never used                       @typescript-eslint/no-unused-vars
+   337:9   warning  'copyMaterialsList' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  1213:4   error    Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  1267:30  error    Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  1282:28  error    Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  1285:17  warning  'isOpening' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  1377:55  error    Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/home/HomePainel.tsx
+    9:10  warning  'Button' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   11:10  warning  'Avatar' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   11:18  warning  'AvatarImage' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   11:31  warning  'AvatarFallback' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   18:3   warning  'SignOut' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   22:3   warning  'CalculatorIcon' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   31:10  warning  'formatCurrency' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   35:20  warning  'signOut' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   37:48  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+   38:47  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+   39:45  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+   40:50  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+   41:47  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+   73:11  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/home/HomePainel.tsx:73:11
+  71 |         const { phrase, date } = JSON.parse(savedData);
+  72 |         if (date === today) {
+> 73 |           setRandomPhrase(phrase);
+     |           ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  74 |           return;
+  75 |         }
+  76 |       } catch (e) {  react-hooks/set-state-in-effect
+   76:16  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   91:49  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+  111:44  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/notas/NotaNovaPainel.tsx
+   72:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/notas/NotaNovaPainel.tsx:72:9
+  70 |       );
+  71 |       if (target) {
+> 72 |         setFormData((prev) => ({
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  73 |           ...prev,
+  74 |           client_id: target.id,
+  75 |           clientName: target.name,  react-hooks/set-state-in-effect
+  128:42  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/notas/NotasPainel.tsx
+  4:17  warning  'useState' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/orcamentos/DeleteBudgetModal.tsx
+  38:43  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  38:66  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/orcamentos/FinancialInvestmentV2Editor.tsx
+   18:3   warning  'PlusCircle' is defined but never used    @typescript-eslint/no-unused-vars
+   19:3   warning  'CaretDown' is defined but never used     @typescript-eslint/no-unused-vars
+   20:3   warning  'CaretUp' is defined but never used       @typescript-eslint/no-unused-vars
+  110:12  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:12  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  255:31  warning  'index' is defined but never used         @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/orcamentos/InvestmentDrawer.tsx
+  16:3  warning  'Check' is defined but never used           @typescript-eslint/no-unused-vars
+  18:3  warning  'Hammer' is defined but never used          @typescript-eslint/no-unused-vars
+  25:3  warning  'ArrowSquareOut' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/orcamentos/OrcamentoNovoPainel.tsx
+   14:8   warning  'FinancialInvestmentV2Editor' is defined but never used  @typescript-eslint/no-unused-vars
+   53:23  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   54:52  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   58:40  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   98:38  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  109:43  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  143:22  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  152:11  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  156:22  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  158:39  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  195:13  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  201:34  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  255:22  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  276:22  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  283:26  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  296:20  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  347:19  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  474:57  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/orcamentos/OrcamentoVerPainel.tsx
+   23:3   warning  'getCategoryNetValue' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   27:10  warning  'valorPorExtenso' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   32:13  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+   39:14  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+   82:19  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+   83:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+   98:48  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  120:11  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  148:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  160:66  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  175:32  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  195:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  201:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  207:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  212:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  217:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  230:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  236:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  242:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  248:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  251:57  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  313:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  322:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  429:9   warning  'hasInvestmentData' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  511:49  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  571:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/orcamentos/OrcamentoVerPainel.tsx:571:7
+  569 |   useEffect(() => {
+  570 |     if (typeof window !== 'undefined') {
+> 571 |       setBaseUrl(`${window.location.protocol}//${window.location.host}`);
+      |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  572 |     }
+  573 |   }, []);
+  574 |  react-hooks/set-state-in-effect
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/orcamentos/OrcamentosPainel.tsx
+   58:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  249:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/perfil/PerfilPainel.tsx
+   10:8   warning  'View' is defined but never used                                 @typescript-eslint/no-unused-vars
+   29:3   warning  'UserCheck' is defined but never used                            @typescript-eslint/no-unused-vars
+   32:3   warning  'PhoneCall' is defined but never used                            @typescript-eslint/no-unused-vars
+   33:3   warning  'Clock' is defined but never used                                @typescript-eslint/no-unused-vars
+  455:67  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  455:80  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/recibos/ReciboNovoPainel.tsx
+   48:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   67:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/recibos/ReciboVerPainel.tsx
+  17:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/recibos/RecibosPainel.tsx
+  24:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  84:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/components/painel/servicos/ServicoEditorPainel.tsx
+  51:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  67:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/components/public/home/PublicHomeClient.tsx
+   27:7   warning  'rajdhani' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   98:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/public/home/PublicHomeClient.tsx:98:7
+   96 |
+   97 |     if (alreadySeen || prefersReduced) {
+>  98 |       setPhase('done');
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+   99 |       return;
+  100 |     }
+  101 |  react-hooks/set-state-in-effect
+  154:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @next/next/no-img-element
+  250:23  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/jsx-no-comment-textnodes
+  317:19  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react/no-unescaped-entities
+  320:19  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react/no-unescaped-entities
+  369:85  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/jsx-no-comment-textnodes
+  409:82  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/jsx-no-comment-textnodes
+  481:87  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/jsx-no-comment-textnodes
+  531:44  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/jsx-no-comment-textnodes
+  585:46  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/jsx-no-comment-textnodes
+
+/home/nkoten/NoteBook/ea/web-app/components/public/landing/PublicLandingClient.tsx
+   27:7   warning  'rajdhani' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   99:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/components/public/landing/PublicLandingClient.tsx:99:7
+   97 |
+   98 |     if (alreadySeen || prefersReduced) {
+>  99 |       setPhase('done');
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  100 |       return;
+  101 |     }
+  102 |  react-hooks/set-state-in-effect
+  155:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @next/next/no-img-element
+  251:23  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/jsx-no-comment-textnodes
+  321:19  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/no-unescaped-entities
+  324:19  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/no-unescaped-entities
+  373:85  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/jsx-no-comment-textnodes
+  413:82  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/jsx-no-comment-textnodes
+  485:87  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/jsx-no-comment-textnodes
+  535:44  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/jsx-no-comment-textnodes
+  589:46  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/jsx-no-comment-textnodes
+
+/home/nkoten/NoteBook/ea/web-app/components/ui/EACard.tsx
+  23:9   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  28:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/nkoten/NoteBook/ea/web-app/components/ui/Text.tsx
+  44:5  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+/home/nkoten/NoteBook/ea/web-app/hooks/useDeleteEntity.ts
+  12:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/hooks/useEASync.ts
+  14:18  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  17:31  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  30:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/hooks/useEASync.ts:30:5
+  28 |     // 1️⃣ Carrega cache local imediatamente
+  29 |     const local = eaSyncClient.getLocalData(entity) as T[];
+> 30 |     setData(local);
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  31 |
+  32 |     // 2️⃣ Pull remoto silencioso
+  33 |     const sync = async () => {  react-hooks/set-state-in-effect
+
+/home/nkoten/NoteBook/ea/web-app/hooks/useEASyncSupabase.ts
+   20:17  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   45:14  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+   68:18  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+   71:51  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  100:14  warning  'err' is defined but never used             @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/hooks/useLocalStorage.ts
+  2:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/hooks/useSearch.ts
+  23:16  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/nkoten/NoteBook/ea/web-app/hooks/useSearch.ts:23:16
+  21 |       try {
+  22 |         const { sort: s, filter: f } = JSON.parse(saved);
+> 23 |         if (s) setSort(s);
+     |                ^^^^^^^ Avoid calling setState() directly within an effect
+  24 |         if (f) setFilter(f);
+  25 |       } catch (e) {
+  26 |         console.error("Erro ao ler preferências do LS", e);  react-hooks/set-state-in-effect
+  49:37  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+  60:37  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+  68:21  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+  68:29  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/lib/EASyncClient.ts
+   10:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/lib/auth.ts
+  6:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/lib/sheets/db.ts
+  24:3   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  52:19  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  61:52  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  69:15  warning  '_' is assigned a value but never used                                                                               @typescript-eslint/no-unused-vars
+  69:30  warning  '__' is assigned a value but never used                                                                              @typescript-eslint/no-unused-vars
+  84:64  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  99:15  warning  '_' is assigned a value but never used                                                                               @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/lib/types/investment.ts
+  132:46  error    Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  150:19  error    Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  217:7   error    'extractedTotal' is never reassigned. Use 'const' instead  prefer-const
+  224:42  error    Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  247:15  error    Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  391:44  error    Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  416:15  error    Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  434:32  warning  'idx' is defined but never used                            @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/migration/migrate.js
+  2:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  4:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/nkoten/NoteBook/ea/web-app/proxy.ts
+  22:48  warning  'options' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/public/sw-painel.js
+  7:35  warning  'event' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/test.tsx
+     5:10  warning  'motion' is defined but never used              @typescript-eslint/no-unused-vars
+     5:18  warning  'AnimatePresence' is defined but never used     @typescript-eslint/no-unused-vars
+    12:3   warning  'ArrowsOutCardinal' is defined but never used   @typescript-eslint/no-unused-vars
+    13:3   warning  'GridFour' is defined but never used            @typescript-eslint/no-unused-vars
+    17:3   warning  'Info' is defined but never used                @typescript-eslint/no-unused-vars
+    19:3   warning  'Ruler' is defined but never used               @typescript-eslint/no-unused-vars
+    20:3   warning  'Stack' is defined but never used               @typescript-eslint/no-unused-vars
+    21:3   warning  'CaretRight' is defined but never used          @typescript-eslint/no-unused-vars
+    22:3   warning  'ArrowsHorizontal' is defined but never used    @typescript-eslint/no-unused-vars
+    23:3   warning  'ArrowsVertical' is defined but never used      @typescript-eslint/no-unused-vars
+   115:14  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+   150:14  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  1232:4   error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1286:30  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1301:28  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1304:17  warning  'isOpening' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  1329:17  warning  'baseY' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  1330:17  warning  'y' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  1331:17  warning  'x' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  1407:55  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/types/budget.ts
+  12:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nkoten/NoteBook/ea/web-app/utils/TextPreProcessor.tsx
+  3:7  error  'lines' is never reassigned. Use 'const' instead       prefer-const
+  6:7  error  'htmlResult' is never reassigned. Use 'const' instead  prefer-const
+
+/home/nkoten/NoteBook/ea/web-app/utils/calculators/drywallQuick.ts
+  159:5  warning  'boardType' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nkoten/NoteBook/ea/web-app/utils/calculators/eletrica.ts
+  141:7  error  'chosenSection' is never reassigned. Use 'const' instead    prefer-const
+  336:7  error  'lightingDetails' is never reassigned. Use 'const' instead  prefer-const
+
+/home/nkoten/NoteBook/ea/web-app/utils/normalizers.ts
+  3:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 406 problems (228 errors, 178 warnings)
+  6 errors and 0 warnings potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.
