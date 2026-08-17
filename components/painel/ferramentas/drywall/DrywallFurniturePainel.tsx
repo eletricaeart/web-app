@@ -34,6 +34,13 @@ interface FurnitureItem extends FurnitureDimensions {
   tag: string;
   boardType?: 'ST' | 'RU' | 'RF';
   profileSize?: 48 | 70 | 90;
+  // Garantia explícita das propriedades
+  useWoodReinforcement?: boolean;
+  hasBase?: boolean;
+  hasDoors?: boolean;
+  doorsQuantity?: number;
+  shelves?: number;
+  dividers?: number;
 }
 
 interface FurnitureProject {
