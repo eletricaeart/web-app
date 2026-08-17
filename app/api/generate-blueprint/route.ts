@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    // Codifica os dados para a URL
     const encodedData = encodeURIComponent(JSON.stringify(data));
     const blueprintUrl = `${baseUrl}/blueprint?data=${encodedData}`;
 
@@ -28,7 +27,6 @@ export async function POST(request: NextRequest) {
     await page.setViewport({ width: 1200, height: 800, deviceScaleFactor: 2 });
     await page.goto(blueprintUrl, { waitUntil: 'networkidle0' });
 
-    // Aguarda o container principal carregar
     await page.waitForSelector('.blueprint-container', { timeout: 5000 });
 
     const element = await page.$('.blueprint-container');
@@ -36,11 +34,13 @@ export async function POST(request: NextRequest) {
       throw new Error('Elemento blueprint-container não encontrado');
     }
 
+    // Puppeteer retorna Uint8Array, convertemos para Buffer
     const screenshotBuffer = await element.screenshot({ type: 'png' });
+    const buffer = Buffer.from(screenshotBuffer);
 
     await browser.close();
 
-    return new NextResponse(screenshotBuffer, {
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
         'Content-Type': 'image/png',
