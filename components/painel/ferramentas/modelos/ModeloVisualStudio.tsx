@@ -382,13 +382,14 @@ export default function ModeloVisualStudio() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={copyMaterialsList}
-              className="px-4 py-2.5 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
-            >
-              <Copy size={16} weight="bold" /> Copiar Resumo
-            </button>
-            <button
-              onClick={() => setIsShareMenuOpen(true)}
+              onClick={() => {
+                const data = {
+                  rooms: blueprintRooms,
+                  consolidated: consolidatedMaterials,
+                };
+                const encoded = encodeURIComponent(JSON.stringify(data));
+                window.open(`/visualizar-materiais?data=${encoded}`, '_blank');
+              }}
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
             >
               <ShareNetwork size={16} weight="bold" /> Compartilhar Documento

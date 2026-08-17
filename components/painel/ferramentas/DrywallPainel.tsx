@@ -436,7 +436,18 @@ export default function DrywallPainel() {
 
             {rooms.length > 0 && (
               <Button
-                onClick={() => setIsShareMenuOpen(true)}
+                onClick={() => {
+                  // Codificar dados para a URL
+                  const data = {
+                    rooms: blueprintRooms,
+                    consolidated: consolidatedMaterials,
+                  };
+                  const encoded = encodeURIComponent(JSON.stringify(data));
+                  window.open(
+                    `/visualizar-materiais?data=${encoded}`,
+                    '_blank',
+                  );
+                }}
                 className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-11 px-6"
               >
                 <ShareNetwork size={18} weight="bold" className="mr-2" />
