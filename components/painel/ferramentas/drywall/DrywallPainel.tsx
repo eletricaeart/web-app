@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import ShareDrywallMenu from './ShareDrywallMenu';
+import ShareDrywallMenu from '../ShareDrywallMenu';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
 import View from '@/components/layout/View';
@@ -29,18 +29,18 @@ import { calculateCeilingMaterials } from '@/utils/calculators/drywallCeiling';
 import { calculateSancaMaterials } from '@/utils/calculators/drywallSanca';
 import FAB from '@/components/ui/FAB';
 import Pressable from '@/components/Pressable';
-import DrywallCalculadora from './calculadoras/DrywallCalculadora';
+import DrywallCalculadora from '../calculadoras/DrywallCalculadora';
 import { useRoomEditor, ServiceInstance, Opening } from '@/hooks/useRoomEditor';
-import { ServiceForm } from './ServiceForm';
-import { MaterialSummary } from './MaterialSummary';
-import { ServiceList } from './ServiceList';
-import { WallBlueprint } from './blueprints/WallBlueprint';
-import { CeilingBlueprint } from './blueprints/CeilingBlueprint';
-import { SancaBlueprint } from './blueprints/SancaBlueprint';
-import ModeloVisualStudio from './modelos/ModeloVisualStudio';
-import ModeloMobilePro from './modelos/ModeloMobilePro';
-import ModeloComercialBIM from './modelos/ModeloComercialBIM';
-import { ShareBlueprintButton } from './ShareBlueprintButton';
+import { ServiceForm } from '../ServiceForm';
+import { MaterialSummary } from '../MaterialSummary';
+import { ServiceList } from '../ServiceList';
+import { WallBlueprint } from '../blueprints/WallBlueprint';
+import { CeilingBlueprint } from '../blueprints/CeilingBlueprint';
+import { SancaBlueprint } from '../blueprints/SancaBlueprint';
+import ModeloVisualStudio from '../modelos/ModeloVisualStudio';
+import ModeloMobilePro from '../modelos/ModeloMobilePro';
+import ModeloComercialBIM from '../modelos/ModeloComercialBIM';
+import { ShareBlueprintButton } from '../ShareBlueprintButton';
 import '../Drywall.css';
 
 import { toPng } from 'html-to-image';
