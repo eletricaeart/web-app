@@ -142,12 +142,12 @@ export default function DrywallFurniturePainel() {
     setItemWidth(item.width);
     setItemHeight(item.height);
     setItemDepth(item.depth);
-    setItemShelves(item.shelves);
-    setItemDividers(item.dividers);
-    setItemHasBase(item.hasBase);
-    setItemHasDoors(item.hasDoors);
-    setItemDoorsQty(item.doorsQuantity);
-    setItemUseWood(item.useWoodReinforcement);
+    setItemShelves(item.shelves ?? 0);
+    setItemDividers(item.dividers ?? 0);
+    setItemHasBase(item.hasBase ?? true);
+    setItemHasDoors(item.hasDoors ?? false);
+    setItemDoorsQty(item.doorsQuantity ?? 2);
+    setItemUseWood(item.useWoodReinforcement ?? false);
     setItemBoardType(item.boardType || 'ST');
     setItemProfileSize(item.profileSize || 70);
   };
