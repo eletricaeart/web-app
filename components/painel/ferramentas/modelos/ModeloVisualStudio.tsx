@@ -39,6 +39,8 @@ import { calculateSancaMaterials } from '@/utils/calculators/drywallSanca';
 import { toast } from 'sonner';
 import { toPng } from 'html-to-image';
 import { saveAs } from 'file-saver';
+import { ShareBlueprintButton } from '../ShareBlueprintButton';
+import ShareDrywallMenu from '@/components/painel/ferramentas/ShareDrywallMenu';
 
 // Interfaces (compatíveis com as do DrywallPainel)
 interface Opening {
@@ -99,6 +101,9 @@ export default function ModeloVisualStudio() {
   const [expandedOpeningId, setExpandedOpeningId] = useState<string | null>(
     null,
   );
+
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const blueprintRef = useRef<HTMLDivElement>(null);
 
@@ -346,6 +351,17 @@ export default function ModeloVisualStudio() {
     toast.success('Lista copiada!');
   };
 
+  // Preparar dados para o menu de compartilhamento
+  const blueprintRooms = useMemo(() => {
+    return rooms.map((room) => ({
+      id: room.id,
+      name: room.name,
+      materials: calculateRoomMaterials(room).filter(
+        (m) => !m.item.toLowerCase().includes('área total'),
+      ),
+    }));
+  }, [rooms]);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-24 text-slate-800">
       {/* Header */}
@@ -372,16 +388,10 @@ export default function ModeloVisualStudio() {
               <Copy size={16} weight="bold" /> Copiar Resumo
             </button>
             <button
-              onClick={() => {
-                const text = `*PROJETO DRYWALL - STUDIO VISUAL*\n\n${consolidatedMaterials.map((m) => `• ${m.item}: ${m.qtd} ${m.unit}`).join('\n')}`;
-                window.open(
-                  `https://wa.me/?text=${encodeURIComponent(text)}`,
-                  '_blank',
-                );
-              }}
+              onClick={() => setIsShareMenuOpen(true)}
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
             >
-              <ShareNetwork size={16} weight="bold" /> WhatsApp
+              <ShareNetwork size={16} weight="bold" /> Compartilhar Documento
             </button>
           </div>
         </div>
@@ -1031,7 +1041,7 @@ export default function ModeloVisualStudio() {
             </div>
           </div>
 
-          {/* Palco visual com blueprints (agora em cards separados) */}
+          {/* Palco visual com blueprints */}
           <div className="lg:col-span-7 space-y-5">
             <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800 text-white shadow-lg space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
@@ -1078,7 +1088,6 @@ export default function ModeloVisualStudio() {
               </div>
 
               {/* Blueprints em cards separados para cada serviço (aqui temos apenas um serviço por "room", mas pode ser adaptado) */}
-              {/* Como o ModeloVisualStudio tem um room por vez, mostramos apenas o blueprint do room selecionado */}
               <div className="space-y-4">
                 {selectedRoom && (
                   <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
@@ -1143,8 +1152,8 @@ export default function ModeloVisualStudio() {
                 )}
               </div>
 
-              {/* Resumo consolidado */}
-              <div className="pt-4 border-t border-slate-800">
+              {/* Resumo consolidado - agora com ref para captura */}
+              <div ref={listRef} className="pt-4 border-t border-slate-800">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-xs font-black uppercase text-indigo-400 tracking-wider flex items-center gap-1.5">
                     <Sparkle size={16} weight="fill" /> Total Consolidado (
@@ -1179,11 +1188,21 @@ export default function ModeloVisualStudio() {
           </div>
         </div>
       )}
+
+      {/* Menu de compartilhamento */}
+      <ShareDrywallMenu
+        listRef={listRef}
+        rooms={blueprintRooms}
+        consolidated={consolidatedMaterials}
+        open={isShareMenuOpen}
+        onOpenChange={setIsShareMenuOpen}
+        title="Lista de Materiais - Drywall"
+      />
     </div>
   );
 }
 
-// Subcomponentes SVG (separados para clareza)
+// Subcomponentes SVG (mesmos do código original)
 function WallBlueprintSVG({
   data,
   openings,
@@ -1281,20 +1300,14 @@ function WallBlueprintSVG({
             label = 'Vão';
           }
 
-          // posY agora é distância do chão até o topo do vão
           const posX = op.posX ?? 0;
-          const posY = op.posY ?? height - op.height; // distância do chão
-
-          const baseY = op.posY ?? 0; // altura do peitoril (base)
-          const topY = height - (baseY + op.height); // coordenada Y do topo do vão
-          const y = height - posY - op.height; // posY é a distância da base até o peitoril (altura do peitoril)
-          const x = posX;
+          const posY = op.posY ?? height - op.height;
+          const topY = height - posY - op.height;
 
           return (
             <g key={op.id}>
-              {/* Área do vão */}
               <rect
-                x={x}
+                x={posX}
                 y={topY}
                 width={op.width}
                 height={op.height}
@@ -1303,7 +1316,6 @@ function WallBlueprintSVG({
                 strokeWidth="0.04"
                 strokeDasharray="0.06, 0.04"
               />
-              {/* Reforços laterais */}
               <rect
                 x={posX - 0.04}
                 y="0"
@@ -1320,7 +1332,6 @@ function WallBlueprintSVG({
                 fill={strokeColor}
                 opacity="0.8"
               />
-              {/* Verga superior */}
               <rect
                 x={posX}
                 y={topY - 0.06}
@@ -1329,7 +1340,6 @@ function WallBlueprintSVG({
                 fill={strokeColor}
                 opacity="0.9"
               />
-              {/* Texto */}
               <text
                 x={posX + op.width / 2}
                 y={topY + op.height / 2}
@@ -1350,7 +1360,6 @@ function WallBlueprintSVG({
                   {op.width}x{op.height}m
                 </tspan>
               </text>
-              {/* ... resto do código ... */}
             </g>
           );
         })}

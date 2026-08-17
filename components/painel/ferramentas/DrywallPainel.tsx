@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
+import ShareDrywallMenu from './ShareDrywallMenu';
 import { usePainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { PainelAppBar } from '@/components/painel/layout/PainelAppBar';
 import View from '@/components/layout/View';
@@ -17,7 +18,6 @@ import {
   Plus,
   DownloadSimple,
   Door,
-  // Window,
   Square,
   ArrowsVertical,
   PencilSimple,
@@ -40,6 +40,7 @@ import { SancaBlueprint } from './blueprints/SancaBlueprint';
 import ModeloVisualStudio from './modelos/ModeloVisualStudio';
 import ModeloMobilePro from './modelos/ModeloMobilePro';
 import ModeloComercialBIM from './modelos/ModeloComercialBIM';
+import { ShareBlueprintButton } from './ShareBlueprintButton';
 import './Drywall.css';
 
 import { toPng } from 'html-to-image';
@@ -76,6 +77,9 @@ export default function DrywallPainel() {
   const selectedRoom = useMemo(() => {
     return rooms.find((r) => r.id === selectedRoomId) || rooms[0] || null;
   }, [rooms, selectedRoomId]);
+
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const listContainerRef = useRef<HTMLDivElement>(null);
 
   // --- Funções de serviço ---
   const handleEditTempService = (service: ServiceInstance) => {
@@ -235,6 +239,14 @@ export default function DrywallPainel() {
     });
     return map;
   }, [rooms]);
+
+  // Cria um array de rooms com os materiais já calculados
+  const blueprintRooms = useMemo(() => {
+    return rooms.map((room) => ({
+      ...room,
+      materials: roomMaterials[room.id] || [],
+    }));
+  }, [rooms, roomMaterials]);
 
   // --- Compartilhamento de documento ---
   const buildShareText = () => {
@@ -421,9 +433,10 @@ export default function DrywallPainel() {
             <p className="text-slate-500 text-sm italic">
               Cálculos baseados em padrões técnicos ABNT
             </p>
+
             {rooms.length > 0 && (
               <Button
-                onClick={handleShareDocument}
+                onClick={() => setIsShareMenuOpen(true)}
                 className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-11 px-6"
               >
                 <ShareNetwork size={18} weight="bold" className="mr-2" />
@@ -432,221 +445,232 @@ export default function DrywallPainel() {
             )}
           </header>
 
-          {/* Lista de ambientes com cards de blueprint */}
-          <div className="space-y-8">
-            {rooms.map((room) => (
-              <div
-                key={room.id}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-sm font-black text-indigo-900 uppercase tracking-tighter">
-                    {room.name}
-                  </h3>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
-                      onClick={() => startEditRoom(room)}
-                    >
-                      <PencilSimple size={18} weight="bold" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 bg-red-50 rounded-lg hover:bg-red-100"
-                      onClick={() => removeRoom(room.id)}
-                    >
-                      <Trash size={18} weight="bold" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Lista de serviços do ambiente com blueprints */}
-                <div className="space-y-4">
-                  {room.services.map((service) => {
-                    const isSelected = selectedRoomId === room.id;
-                    return (
-                      <div
-                        key={service.id}
-                        className="border border-slate-100 rounded-xl p-3 bg-slate-50/50"
+          {/* Container da lista de materiais para captura */}
+          <div ref={listContainerRef}>
+            {/* Lista de ambientes com cards de blueprint */}
+            <div className="space-y-8">
+              {rooms.map((room) => (
+                <div
+                  key={room.id}
+                  className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-sm font-black text-indigo-900 uppercase tracking-tighter">
+                      {room.name}
+                    </h3>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+                        onClick={() => startEditRoom(room)}
                       >
-                        <div className="flex justify-between items-center mb-2">
-                          <div>
-                            <span className="text-xs font-bold text-indigo-600 uppercase">
-                              {service.tag}
-                            </span>
-                            <span className="ml-2 text-[10px] text-slate-500">
-                              {service.type} | {service.totalArea.toFixed(2)} m²
-                            </span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-xs text-indigo-600"
-                            onClick={() => {
-                              setSelectedRoomId(isSelected ? null : room.id);
-                              setViewMode('estrutura');
-                            }}
-                          >
-                            {isSelected ? 'Ocultar Blueprint' : 'Ver Blueprint'}
-                          </Button>
-                        </div>
+                        <PencilSimple size={18} weight="bold" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-500 bg-red-50 rounded-lg hover:bg-red-100"
+                        onClick={() => removeRoom(room.id)}
+                      >
+                        <Trash size={18} weight="bold" />
+                      </Button>
+                    </div>
+                  </div>
 
-                        {isSelected && (
-                          <div className="mt-3 pt-3 border-t border-slate-200">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-500 uppercase">
-                                  Blueprint
-                                </span>
-                                <div className="flex gap-1 bg-slate-200 rounded-lg p-0.5">
-                                  {(
-                                    ['estrutura', 'chapas', 'ambos'] as const
-                                  ).map((mode) => (
-                                    <button
-                                      key={mode}
-                                      onClick={() => setViewMode(mode)}
-                                      className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition ${
-                                        viewMode === mode
-                                          ? 'bg-white shadow-sm text-indigo-600'
-                                          : 'text-slate-500'
-                                      }`}
-                                    >
-                                      {mode === 'estrutura'
-                                        ? 'Estrutura'
-                                        : mode === 'chapas'
-                                          ? 'Chapas'
-                                          : 'Ambos'}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs text-emerald-600"
-                                onClick={() =>
-                                  handleShareBlueprint(service.id, service.tag)
-                                }
-                              >
-                                <DownloadSimple size={14} className="mr-1" />
-                                Exportar PNG
-                              </Button>
+                  {/* Lista de serviços do ambiente com blueprints */}
+                  <div className="space-y-4">
+                    {room.services.map((service) => {
+                      const isSelected = selectedRoomId === room.id;
+                      return (
+                        <div
+                          key={service.id}
+                          className="border border-slate-100 rounded-xl p-3 bg-slate-50/50"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div>
+                              <span className="text-xs font-bold text-indigo-600 uppercase">
+                                {service.tag}
+                              </span>
+                              <span className="ml-2 text-[10px] text-slate-500">
+                                {service.type} | {service.totalArea.toFixed(2)}{' '}
+                                m²
+                              </span>
                             </div>
-
-                            <div
-                              ref={(el) => {
-                                blueprintRefs.current[service.id] = el;
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs text-indigo-600"
+                              onClick={() => {
+                                setSelectedRoomId(isSelected ? null : room.id);
+                                setViewMode('estrutura');
                               }}
-                              className="bg-slate-900 rounded-xl p-4 border border-slate-800 min-h-[200px] flex items-center justify-center relative overflow-hidden"
                             >
-                              {/* Grade de fundo */}
-                              <div
-                                className="absolute inset-0 opacity-10 pointer-events-none"
-                                style={{
-                                  backgroundImage: `radial-gradient(circle, #6366f1 1px, transparent 1px)`,
-                                  backgroundSize: '20px 20px',
-                                }}
-                              />
-                              {service.type === 'wall' && (
-                                <WallBlueprint
-                                  service={service}
-                                  viewMode={viewMode}
-                                />
-                              )}
-                              {service.type === 'ceiling' && (
-                                <CeilingBlueprint
-                                  service={service}
-                                  viewMode={viewMode}
-                                />
-                              )}
-                              {service.type === 'sanca' && (
-                                <SancaBlueprint service={service} />
-                              )}
-                            </div>
-
-                            {/* Informações adicionais do blueprint */}
-                            <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-500">
-                              {service.type === 'wall' && (
-                                <>
-                                  <span>
-                                    Comprimento: {service.measures[0]?.w || 0}m
-                                  </span>
-                                  <span>
-                                    Altura: {service.measures[0]?.h || 0}m
-                                  </span>
-                                  <span>
-                                    Perfil: {service.profileSize || 48}mm
-                                  </span>
-                                  <span>
-                                    Espaçamento:{' '}
-                                    {(service.studSpacing || 0.6) * 100}cm
-                                  </span>
-                                </>
-                              )}
-                              {service.type === 'ceiling' && (
-                                <>
-                                  <span>
-                                    Largura: {service.measures[0]?.w || 0}m
-                                  </span>
-                                  <span>
-                                    Comprimento: {service.measures[0]?.h || 0}m
-                                  </span>
-                                  <span>
-                                    Offset Tirantes:{' '}
-                                    {service.tiranteOffset || 0.6}m
-                                  </span>
-                                </>
-                              )}
-                              {service.type === 'sanca' && (
-                                <>
-                                  <span>
-                                    Perímetro: {service.perimeter || 0}m
-                                  </span>
-                                  <span>Altura: {service.height || 0}m</span>
-                                </>
-                              )}
-                              <span>Placa: {service.boardType}</span>
-                            </div>
+                              {isSelected
+                                ? 'Ocultar Blueprint'
+                                : 'Ver Blueprint'}
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+
+                          {isSelected && (
+                            <div className="mt-3 pt-3 border-t border-slate-200">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-slate-500 uppercase">
+                                    Blueprint
+                                  </span>
+                                  <div className="flex gap-1 bg-slate-200 rounded-lg p-0.5">
+                                    {(
+                                      ['estrutura', 'chapas', 'ambos'] as const
+                                    ).map((mode) => (
+                                      <button
+                                        key={mode}
+                                        onClick={() => setViewMode(mode)}
+                                        className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition ${
+                                          viewMode === mode
+                                            ? 'bg-white shadow-sm text-indigo-600'
+                                            : 'text-slate-500'
+                                        }`}
+                                      >
+                                        {mode === 'estrutura'
+                                          ? 'Estrutura'
+                                          : mode === 'chapas'
+                                            ? 'Chapas'
+                                            : 'Ambos'}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs text-emerald-600"
+                                  onClick={() =>
+                                    handleShareBlueprint(
+                                      service.id,
+                                      service.tag,
+                                    )
+                                  }
+                                >
+                                  <DownloadSimple size={14} className="mr-1" />
+                                  Exportar PNG
+                                </Button>
+                              </div>
+
+                              <div
+                                ref={(el) => {
+                                  blueprintRefs.current[service.id] = el;
+                                }}
+                                className="bg-slate-900 rounded-xl p-4 border border-slate-800 min-h-[200px] flex items-center justify-center relative overflow-hidden"
+                              >
+                                {/* Grade de fundo */}
+                                <div
+                                  className="absolute inset-0 opacity-10 pointer-events-none"
+                                  style={{
+                                    backgroundImage: `radial-gradient(circle, #6366f1 1px, transparent 1px)`,
+                                    backgroundSize: '20px 20px',
+                                  }}
+                                />
+                                {service.type === 'wall' && (
+                                  <WallBlueprint
+                                    service={service}
+                                    viewMode={viewMode}
+                                  />
+                                )}
+                                {service.type === 'ceiling' && (
+                                  <CeilingBlueprint
+                                    service={service}
+                                    viewMode={viewMode}
+                                  />
+                                )}
+                                {service.type === 'sanca' && (
+                                  <SancaBlueprint service={service} />
+                                )}
+                              </div>
+
+                              {/* Informações adicionais do blueprint */}
+                              <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-500">
+                                {service.type === 'wall' && (
+                                  <>
+                                    <span>
+                                      Comprimento: {service.measures[0]?.w || 0}
+                                      m
+                                    </span>
+                                    <span>
+                                      Altura: {service.measures[0]?.h || 0}m
+                                    </span>
+                                    <span>
+                                      Perfil: {service.profileSize || 48}mm
+                                    </span>
+                                    <span>
+                                      Espaçamento:{' '}
+                                      {(service.studSpacing || 0.6) * 100}cm
+                                    </span>
+                                  </>
+                                )}
+                                {service.type === 'ceiling' && (
+                                  <>
+                                    <span>
+                                      Largura: {service.measures[0]?.w || 0}m
+                                    </span>
+                                    <span>
+                                      Comprimento: {service.measures[0]?.h || 0}
+                                      m
+                                    </span>
+                                    <span>
+                                      Offset Tirantes:{' '}
+                                      {service.tiranteOffset || 0.6}m
+                                    </span>
+                                  </>
+                                )}
+                                {service.type === 'sanca' && (
+                                  <>
+                                    <span>
+                                      Perímetro: {service.perimeter || 0}m
+                                    </span>
+                                    <span>Altura: {service.height || 0}m</span>
+                                  </>
+                                )}
+                                <span>Placa: {service.boardType}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Lista total de materiais (estilizada como no ModeloVisualStudio) */}
+            {consolidatedMaterials.length > 0 && (
+              <div className="mt-8 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <h4 className="text-xs font-black uppercase text-indigo-600 tracking-wider flex items-center gap-2 mb-4">
+                  <Sparkle size={16} weight="fill" />
+                  Total Consolidado da Obra
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {consolidatedMaterials.map((mat, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-slate-50 p-2 rounded-xl border border-slate-100"
+                    >
+                      <span className="text-[11px] text-slate-700 font-medium line-clamp-1">
+                        {mat.item}
+                      </span>
+                      <span className="text-sm font-black text-indigo-700">
+                        {mat.qtd}{' '}
+                        <span className="text-[10px] font-normal text-slate-500">
+                          {mat.unit}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
           </div>
-
-          {/* Lista total de materiais (estilizada como no ModeloVisualStudio) */}
-          {consolidatedMaterials.length > 0 && (
-            <div className="mt-8 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-              <h4 className="text-xs font-black uppercase text-indigo-600 tracking-wider flex items-center gap-2 mb-4">
-                <Sparkle size={16} weight="fill" />
-                Total Consolidado da Obra
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                {consolidatedMaterials.map((mat, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-slate-50 p-2 rounded-xl border border-slate-100"
-                  >
-                    <span className="text-[11px] text-slate-700 font-medium line-clamp-1">
-                      {mat.item}
-                    </span>
-                    <span className="text-sm font-black text-indigo-700">
-                      {mat.qtd}{' '}
-                      <span className="text-[10px] font-normal text-slate-500">
-                        {mat.unit}
-                      </span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </View>
       )}
 
@@ -730,13 +754,19 @@ export default function DrywallPainel() {
         </View>
       )}
 
+      {/* Menu de compartilhamento */}
+      <ShareDrywallMenu
+        listRef={listContainerRef}
+        rooms={blueprintRooms}
+        consolidated={consolidatedMaterials}
+        open={isShareMenuOpen}
+        onOpenChange={setIsShareMenuOpen}
+        title="Lista de Materiais - Drywall"
+      />
+
       {activeMode === 'completa' && !isDrawerOpen && (
         <FAB actions={fabConfig} hasBottomNav={true} />
       )}
     </>
   );
 }
-
-// Importação de ícones faltantes (adicione ao Phosphor)
-// Nota: Você precisa instalar os ícones que faltam: PencilSimple, Trash, Sparkle
-// Eles já devem estar disponíveis em @phosphor-icons/react
