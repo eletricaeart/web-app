@@ -87,6 +87,13 @@ interface BudgetData {
   document_title?: string;
   issue_date?: string;
   access_password?: string;
+  commitment?: {
+    enabled?: boolean;
+    title?: string;
+    text?: string;
+    highlightText?: string;
+  };
+  commitment_json?: any;
 }
 
 export default function OrcamentoVerPainel() {
@@ -222,6 +229,11 @@ export default function OrcamentoVerPainel() {
       investmentTotal,
       grandTotal,
       services: servicesRaw,
+      commitment:
+        data.commitment_json ||
+        data.commitment ||
+        (data as any)['Compromisso JSON'] ||
+        undefined,
       address: {
         street:
           ref.street ||
@@ -531,6 +543,7 @@ export default function OrcamentoVerPainel() {
             <FooterContent
               budgetId={String(data.id)}
               password={data.access_password || data.accessPassword}
+              commitment={displayData.commitment}
             />
           </View>{' '}
         </View>
@@ -559,9 +572,16 @@ export default function OrcamentoVerPainel() {
 function FooterContent({
   budgetId,
   password,
+  commitment,
 }: {
   budgetId: string;
   password?: string;
+  commitment?: {
+    enabled?: boolean;
+    title?: string;
+    text?: string;
+    highlightText?: string;
+  };
 }) {
   const [baseUrl, setBaseUrl] = useState('');
   const viewUrl = `${baseUrl}/validar/${budgetId}`;
@@ -572,22 +592,34 @@ function FooterContent({
     }
   }, []);
 
+  const isEnabled = commitment?.enabled !== false;
+  const title =
+    commitment?.title !== undefined
+      ? commitment.title
+      : 'Compromisso Elétrica&Art:';
+  const text =
+    commitment?.text !== undefined
+      ? commitment.text
+      : 'Unir técnica, estética, precisão e responsabilidade para entregar um resultado impecável, durável e superior.';
+  const highlightText =
+    commitment?.highlightText !== undefined
+      ? commitment.highlightText
+      : 'Agradecemos a oportunidade de apresentar esta proposta e estamos à disposição para quaisquer esclarecimentos adicionais.';
+
   return (
     <View tag="footer-content">
       <View className="avoid" tag="footer-content_top">
-        <View tag="content">
-          <View tag="t6">Compromisso Elétrica&Art:</View>
-          <p>
-            Unir técnica, estética, precisão e responsabilidade para entregar um
-            resultado impecável, durável e superior.
-          </p>
-          <View tag="tagb">
-            <p>
-              Agradecemos a oportunidade de apresentar esta proposta e estamos à
-              disposição para quaisquer esclarecimentos adicionais.
-            </p>
+        {isEnabled && (title || text || highlightText) && (
+          <View tag="content">
+            {title && <View tag="t6">{title}</View>}
+            {text && <p>{text}</p>}
+            {highlightText && (
+              <View tag="tagb">
+                <p>{highlightText}</p>
+              </View>
+            )}
           </View>
-        </View>
+        )}
         <View tag="footer-content_bottom">
           <View tag="ui">
             <header>

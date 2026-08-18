@@ -275,17 +275,24 @@ export function buildInvestmentClause(
             optHtml += `<ul style="list-style-type: none; padding: 0; margin-top: 6px; font-size: 0.82rem;">`;
             cat.items.forEach((item) => {
               const qtyUnit = item.unidade ? ` ${item.unidade}` : '';
-              const qtyText =
-                item.quantity > 1 || item.unidade
-                  ? ` (${item.quantity}${qtyUnit} x ${formatCurrency(item.unitValue)})`
-                  : '';
+              const isSingle = !item.quantity || Number(item.quantity) === 1;
+              const isStandardUnit =
+                !item.unidade ||
+                ['un', 'un.', 'unidade', 'und'].includes(
+                  item.unidade.trim().toLowerCase(),
+                );
+              let titleAndQty = item.name;
+              if (!isSingle || !isStandardUnit) {
+                titleAndQty += ` (${item.quantity}${qtyUnit} x ${formatCurrency(item.unitValue)})`;
+              }
+              const itemExtenso = valorPorExtenso(item.totalValue);
               const badgeTipo =
                 item.tipo === 'insumo'
                   ? `<span style="display: inline-block; font-size: 0.65rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1px 4px; border-radius: 4px; font-weight: 700; margin-right: 4px;">MATERIAL</span>`
                   : '';
-              optHtml += `<li style="display: flex; justify-content: space-between; padding: 2px 0; color: #334155;">
-                <span>${badgeTipo}${item.name}${qtyText}</span>
-                <span style="font-weight: 600;">${formatCurrency(item.totalValue)}</span>
+              optHtml += `<li style="display: flex; justify-content: space-between; padding: 2px 0; color: #334155; gap: 8px; flex-wrap: wrap;">
+                <span>${badgeTipo}${titleAndQty}:</span>
+                <span style="font-weight: 600;">${formatCurrency(item.totalValue)} (${itemExtenso})</span>
               </li>`;
             });
             optHtml += `</ul>`;
@@ -296,9 +303,8 @@ export function buildInvestmentClause(
         const extensoTotal = valorPorExtenso(opt.grandTotal);
         optHtml += `<div style="padding: 8px 12px; background: ${isSelected ? '#f0fdf4' : '#eef2ff'}; border: 1px solid ${isSelected ? '#bbf7d0' : '#c7d2fe'}; border-radius: 8px; font-weight: 700; color: #1e1b4b; display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
           <span>Investimento Total (${opt.title}):</span>
-          <span style="font-size: 1.05rem; color: ${isSelected ? '#15803d' : '#4338ca'}; font-weight: 800;">${formatCurrency(opt.grandTotal)}</span>
+          <span style="font-size: 1.05rem; color: ${isSelected ? '#15803d' : '#4338ca'}; font-weight: 800;">${formatCurrency(opt.grandTotal)} (${extensoTotal})</span>
         </div>`;
-        optHtml += `<p style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">Extenso: ${extensoTotal}</p>`;
         optHtml += `</div>`;
 
         return {
@@ -333,18 +339,25 @@ export function buildInvestmentClause(
         descHtml += `<ul style="list-style-type: none; padding: 0; margin-top: 6px; margin-bottom: 6px; font-size: 0.85rem;">`;
         cat.items.forEach((item) => {
           const qtyUnit = item.unidade ? ` ${item.unidade}` : '';
-          const qtyText =
-            item.quantity > 1 || item.unidade
-              ? ` (${item.quantity}${qtyUnit} x ${formatCurrency(item.unitValue)})`
-              : '';
+          const isSingle = !item.quantity || Number(item.quantity) === 1;
+          const isStandardUnit =
+            !item.unidade ||
+            ['un', 'un.', 'unidade', 'und'].includes(
+              item.unidade.trim().toLowerCase(),
+            );
+          let titleAndQty = item.name;
+          if (!isSingle || !isStandardUnit) {
+            titleAndQty += ` (${item.quantity}${qtyUnit} x ${formatCurrency(item.unitValue)})`;
+          }
+          const itemExtenso = valorPorExtenso(item.totalValue);
           const badgeTipo =
             item.tipo === 'insumo'
               ? `<span style="display: inline-block; font-size: 0.68rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1px 5px; border-radius: 4px; font-weight: 700; margin-right: 6px;">MATERIAL</span>`
               : '';
           descHtml += `<li style="margin-bottom: 4px; padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span>${badgeTipo}<strong>${item.name}</strong>${qtyText}</span>
-              <span style="font-weight: 600; color: #1e1b4b;">${formatCurrency(item.totalValue)}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span>${badgeTipo}<strong>${titleAndQty}:</strong></span>
+              <span style="font-weight: 600; color: #1e1b4b;">${formatCurrency(item.totalValue)} (${itemExtenso})</span>
             </div>
             ${item.description ? `<div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">${item.description}</div>` : ''}
           </li>`;
@@ -434,11 +447,10 @@ export function buildSummaryClause(
       v2.options.forEach((opt, idx) => {
         const isSelected = v2.selectedOptionId === opt.id;
         summaryHtml += `<div style="margin-bottom: 8px; padding: 10px 14px; background: ${isSelected ? '#f0fdf4' : '#f8fafc'}; border: 1px solid ${isSelected ? '#86efac' : '#e2e8f0'}; border-radius: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
             <span style="font-weight: 700; color: #1e293b;">${opt.title} ${isSelected ? '<span style="font-size: 0.7rem; color: #15803d; background: #dcfce7; padding: 1px 6px; border-radius: 4px; font-weight: 800;">APROVADA</span>' : ''}</span>
-            <span style="font-size: 1rem; font-weight: 800; color: ${isSelected ? '#15803d' : '#4338ca'};">${formatCurrency(opt.grandTotal)}</span>
+            <span style="font-size: 1rem; font-weight: 800; color: ${isSelected ? '#15803d' : '#4338ca'};">${formatCurrency(opt.grandTotal)} (${valorPorExtenso(opt.grandTotal)})</span>
           </div>
-          <p style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Extenso: ${valorPorExtenso(opt.grandTotal)}</p>
         </div>`;
       });
 
@@ -487,7 +499,7 @@ export function buildSummaryClause(
           cat.materialsValue && cat.materialsValue > 0
             ? ' (com material incluso)'
             : '';
-        summaryHtml += `<p><strong>${cat.categoryLabel}:</strong> ${formatCurrency(catTotal)}${materialSuffix}</p>`;
+        summaryHtml += `<p><strong>${cat.categoryLabel}:</strong> ${formatCurrency(catTotal)} (${valorPorExtenso(catTotal)})${materialSuffix}</p>`;
       }
     });
 
@@ -522,10 +534,10 @@ export function buildSummaryClause(
   const grandTotal = financials.grandTotal || 0;
   const extensoGrandTotal = valorPorExtenso(grandTotal);
 
-  let content = `<p><strong>Mão de Obra:</strong> ${formatCurrency(labor)}</p>
-<p><strong>Materiais:</strong> ${formatCurrency(materials)}</p>`;
+  let content = `<p><strong>Mão de Obra:</strong> ${formatCurrency(labor)}${labor > 0 ? ` (${valorPorExtenso(labor)})` : ''}</p>
+<p><strong>Materiais:</strong> ${formatCurrency(materials)}${materials > 0 ? ` (${valorPorExtenso(materials)})` : ''}</p>`;
   if (discount > 0) {
-    content += `<p><strong>Desconto:</strong> -${formatCurrency(discount)}</p>`;
+    content += `<p><strong>Desconto:</strong> -${formatCurrency(discount)} (${valorPorExtenso(discount)})</p>`;
   }
   content += `<p style="font-size: 1rem; color: #3730a3; font-weight: bold; margin-top: 6px;"><strong>TOTAL GERAL:</strong> ${formatCurrency(grandTotal)} (${extensoGrandTotal})</p>`;
 

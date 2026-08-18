@@ -3,7 +3,7 @@
 export interface BudgetServiceItem {
   subtitulo: string;
   detalhes: {
-    tipo: "p" | "ul" | "t6" | "tagc" | "brk";
+    tipo: 'p' | 'ul' | 't6' | 'tagc' | 'brk';
     conteudo: string | string[];
   }[];
 }
@@ -12,6 +12,21 @@ export interface BudgetService {
   titulo: string;
   itens: BudgetServiceItem[];
 }
+
+export interface BudgetCommitment {
+  enabled?: boolean;
+  title?: string;
+  text?: string;
+  highlightText?: string;
+}
+
+export const DEFAULT_BUDGET_COMMITMENT: BudgetCommitment = {
+  enabled: true,
+  title: 'Compromisso Elétrica&Art:',
+  text: 'Unir técnica, estética, precisão e responsabilidade para entregar um resultado impecável, durável e superior.',
+  highlightText:
+    'Agradecemos a oportunidade de apresentar esta proposta e estamos à disposição para quaisquer esclarecimentos adicionais.',
+};
 
 export interface Budget {
   id: string;
@@ -31,4 +46,5 @@ export interface Budget {
     text: string;
   };
   servicos: BudgetService[];
+  commitment?: BudgetCommitment;
 }

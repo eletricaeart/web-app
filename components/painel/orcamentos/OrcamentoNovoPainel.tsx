@@ -8,7 +8,16 @@ import ClientForm from '@/components/forms/ClientForm';
 import ClauseManager from '@/components/forms/ClauseManager';
 import InvestmentDrawer, { PEEK_HEIGHT } from './InvestmentDrawer';
 import View from '@/components/layout/View';
-import { CircleNotch, Calculator, CalendarBlank } from '@phosphor-icons/react';
+import {
+  CircleNotch,
+  Calculator,
+  CalendarBlank,
+  Handshake,
+  CaretDown,
+  CaretUp,
+  ArrowCounterClockwise,
+  CheckCircle,
+} from '@phosphor-icons/react';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import * as Default_Divider from '@/components/Divider';
 import FinancialInvestmentV2Editor from './FinancialInvestmentV2Editor';
@@ -20,6 +29,10 @@ import {
   buildInvestmentClause,
   buildSummaryClause,
 } from '@/lib/types/investment';
+import {
+  BudgetCommitment,
+  DEFAULT_BUDGET_COMMITMENT,
+} from '@/lib/types/budget';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -54,6 +67,8 @@ export default function OrcamentoNovoPainel() {
   const { data: clientsCache } = useEASyncSupabase<any>('clientes');
 
   const [loading, setLoading] = useState<boolean>(false);
+
+  const [isCommitmentOpen, setIsCommitmentOpen] = useState(false);
 
   const [budget, setBudget] = useState<any>({
     id: null,
@@ -91,6 +106,7 @@ export default function OrcamentoNovoPainel() {
       totalMaterials: 0,
       grandTotal: 0,
     } as BudgetFinancialsV2,
+    commitment: { ...DEFAULT_BUDGET_COMMITMENT },
   });
 
   const legacyClauseTotal = useMemo(() => {
@@ -237,6 +253,11 @@ export default function OrcamentoNovoPainel() {
             totalMaterials: Number(finJson.materials || 0),
             grandTotal: Number(finJson.total || 0),
           },
+      commitment:
+        data.commitment_json ||
+        data.commitment ||
+        (data as any)['Compromisso JSON'] ||
+        DEFAULT_BUDGET_COMMITMENT,
       accessPassword: data.access_password || data.accessPassword,
     });
   };
@@ -327,6 +348,7 @@ export default function OrcamentoNovoPainel() {
               total: Number(calculatedTotal) || 0,
             },
       access_password: accessPassword,
+      commitment_json: budget.commitment,
     };
 
     if (editId && isUUID(editId)) {
@@ -462,6 +484,166 @@ export default function OrcamentoNovoPainel() {
             onInsertInvestmentClause={handleInsertInvestmentClause}
             onInsertSummaryClause={handleInsertSummaryClause}
           />
+
+          <Default_Divider.default spacing="2rem" color="transparent" />
+          <View className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <header className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2 text-indigo-600 font-bold uppercase text-xs tracking-widest">
+                <Handshake size={20} className="text-indigo-600" />
+                <span>Compromisso & Mensagem de Fechamento</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                    budget.commitment?.enabled !== false
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  }`}
+                >
+                  {budget.commitment?.enabled !== false
+                    ? 'Ativo no Orçamento'
+                    : 'Desativado'}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsCommitmentOpen(!isCommitmentOpen)}
+                  className="h-8 px-2 text-slate-500 hover:text-indigo-600"
+                >
+                  {isCommitmentOpen ? (
+                    <CaretUp size={18} />
+                  ) : (
+                    <CaretDown size={18} />
+                  )}
+                </Button>
+              </div>
+            </header>
+
+            <p className="text-xs text-slate-500 mb-4">
+              Esta seção é exibida logo antes da assinatura no documento final
+              do orçamento. Você pode personalizar o título, a mensagem
+              institucional e a caixa de agradecimento em destaque, ou
+              desativá-la.
+            </p>
+
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl mb-4">
+              <div className="flex items-center gap-3">
+                <input
+                  id="toggle-commitment"
+                  type="checkbox"
+                  checked={budget.commitment?.enabled !== false}
+                  onChange={(e) =>
+                    setBudget({
+                      ...budget,
+                      commitment: {
+                        ...(budget.commitment || DEFAULT_BUDGET_COMMITMENT),
+                        enabled: e.target.checked,
+                      },
+                    })
+                  }
+                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                />
+                <label
+                  htmlFor="toggle-commitment"
+                  className="text-xs font-semibold text-slate-700 cursor-pointer select-none"
+                >
+                  Exibir seção de compromisso no documento final
+                </label>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setBudget({
+                    ...budget,
+                    commitment: { ...DEFAULT_BUDGET_COMMITMENT, enabled: true },
+                  })
+                }
+                className="text-[11px] h-7 px-2 text-slate-600 hover:text-indigo-700 flex items-center gap-1 border-slate-300"
+              >
+                <ArrowCounterClockwise size={13} />
+                Restaurar Padrão
+              </Button>
+            </div>
+
+            {budget.commitment?.enabled !== false && (
+              <div className="space-y-4 pt-1">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Título da Seção
+                  </label>
+                  <Input
+                    type="text"
+                    value={
+                      budget.commitment?.title ??
+                      DEFAULT_BUDGET_COMMITMENT.title
+                    }
+                    onChange={(e) =>
+                      setBudget({
+                        ...budget,
+                        commitment: {
+                          ...(budget.commitment || DEFAULT_BUDGET_COMMITMENT),
+                          title: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="Ex: Compromisso Elétrica&Art:"
+                    className="bg-white border-slate-200 text-sm font-medium text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Texto Institucional / Compromisso
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={
+                      budget.commitment?.text ?? DEFAULT_BUDGET_COMMITMENT.text
+                    }
+                    onChange={(e) =>
+                      setBudget({
+                        ...budget,
+                        commitment: {
+                          ...(budget.commitment || DEFAULT_BUDGET_COMMITMENT),
+                          text: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="Ex: Unir técnica, estética, precisão e responsabilidade para entregar um resultado impecável, durável e superior."
+                    className="w-full text-sm font-normal text-slate-700 bg-white border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Texto em Destaque Colorido (Caixa de Fechamento)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={
+                      budget.commitment?.highlightText ??
+                      DEFAULT_BUDGET_COMMITMENT.highlightText
+                    }
+                    onChange={(e) =>
+                      setBudget({
+                        ...budget,
+                        commitment: {
+                          ...(budget.commitment || DEFAULT_BUDGET_COMMITMENT),
+                          highlightText: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="Ex: Agradecemos a oportunidade de apresentar esta proposta e estamos à disposição para quaisquer esclarecimentos adicionais."
+                    className="w-full text-sm font-normal text-slate-700 bg-white border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y"
+                  />
+                </div>
+              </div>
+            )}
+          </View>
 
           <Default_Divider.default spacing="2rem" color="transparent" />
           <View className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
