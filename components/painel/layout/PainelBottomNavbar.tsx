@@ -44,7 +44,7 @@ export default function PainelBottomNavbar() {
   };
 
   return (
-    <nav className="painel-navdock">
+    <nav className="painel-navdock bg-[linear-gradient(0deg,_#27a5,_#27a5,_transparent)_!important] backdrop-blur-[1px]">
       <div
         className="painel-navdock-track"
         style={{ '--nav-count': NAV_ITEMS.length } as React.CSSProperties}
