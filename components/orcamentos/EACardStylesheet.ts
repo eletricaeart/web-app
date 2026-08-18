@@ -5,15 +5,14 @@ ea-card,
   /* Definimos o card como um container de tamanho */
   container-type: inline-size; 
 
-  /*font-size: 2.5vw;*/
+  font-size: 14px !important;
   display: grid !important;
   grid-template-columns: 0.35fr 0.65fr;
   width: 100%;
-  /* height: 36.3vw; */
   aspect-ratio: 3.8 / 1;
   padding: 1vw;
   inset: 0;
-  color: #f5f5f5;
+  color: #f5f5f5 !important;
   filter: var(--appbar-filter-shadow);
 
   margin: 0;
@@ -25,8 +24,8 @@ ea-card,
 }
 .card {
   background: var(--sv-sombra-azul);
-  color: #f5f5f5;
-  font-size: 2.5vw;
+  color: #f5f5f5 !important;
+  font-size: 14px !important;
   display: grid;
   grid-template-columns: 0.35fr 0.65fr;
   width: 100%;
@@ -62,20 +61,14 @@ ea-card,
   align-items: center;
   justify-content: center;
   text-align: center;
+  color: #f5f5f5 !important;
 
-  font-size: 2.25vw;
-  /* clamp para a fonte não ficar gigante nem minúscula */
-  font-size: clamp(8px, 2.25vw, 16px) !important;
-
-  /* A MÁGICA: Fonte baseada na largura do card (cqw) */
-  /* 4cqw costuma ser o 'sweet spot' para esse layout 3.8/1 */
-  font-size: clamp(10px, 4cqw, 18px) !important;
+  /* Tamanho isolado do EACard */
+  font-size: clamp(10px, 3.2cqw, 15px) !important;
 
   /* Reduzimos o espaçamento entre linhas para caber mais texto */
-  line-height: 1.1 !important; 
+  line-height: 1.15 !important; 
 
-  height: 95%;
-  /* Permitimos que a altura seja flexível se necessário, mas mantendo a proporção */
   height: 100% !important;
   padding: 0.5vw !important;
   padding: 2cqw; /* Padding proporcional à largura do card */ 
@@ -85,47 +78,71 @@ ea-card,
   aspect-ratio: 1.8 / 1;
 }
 
-.nameImg {
-  width: 100%;
-  margin-bottom: 0.2em;
+.description span {
+  font-size: 0.9em !important;
+  font-weight: bold !important;
+  color: #f5f5f5 !important;
+  display: block !important;
+  line-height: 1.2 !important;
 }
 
-/* Ajuste na imagem do nome (Elétrica & Art) para não empurrar o resto */
-.nameImg {
-  width: 90% !important; /* Reduzimos levemente a largura da logo de texto */
-  max-height: 40% !important; /* Garante que ela não ocupe o card todo */
-  object-fit: contain;
-  margin-bottom: 4px !important;
+.description p {
+  font-size: 0.88em !important;
+  margin: 0.2em 0 !important;
+  color: #f5f5f5 !important;
+  line-height: 1.2 !important;
+}
+
+.description div {
+  font-size: 0.88em !important;
+  color: #f5f5f5 !important;
+  line-height: 1.25 !important;
 }
 
 .nameImg {
-  /* Logo do nome também proporcional ao card */
+  /* Logo do nome proporcional ao card */
   width: 80cqw; 
   max-width: 90%;
+  max-height: 40% !important;
+  object-fit: contain;
   margin-bottom: 0.5cqw;
 }
 
 .description t5,
 .description t {
   display: block;
-  /* line-height: 1.2; */
-
   width: 100%;
-  overflow-wrap: break-word; /* Garante que o CNPJ/Endereço quebrem se forem longos */
+  overflow-wrap: break-word;
   margin-bottom: 2px !important;
-
-  white-space: nowrap; /* Evita quebra feia se o container for pequeno */
+  white-space: nowrap;
 }
 
 .contactLink {
-  color: inherit;
+  color: #f5f5f5 !important;
   text-decoration: none;
 }
 
 @media print {
+  ea-card,
+  .ea_card,
   .card {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 13px !important;
+  }
+  .description {
+    font-size: 12px !important;
+    line-height: 1.15 !important;
+  }
+  .description span {
+    font-size: 11px !important;
+  }
+  .description p {
+    font-size: 10.5px !important;
+  }
+  .description div,
+  .contactLink {
+    font-size: 10.5px !important;
   }
 }
 `;

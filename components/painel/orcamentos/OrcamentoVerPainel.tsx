@@ -232,6 +232,8 @@ export default function OrcamentoVerPainel() {
       commitment:
         data.commitment_json ||
         data.commitment ||
+        data.financial_json?.commitment ||
+        data.financial?.commitment ||
         (data as any)['Compromisso JSON'] ||
         undefined,
       address: {
@@ -240,27 +242,35 @@ export default function OrcamentoVerPainel() {
           ref.clientAddress?.street ||
           ref.cliente?.rua ||
           (data as any).street ||
+          data.financial_json?.address?.street ||
           '',
         number:
           ref.number ||
           ref.clientAddress?.number ||
           ref.cliente?.num ||
           (data as any).number ||
+          data.financial_json?.address?.number ||
           '',
         neighborhood:
           ref.neighborhood ||
           ref.clientAddress?.neighborhood ||
           ref.cliente?.bairro ||
           (data as any).neighborhood ||
+          data.financial_json?.address?.neighborhood ||
           '',
         city:
           ref.city ||
           ref.clientAddress?.city ||
           ref.cliente?.cidade ||
           (data as any).city ||
+          data.financial_json?.address?.city ||
           '',
         complement:
-          ref.complement || ref.complemento || (data as any).complement || '',
+          ref.complement ||
+          ref.complemento ||
+          (data as any).complement ||
+          data.financial_json?.address?.complement ||
+          '',
       },
     };
   }, [data, clientes]);
@@ -543,7 +553,6 @@ export default function OrcamentoVerPainel() {
             <FooterContent
               budgetId={String(data.id)}
               password={data.access_password || data.accessPassword}
-              commitment={displayData.commitment}
             />
           </View>{' '}
         </View>
@@ -572,16 +581,9 @@ export default function OrcamentoVerPainel() {
 function FooterContent({
   budgetId,
   password,
-  commitment,
 }: {
   budgetId: string;
   password?: string;
-  commitment?: {
-    enabled?: boolean;
-    title?: string;
-    text?: string;
-    highlightText?: string;
-  };
 }) {
   const [baseUrl, setBaseUrl] = useState('');
   const viewUrl = `${baseUrl}/validar/${budgetId}`;
@@ -592,107 +594,92 @@ function FooterContent({
     }
   }, []);
 
-  const isEnabled = commitment?.enabled !== false;
-  const title =
-    commitment?.title !== undefined
-      ? commitment.title
-      : 'Compromisso Elétrica&Art:';
-  const text =
-    commitment?.text !== undefined
-      ? commitment.text
-      : 'Unir técnica, estética, precisão e responsabilidade para entregar um resultado impecável, durável e superior.';
-  const highlightText =
-    commitment?.highlightText !== undefined
-      ? commitment.highlightText
-      : 'Agradecemos a oportunidade de apresentar esta proposta e estamos à disposição para quaisquer esclarecimentos adicionais.';
-
   return (
     <View tag="footer-content">
       <View className="avoid" tag="footer-content_top">
-        {isEnabled && (title || text || highlightText) && (
-          <View tag="content">
-            {title && <View tag="t6">{title}</View>}
-            {text && <p>{text}</p>}
-            {highlightText && (
-              <View tag="tagb">
-                <p>{highlightText}</p>
-              </View>
-            )}
+        <View tag="content">
+          <View tag="t6">Compromisso Elétrica&Art:</View>
+          <p>
+            Unir técnica, estética, precisão e responsabilidade para entregar um
+            resultado impecável, durável e superior.
+          </p>
+          <View tag="tagb">
+            <p>
+              Agradecemos a oportunidade de apresentar esta proposta e estamos à
+              disposição para quaisquer esclarecimentos adicionais.
+            </p>
           </View>
-        )}
-        <View tag="footer-content_bottom">
-          <View tag="ui">
-            <header>
-              <View tag="ui">
-                <View tag="t">Assinatura e Aprovação</View>
-              </View>
-            </header>
-            <View tag="content">
-              <View tag="signatures">
-                <View tag="signature">
-                  <View tag="content">
-                    <View tag="sig-name">Rafael - Elétrica&Art</View>
-                  </View>
+        </View>
+      </View>
+      <View tag="footer-content_bottom">
+        <View tag="ui">
+          <header>
+            <View tag="ui">
+              <View tag="t">Assinatura e Aprovação</View>
+            </View>
+          </header>
+          <View tag="content">
+            <View tag="signatures">
+              <View tag="signature">
+                <View tag="content">
+                  <View tag="sig-name">Rafael - Elétrica&Art</View>
                 </View>
-                <View tag="signature">
-                  <View tag="content">
-                    <View tag="sig-name">Assinatura do Cliente</View>
-                  </View>
+              </View>
+              <View tag="signature">
+                <View tag="content">
+                  <View tag="sig-name">Assinatura do Cliente</View>
                 </View>
               </View>
             </View>
           </View>
-          {password && (
-            <div
-              className={`flex flex-1 items-center justify-center pt-[4rem]`}
+        </View>
+        {password && (
+          <div className={`flex flex-1 items-center justify-center pt-8`}>
+            <View
+              tag="holder"
+              className="flex items-center justify-center gap-8 bg-olive-300 border-[1px] border-slate-300 rounded-[12px] p-4"
             >
               <View
-                tag="holder"
-                className="flex items-center justify-center gap-8 bg-olive-300 border-[1px] border-slate-300 rounded-[12px] p-4"
+                tag="qrcode"
+                className={`flex flex-col items-center justify-center bg-white text-[#00559c] p-2 rounded-sm`}
               >
-                <View
-                  tag="qrcode"
-                  className={`flex flex-col items-center justify-center bg-white text-[#00559c] p-2 rounded-sm`}
-                >
-                  {baseUrl ? (
-                    <QRCodeSVG
-                      value={viewUrl}
-                      size={100}
-                      level={'H'}
-                      includeMargin={false}
-                      imageSettings={{
-                        src: '/pix/file.svg',
-                        height: 40,
-                        width: 40,
-                        excavate: false,
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '100px',
-                        height: '100px',
-                        background: '#f5f5f5',
-                      }}
-                    />
-                  )}
-                </View>
-                <p className="text-[12px] text-olive-600">
-                  Para visualizar este documento original em nosso sistema,
-                  aponte a câmera do seu celular para o QR Code ao lado ou
-                  acesse{' '}
-                  <b>
-                    {`https://${baseUrl.replace(/^https?:\/\//, '')}/validar/${budgetId}`}
-                  </b>{' '}
-                  e informe a senha:{' '}
-                  <span className="font-[800] text-[16px]">
-                    {password || '----'}
-                  </span>
-                </p>
+                {baseUrl ? (
+                  <QRCodeSVG
+                    value={viewUrl}
+                    size={100}
+                    level={'H'}
+                    includeMargin={false}
+                    imageSettings={{
+                      src: '/pix/file.svg',
+                      height: 40,
+                      width: 40,
+                      excavate: false,
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '100px',
+                      height: '100px',
+                      background: '#f5f5f5',
+                    }}
+                  />
+                )}
               </View>
-            </div>
-          )}
-        </View>
+              <p className="text-[12px] text-olive-600">
+                Para visualizar este documento original em nosso sistema, aponte
+                a câmera do seu celular para o QR Code ao lado ou acesse{' '}
+                <b>
+                  {`https://${baseUrl.replace(/^https?:\/\//, '')}/validar/${budgetId}`}
+                </b>{' '}
+                e informe a senha:{' '}
+                <span className="font-[800] text-[16px]">
+                  {password || '----'}
+                </span>
+              </p>
+            </View>
+          </div>
+        )}
       </View>
     </View>
   );

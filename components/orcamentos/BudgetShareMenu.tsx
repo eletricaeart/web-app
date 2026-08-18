@@ -3,7 +3,14 @@
 
 import React, { useState } from 'react';
 import { domToBlob } from 'modern-screenshot';
-import { ImageIcon, FilePdf, SpinnerGap, Printer } from '@phosphor-icons/react'; // Added Printer icon
+import {
+  ImageIcon,
+  FilePdf,
+  SpinnerGap,
+  Printer,
+  SlidersHorizontal,
+  CheckCircle,
+} from '@phosphor-icons/react';
 import {
   Drawer,
   DrawerContent,
@@ -12,8 +19,6 @@ import {
 } from '@/components/ui/drawer';
 import View from '../layout/View';
 import { toast } from 'sonner';
-import html2pdf from 'html2pdf.js'; // Import the power!
-import html2canvas from 'html2canvas-pro'; // Import the PRO version!
 import { styles4send } from './styles4send';
 import { prestyle } from './prestyle';
 import { EACardStyles } from './EACardStylesheet';
@@ -42,8 +47,239 @@ export default function BudgetShareMenu({
 }: BudgetShareMenuProps) {
   const [generatedFile, setGeneratedFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Estados de teste e otimização configuráveis
+  const [density, setDensity] = useState<'compact' | 'standard' | 'minimal'>(
+    'compact',
+  );
+  const [antiCutsEnabled, setAntiCutsEnabled] = useState(true);
+  const [showConfig, setShowConfig] = useState(false);
+
+  const getPdfCustomStyles = () => {
+    const baseFontSize =
+      density === 'minimal' ? '12px' : density === 'compact' ? '13px' : '14px';
+
+    if (!antiCutsEnabled) {
+      return `
+        @media print {
+          @page {
+            size: A4;
+            margin: 5mm 0 5mm 0;
+            @bottom-right {
+              content: "Pág. " counter(page) " de " counter(pages);
+              font-size: 9pt;
+              padding-bottom: 5px;
+              padding-right: 5px;
+            }
+          }
+        }
+      `;
+    }
+
+    return `
+      @media print, all {
+        @page {
+          size: A4 portrait;
+          margin: 8mm 6mm 8mm 6mm;
+          @bottom-right {
+            content: "Pág. " counter(page) " de " counter(pages);
+            font-size: 8.5pt;
+            color: #64748b;
+            padding-bottom: 4px;
+            padding-right: 4px;
+          }
+        }
+
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          box-sizing: border-box !important;
+        }
+
+        html, body {
+          background: #ffffff !important;
+          color: #0f172a !important;
+          font-size: ${baseFontSize} !important;
+          line-height: 1.45 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          height: auto !important;
+          min-height: auto !important;
+          overflow: visible !important;
+        }
+
+        /* Isolação dos textos e layout do EACard para não sofrerem alterações de densidade/fonte do documento */
+        ea-card,
+        .ea_card,
+        .card {
+          font-size: 14px !important;
+          line-height: 1.15 !important;
+          color: #f5f5f5 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        ea-card .description,
+        .ea_card .description,
+        .card .description {
+          font-size: 12.5px !important;
+          line-height: 1.15 !important;
+          color: #f5f5f5 !important;
+        }
+
+        ea-card .description span,
+        .ea_card .description span,
+        .card .description span {
+          font-size: 11.5px !important;
+          font-weight: bold !important;
+          line-height: 1.2 !important;
+          color: #f5f5f5 !important;
+          display: block !important;
+        }
+
+        ea-card .description p,
+        .ea_card .description p,
+        .card .description p {
+          font-size: 11px !important;
+          line-height: 1.2 !important;
+          margin: 2.5px 0 !important;
+          color: #f5f5f5 !important;
+        }
+
+        ea-card .description div,
+        .ea_card .description div,
+        .card .description div,
+        ea-card .description a,
+        .ea_card .description a,
+        .card .description a,
+        ea-card .contactLink,
+        .ea_card .contactLink,
+        .card .contactLink {
+          font-size: 11px !important;
+          line-height: 1.25 !important;
+          color: #f5f5f5 !important;
+        }
+
+        budget-page {
+          padding: 0 0 12px 0 !important;
+          margin: 0 !important;
+          background: transparent !important;
+          height: auto !important;
+          min-height: auto !important;
+          display: block !important;
+          overflow: visible !important;
+        }
+
+        /* Anti-cortes em cards, blocos, cabeçalhos e cláusulas */
+        clause-header,
+        subclause-header,
+        cliente-section,
+        doc-header,
+        .ea-card,
+        .card,
+        tagb,
+        tagc,
+        .tagc,
+        blockquote,
+        table,
+        tr,
+        tbody,
+        signatures,
+        signature,
+        .signatures,
+        footer-content_bottom,
+        footer-content_top,
+        footer-content,
+        subclause,
+        .avoid {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          overflow: visible !important;
+        }
+
+        budget-body > clause {
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          overflow: visible !important;
+          padding: 4px 0 !important;
+          margin: 4px 0 !important;
+          background: transparent !important;
+        }
+
+        budget-body > clause > ui {
+          overflow: visible !important;
+          background: transparent !important;
+        }
+
+        clause-content {
+          overflow: visible !important;
+          background: #ffffff !important;
+          padding: 8px 12px !important;
+        }
+
+        clause-header,
+        subclause-header {
+          break-after: avoid !important;
+          page-break-after: avoid !important;
+        }
+
+        p, li {
+          orphans: 3 !important;
+          widows: 3 !important;
+        }
+
+        /* Rodapé sem quebra forçada para evitar página 9 em branco */
+        footer-content {
+          height: auto !important;
+          min-height: auto !important;
+          display: block !important;
+          break-before: auto !important;
+          page-break-before: auto !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          margin: 10px 0 0 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+        }
+
+        footer-content_top {
+          display: block !important;
+          padding: 4px 0 !important;
+          background: transparent !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+
+        footer-content_bottom {
+          display: block !important;
+          padding: 4px 0 0 0 !important;
+          background: transparent !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+
+        signatures {
+          display: flex !important;
+          flex-direction: row !important;
+          justify-content: space-between !important;
+          align-items: flex-end !important;
+          gap: 1.5cm !important;
+          margin-top: 1.5cm !important;
+          padding: 0.5cm 1cm !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+
+        signature {
+          flex: 1 !important;
+          font-size: 0.95rem;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+      }
+    `;
+  };
 
   /**
    * --- [ generate pdf on server and return it to front ]
@@ -51,40 +287,27 @@ export default function BudgetShareMenu({
   const generatePdfOnServerAndReturnIt = async () => {
     if (!budgetRef.current) return;
     setIsGenerating(true);
-    setGeneratedFile(null); // Limpa anterior
+    setGeneratedFile(null);
 
     try {
-      // Pegamos a origem do site (ex: https://eletrica-e-art.vercel.app)
-      const baseUrl = window.location.origin;
-
       const budgetHtml = budgetRef.current.innerHTML;
       const styles = Array.from(document.querySelectorAll('style'))
         .map((s) => s.innerHTML)
         .join('\n');
+
+      const customStyles = getPdfCustomStyles();
 
       const htmlFull = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <script src="https://cdn.tailwindcss.com"></script>
           <style>${styles}\n${prestyle}\n${styles4send}\n${EACardStyles}\n${TextStylesheet}</style>
-          <style>
-            @media print {
-              @page {
-    size: A4;
-    margin: 5mm 0 5mm 0;
-    @bottom-right {
-      content: "Pág. " counter(page) " de " counter(pages);
-      font-size: 9pt;
-      padding-bottom: 5px;
-      padding-right: 5px;
-    }
-  }
-            }
-          </style>
+          <style>${customStyles}</style>
         </head>
-        <body class="p-10">${budgetHtml}</body>
+        <body class="p-4">${budgetHtml}</body>
       </html>
     `;
 
@@ -101,18 +324,18 @@ export default function BudgetShareMenu({
         type: 'application/pdf',
       });
 
-      // GUARDAMOS O ARQUIVO NO ESTADO
       setGeneratedFile(file);
       setPdfUrl(window.URL.createObjectURL(blob));
 
-      toast.success('PDF gerado com sucesso! Clique em compartilhar.');
+      toast.success(
+        'PDF gerado com sucesso! Clique para compartilhar ou baixar.',
+      );
     } catch (err: any) {
-      toast.error('Erro ao gerar PDF');
+      toast.error('Erro ao gerar PDF no servidor');
     } finally {
       setIsGenerating(false);
     }
   };
-  /* --- */
 
   /**
    * --- [ handle the pdf file after the front receive it from the server ]
@@ -128,7 +351,6 @@ export default function BudgetShareMenu({
           text: `Olá! Segue o orçamento de ${clientName}.`,
         });
       } else {
-        // Fallback: Download
         const a = document.createElement('a');
         a.href = pdfUrl!;
         a.download = generatedFile.name;
@@ -138,25 +360,28 @@ export default function BudgetShareMenu({
       console.error('Erro ao compartilhar:', err);
     }
   };
-  /* --- */
 
   /**
    * --- [ handle native browser print ]
    * */
   const handleNativePrint = () => {
-    async function load() {
-      onOpenChange(false);
-    }
-    load().then(() => {
-      onOpenChange(false);
+    const styleEl = document.createElement('style');
+    styleEl.id = 'ea-print-custom-rules';
+    styleEl.innerHTML = getPdfCustomStyles();
+    document.head.appendChild(styleEl);
+
+    onOpenChange(false);
+    setTimeout(() => {
+      window.print();
       setTimeout(() => {
-        window.print();
-      }, 1000);
-    });
+        const el = document.getElementById('ea-print-custom-rules');
+        if (el) el.remove();
+      }, 2000);
+    }, 500);
   };
 
   /**
-   * --- [ Share as Image (Existing) ]
+   * --- [ Share as Image ]
    *  */
   const handleShareAsImg = async () => {
     if (!budgetRef.current) return;
@@ -189,143 +414,116 @@ export default function BudgetShareMenu({
     }
   };
 
-  /**
-   * --- [ Testing: Local PDF with html2pdf (Captures the current view) ]
-   *  */
-  const handleShareAsPdfWithHTML2PDF = async () => {
-    if (!budgetRef.current) return;
-    setIsGenerating(true);
-
-    const element = budgetRef.current;
-
-    try {
-      // 1. Capture the WHOLE element as one high-res canvas
-      // This avoids the "lab" color error because we are just taking a "photo"
-      const canvas = await html2canvas(element, {
-        scale: 2, // High quality
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      });
-
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-      // 2. Calculations for the "Slicer"
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight(); // A4 Height (~297mm)
-
-      // How tall the image will be when scaled to the PDF width
-      const totalImgHeightInPdf = (imgProps.height * pdfWidth) / imgProps.width;
-
-      let heightLeft = totalImgHeightInPdf;
-      let position = 0; // Current vertical position in the PDF
-
-      // 3. The "Loop": Slice the image until there's nothing left
-      // Page 1
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, totalImgHeightInPdf);
-      heightLeft -= pdfHeight;
-
-      // Extra Pages (if the budget is long)
-      while (heightLeft > 0) {
-        position = heightLeft - totalImgHeightInPdf; // Move the "camera" down
-        pdf.addPage();
-        pdf.addImage(
-          imgData,
-          'JPEG',
-          0,
-          position,
-          pdfWidth,
-          totalImgHeightInPdf,
-        );
-        heightLeft -= pdfHeight;
-      }
-
-      // 4. Share or Save
-      const pdfBlob = pdf.output('blob');
-      const file = new File([pdfBlob], `Orcamento_${clientName}.pdf`, {
-        type: 'application/pdf',
-      });
-
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Orçamento Elétrica & Art',
-        });
-      } else {
-        pdf.save(`Orcamento_${clientName}.pdf`);
-      }
-    } catch (err) {
-      console.error('PDF Multipage Error:', err);
-      toast.error('Erro ao gerar as páginas do PDF.');
-    } finally {
-      setIsGenerating(false);
-      onOpenChange(false);
-    }
-  };
-  /* --- */
-
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
-        className="pb-10 bg-white rounded-[2rem_2rem_0_0_!important] border-none"
+        className="pb-8 bg-white rounded-[2rem_2rem_0_0_!important] border-none"
         style={{ borderTopWidth: '0 !important' }}
       >
-        <DrawerHeader>
-          <DrawerTitle className="text-center text-slate-800 text-xl font-geist-mono capitalize tracking-widest font-semibold">
+        <DrawerHeader className="pb-2">
+          <DrawerTitle className="text-center text-slate-800 text-lg font-bold tracking-tight">
             Opções de Compartilhamento
           </DrawerTitle>
         </DrawerHeader>
 
-        {/* Changed grid-cols-2 to grid-cols-3 to fit all options */}
-        <View className="grid grid-cols-3 gap-2 min-h-40 p-4">
-          {/* Option: Image */}
-          <View
-            onClick={handleShareAsImg}
-            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
-          >
-            <View className="bg-amber-100 p-3 rounded-2xl text-amber-600">
-              {isGenerating ? (
-                <SpinnerGap className="animate-spin" size={24} />
-              ) : (
-                <ImageIcon size={24} weight="duotone" />
-              )}
-            </View>
-            <span className="text-[10px] font-bold text-slate-700 text-center">
-              Imagem
-            </span>
-          </View>
+        {/* Configurações de Densidade e Teste do PDF */}
+        <div className="px-5 mb-3">
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal size={18} className="text-indigo-600" />
+                <span className="text-xs font-semibold text-slate-800">
+                  Otimizador Anti-Cortes & Paginação
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowConfig(!showConfig)}
+                className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg transition-colors"
+              >
+                {showConfig ? 'Ocultar' : 'Ajustar'}
+              </button>
+            </div>
 
-          {/* print the pdf */}
-          <View
-            onClick={handleNativePrint}
-            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
-          >
-            <View className="bg-sky-100 p-3 rounded-2xl text-sky-600">
-              {isGenerating ? (
-                <SpinnerGap className="animate-spin" size={24} />
-              ) : (
-                <Printer size={24} weight="duotone" />
-              )}
-            </View>
-            <span className="text-[10px] font-bold text-slate-700 text-center">
-              Imprimir
-            </span>
-          </View>
+            {showConfig && (
+              <div className="mt-3 pt-3 border-t border-slate-200/70 space-y-3">
+                <div>
+                  <label className="text-[11px] font-medium text-slate-600 block mb-1.5">
+                    Tamanho do texto no documento:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setDensity('minimal')}
+                      className={`text-[11px] py-1.5 px-2 rounded-xl font-medium border transition-all ${
+                        density === 'minimal'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Muito Compacto (12px)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDensity('compact')}
+                      className={`text-[11px] py-1.5 px-2 rounded-xl font-medium border transition-all ${
+                        density === 'compact'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Compacto (13px) ★
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDensity('standard')}
+                      className={`text-[11px] py-1.5 px-2 rounded-xl font-medium border transition-all ${
+                        density === 'standard'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Padrão (14px)
+                    </button>
+                  </div>
+                </div>
 
-          {/* generate pdf file on the server and share it on frontend */}
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-600">
+                    Evitar quebra de cláusulas e página vazia
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAntiCutsEnabled(!antiCutsEnabled)}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all ${
+                      antiCutsEnabled
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-slate-100 text-slate-500 border-slate-200'
+                    }`}
+                  >
+                    {antiCutsEnabled
+                      ? 'Ativado (Recomendado)'
+                      : 'Desativado (Clássico)'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Botões de Ação */}
+        <View className="grid grid-cols-3 gap-3 px-4">
+          {/* Opção: Gerar PDF */}
           {!generatedFile ? (
             <View
               onClick={generatePdfOnServerAndReturnIt}
-              className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+              className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 rounded-2xl active:scale-95 transition-all cursor-pointer hover:bg-slate-100/80"
             >
-              <View className="bg-indigo-100 p-3 rounded-2xl text-indigo-600">
+              <View className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
                 {isGenerating ? (
-                  <SpinnerGap className="animate-spin" size={24} />
+                  <SpinnerGap className="animate-spin" size={22} />
                 ) : (
-                  <FilePdf size={24} weight="duotone" />
+                  <FilePdf size={22} weight="duotone" />
                 )}
               </View>
               <span className="text-[10px] font-bold text-slate-700 text-center">
@@ -338,37 +536,46 @@ export default function BudgetShareMenu({
                 handleShareFileAfterServerGenerateTheFile();
                 setTimeout(() => {
                   setGeneratedFile(null);
-                }, 2000);
+                }, 3000);
               }}
-              className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+              className="flex flex-col items-center gap-1.5 p-3 bg-indigo-50 border border-indigo-200 rounded-2xl active:scale-95 transition-all cursor-pointer"
             >
-              <View className="bg-indigo-600 p-3 rounded-2xl text-indigo-100">
-                {isGenerating ? (
-                  <SpinnerGap className="animate-spin" size={24} />
-                ) : (
-                  <FilePdf size={24} weight="duotone" />
-                )}
+              <View className="bg-indigo-600 p-2.5 rounded-xl text-white">
+                <CheckCircle size={22} weight="fill" />
               </View>
-              <span className="text-[10px] font-bold text-slate-700 text-center">
-                Compartilhar o PDF
+              <span className="text-[10px] font-bold text-indigo-700 text-center">
+                Compartilhar
               </span>
             </View>
           )}
 
-          {/* Testing: Local PDF (With HTML2PDF) */}
+          {/* Opção: Imprimir */}
           <View
-            onClick={handleShareAsPdfWithHTML2PDF}
-            className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-3xl active:scale-95 transition-all"
+            onClick={handleNativePrint}
+            className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 rounded-2xl active:scale-95 transition-all cursor-pointer hover:bg-slate-100/80"
           >
-            <View className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+            <View className="bg-sky-100 p-2.5 rounded-xl text-sky-600">
+              <Printer size={22} weight="duotone" />
+            </View>
+            <span className="text-[10px] font-bold text-slate-700 text-center">
+              Imprimir
+            </span>
+          </View>
+
+          {/* Opção: Imagem */}
+          <View
+            onClick={handleShareAsImg}
+            className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 rounded-2xl active:scale-95 transition-all cursor-pointer hover:bg-slate-100/80"
+          >
+            <View className="bg-amber-100 p-2.5 rounded-xl text-amber-600">
               {isGenerating ? (
-                <SpinnerGap className="animate-spin" size={24} />
+                <SpinnerGap className="animate-spin" size={22} />
               ) : (
-                <Printer size={24} weight="duotone" />
+                <ImageIcon size={22} weight="duotone" />
               )}
             </View>
             <span className="text-[10px] font-bold text-slate-700 text-center">
-              PDF (Teste)
+              Imagem
             </span>
           </View>
         </View>

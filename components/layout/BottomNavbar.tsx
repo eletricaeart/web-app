@@ -40,7 +40,7 @@ export default function BottomNavbar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 flex justify-between items-center shadow-[0_3px_8px_0px_#0003] py-4 px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 flex justify-between items-center shadow-[0_3px_8px_0px_#0003] py-5 px-3 min-h-[72px]">
       {navItems.map((item) => {
         // Lógica de ativação ajustada para evitar falsos positivos
         const isActive =

@@ -679,25 +679,14 @@ footer-content,
 footer-content_top,
 footer-content_bottom {
   break-inside: avoid !important;
+  page-break-inside: avoid !important;
 }
-
-/* clause-header, */
-/* subclause-header, */
-/* h1, */
-/* h2, */
-/* h3, */
-/* h4, */
-/* h5, */
-/* h6 { */
-/*   break-after: avoid; */
-/* } */
 
 subclause-body div,
 subclause-body ul,
 subclause-body ol {
   break-inside: auto !important;
   page-break-inside: auto !important;
-  /* orphans: 3; */
 }
 
 subclause-body div > *,
@@ -705,9 +694,8 @@ subclause-body ul > *,
 subclause-body ol > * {
   break-inside: avoid !important;
   page-break-inside: avoid !important;
-  display: block; /* Garante que a regra de quebra funcione melhor */
-  position: relative; /* Evita bugs de renderização em alguns motores de PDF */
-  /* orphans: 3; */
+  display: block;
+  position: relative;
 }
 
 subclause-body ul > li,
@@ -715,26 +703,25 @@ subclause-body ol > li {
   display: list-item !important;
 }
 
-/* subclause-body li { */
-/*list-style-position: inside; /* Garante que o marcador viaje junto com o texto */
-/* } */
-
 subclause-body h1 {
   font-weight: bold;
   margin: 1rem 0 0;
 }
 subclause-body p {
-  margin: 1rem 0;
+  margin: 0.75rem 0;
 }
 subclause-body ul {
-  padding-left: 2rem;
+  padding-left: 1.5rem;
 }
 subclause-body blockquote {
   margin: 0.5rem 0;
 }
 
 footer-content {
-  break-before: page;
+  break-before: auto !important;
+  page-break-before: auto !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
 }
 
 footer-content_top {
@@ -932,7 +919,37 @@ menu {
     font-size: 0.8rem !important;
   }
 
-  /* Garante que as cláusulas quebrem de página corretamente se necessário */
+  /* Força o container do orçamento a ocupar todo o espaço necessário sem padding residual */
+  budget-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    height: auto !important;
+    min-height: auto !important;
+    display: block !important;
+  }
+
+  /* Garante que as cláusulas quebrem de página corretamente sem cortar conteúdos */
+  budget-body > clause {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    overflow: visible !important;
+    padding: 4px 0 !important;
+    margin: 4px 0 !important;
+    background: transparent !important;
+  }
+
+  budget-body > clause > ui {
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  clause-content {
+    overflow: visible !important;
+    background: #fff !important;
+    padding: 0.75rem 1rem !important;
+  }
+
   article {
     break-inside: auto !important;
     page-break-inside: auto !important;
@@ -943,80 +960,103 @@ menu {
   clause-header,
   subclause-header {
     break-after: avoid !important;
+    page-break-after: avoid !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   subclause-body > * {
     break-before: auto !important;
     break-inside: avoid !important;
+    page-break-inside: avoid !important;
     break-after: auto !important;
+  }
+
+  tagc,
+  .tagc,
+  tagb,
+  blockquote,
+  cliente-section,
+  doc-header,
+  signatures,
+  signature,
+  .avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   tagc,
   .tagc {
     display: block;
     margin: 0.5rem 0;
-    padding: 10px 14px;
-    background: rgba(34, 119, 255, 0.1);
+    padding: 8px 12px;
     background: #e8f1ff;
     color: #0075bd;
-    border-radius: 12px;
-    margin: 8px 0;
+    border-radius: 8px;
     border-left: 4px solid #27f;
   }
 
+  /* Rodapé / Compromisso e Assinaturas sem criar folha vazia */
   footer-content {
-    height: 100%;
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 270mm !important; /* Altura aproximada de uma folha A4 menos margens */
-    break-before: page !important; /* MÁGICA: Sempre começa em uma folha nova */
-    page-break-before: always !important;
-    margin: 0 !important;
-    padding: 1cm 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    display: block !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin: 8px 0 0 0 !important;
+    padding: 0 !important;
   }
 
-  /* O topo do rodapé (texto de agradecimento) */
   footer-content_top {
-    flex: 0 !important; /* Não cresce */
+    display: block !important;
+    padding: 6px 0 !important;
+    background: transparent !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-  /* O fundo do rodapé (assinaturas) */
   footer-content_bottom {
-    flex: 1 !important; /* CRESCE: Ocupa todo o espaço restante da folha */
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-end !important; /* Empurra o conteúdo para a base */
-    height: 100%;
-    margin-bottom: 2cm !important; /* Espaço de segurança no fim da folha */
+    display: block !important;
+    padding: 6px 0 0 0 !important;
+    background: transparent !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   footer-content_bottom > ui {
     flex: 1;
+    overflow: visible !important;
   }
 
   footer-content_bottom ui content {
-    height: 100%;
-    flex: 1;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  /* Espaçamento interno das assinaturas */
+  /* Espaçamento proporcional e limpo das assinaturas */
   signatures {
     display: flex !important;
-    flex-direction: row !important; /* Rafael de um lado, Cliente do outro */
+    flex-direction: row !important;
     justify-content: space-between !important;
     align-items: flex-end !important;
     gap: 2cm !important;
-    margin-top: 4cm !important; /* Espaço generoso para assinar */
+    margin-top: 1.5cm !important;
+    padding: 0.5cm 1cm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   signature {
     flex: 1 !important;
-    /* border-top: 1px solid #000 !important; /* Linha da assinatura */
-    font-size: 1rem;
+    font-size: 0.95rem;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   sig-name {
-    padding-top: 1.5rem !important;
+    padding-top: 1rem !important;
     border-color: #333 !important;
     color: #00559c;
   }
