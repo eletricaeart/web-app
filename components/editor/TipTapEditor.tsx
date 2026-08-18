@@ -1,7 +1,7 @@
 // components/editor/TipTapEditor.tsx
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -35,6 +35,85 @@ const CLOUD = {
   preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
 };
 
+/**
+ * Encontra o container com rolagem pai (ou retorna a janela global)
+ */
+function getScrollParent(node: HTMLElement | null): HTMLElement | Window {
+  if (!node || typeof window === 'undefined') return window;
+  let parent = node.parentElement;
+  while (
+    parent &&
+    parent !== document.body &&
+    parent !== document.documentElement
+  ) {
+    const style = window.getComputedStyle(parent);
+    const overflowY = style.overflowY;
+    if (
+      (overflowY === 'auto' || overflowY === 'scroll') &&
+      parent.scrollHeight > parent.clientHeight
+    ) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return window;
+}
+
+/**
+ * Ajusta automaticamente o scroll para manter a linha onde o cursor está
+ * sempre perfeitamente visível na tela, evitando que fique encoberta pela
+ * barra de ferramentas inferior ou pela navbar.
+ */
+function keepCaretInView(editorInstance: any, containerEl: HTMLElement | null) {
+  if (!editorInstance || !editorInstance.view || typeof window === 'undefined')
+    return;
+
+  requestAnimationFrame(() => {
+    try {
+      const { state, view } = editorInstance;
+      if (!view || !state) return;
+
+      const { selection } = state;
+      const pos = selection.head ?? selection.from;
+      if (typeof pos !== 'number') return;
+
+      // Obtém as coordenadas do cursor em relação à tela (viewport)
+      const coords = view.coordsAtPos(pos);
+      if (!coords) return;
+
+      const scrollParent = getScrollParent(containerEl);
+      const viewportHeight =
+        window.innerHeight || document.documentElement.clientHeight;
+
+      // Margem inferior segura: 160px (cobre a toolbar sticky do TipTap + navbar inferior + espaço visual de respiro)
+      const bottomSafeMargin = 160;
+      // Margem superior segura: 85px (cobre AppBar e cabeçalhos fixos)
+      const topSafeMargin = 85;
+
+      const cursorBottom = coords.bottom;
+      const cursorTop = coords.top;
+
+      if (cursorBottom > viewportHeight - bottomSafeMargin) {
+        const delta = cursorBottom - (viewportHeight - bottomSafeMargin) + 32;
+        if (scrollParent === window) {
+          window.scrollBy({ top: delta, behavior: 'smooth' });
+        } else if (scrollParent instanceof HTMLElement) {
+          scrollParent.scrollBy({ top: delta, behavior: 'smooth' });
+        }
+      } else if (cursorTop < topSafeMargin) {
+        const delta = cursorTop - topSafeMargin - 20;
+        if (scrollParent === window) {
+          window.scrollBy({ top: delta, behavior: 'smooth' });
+        } else if (scrollParent instanceof HTMLElement) {
+          scrollParent.scrollBy({ top: delta, behavior: 'smooth' });
+        }
+      }
+    } catch {
+      // Ignora silenciosamente se o DOM ainda estiver em transição
+    }
+  });
+}
+
 interface TipTapEditorProps {
   value: string;
   onChange: (val: string) => void;
@@ -52,6 +131,7 @@ export default function TipTapEditor({
 }: TipTapEditorProps) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -79,6 +159,10 @@ export default function TipTapEditor({
     content: value || '',
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+      keepCaretInView(editor, containerRef.current);
+    },
+    onSelectionUpdate: ({ editor }) => {
+      keepCaretInView(editor, containerRef.current);
     },
     onCreate: ({ editor }) => {
       editor.commands.unsetAllMarks();
@@ -87,11 +171,24 @@ export default function TipTapEditor({
       if (editor.isEmpty) {
         editor.commands.unsetAllMarks();
       }
+      keepCaretInView(editor, containerRef.current);
     },
     editorProps: {
       attributes: {
         class:
           'prose prose-sm max-w-none focus:outline-none min-h-[120px] p-4 text-slate-700',
+      },
+      handleKeyDown: (view, event) => {
+        if (
+          event.key === 'Enter' ||
+          event.key === 'ArrowDown' ||
+          event.key === 'ArrowUp'
+        ) {
+          setTimeout(() => {
+            if (editor) keepCaretInView(editor, containerRef.current);
+          }, 30);
+        }
+        return false;
       },
     },
   });
@@ -142,6 +239,7 @@ export default function TipTapEditor({
 
   return (
     <div
+      ref={containerRef}
       className="tiptap-container relative border border-slate-100 shadow-inner overflow-hidden"
       style={{ background: '#ffffff', borderRadius: radius }}
     >
@@ -177,9 +275,7 @@ export default function TipTapEditor({
           />
         </MenuButton>
 
-        {/* Título Estilizado: mesmo mecanismo de heading do TipTap (nível 4),
-            então clicar → digitar → Enter sai do modo automaticamente,
-            sem precisar de nenhuma lógica extra nossa. */}
+        {/* Título Estilizado (nível 4) */}
         <MenuButton
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 4 }).run()
