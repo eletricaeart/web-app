@@ -93,6 +93,9 @@ export default function OrcamentosPainel() {
         'clientName',
         'documentTitle',
         'Nome Cliente',
+        'Título Doc',
+        'subtitle',
+        'city',
       ],
       'orcamentos',
     );
@@ -219,7 +222,7 @@ export default function OrcamentosPainel() {
           className="flex flex-col px-0 py-4 gap-2"
           style={{ paddingBottom: '190px' }}
         >
-          {filteredOrcamentos.length > 0 ? (
+          {filteredData.length > 0 ? (
             filteredData.map((orc) => {
               const isTemp = String(orc.id).startsWith('TEMP_');
               const currentClientName = getClientName(orc);
@@ -230,6 +233,14 @@ export default function OrcamentosPainel() {
                 const cName = c?.name || (c as any)?.['Nome'] || '';
                 return cName.toLowerCase() === currentClientName.toLowerCase();
               });
+
+              const totalValue = Number(
+                (orc as any).financial_json?.grandTotal ??
+                  (orc as any).financial_json?.total ??
+                  (orc as any).financial?.total ??
+                  (orc as any).total ??
+                  0,
+              );
 
               return (
                 <div
@@ -245,11 +256,7 @@ export default function OrcamentosPainel() {
                       issueDate: getIssueDate(orc),
                       expiration: (orc as any).expiration,
                       status: (orc as any).status,
-                      total: Number(
-                        (orc as any).financial_json?.total ??
-                          (orc as any).financial?.total ??
-                          0,
-                      ),
+                      total: totalValue,
                     }}
                     clientData={clientData}
                     onClick={() =>

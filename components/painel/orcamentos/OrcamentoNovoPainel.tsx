@@ -319,6 +319,11 @@ export default function OrcamentoNovoPainel() {
       client_name_manual: budget.client.name,
       client_id: isUUID(budget.client.id) ? budget.client.id : null,
 
+      // Chaves de compatibilidade para buscas, relatórios e componentes legados
+      documentTitle: budget.documentTitle,
+      clientName: budget.client.name,
+      issueDate: budget.issueDate,
+
       zip: budget.client.zip || null,
       street: budget.client.street || null,
       number: budget.client.number || null,
@@ -331,6 +336,7 @@ export default function OrcamentoNovoPainel() {
       subtitle: budget.subtitle,
 
       services_json: budget.services,
+      services: budget.services,
       investment_categories: budget.investmentCategories,
       financial_json:
         budget.financialV2?.categories?.length > 0
@@ -347,11 +353,22 @@ export default function OrcamentoNovoPainel() {
               discount: Number(budget.financial.discount) || 0,
               total: Number(calculatedTotal) || 0,
             },
+      financial:
+        budget.financialV2?.categories?.length > 0
+          ? {
+              labor: budget.financialV2.totalLabor || 0,
+              materials: budget.financialV2.totalMaterials || 0,
+              discount: 0,
+              total: calculatedTotal,
+            }
+          : budget.financial,
       access_password: accessPassword,
+      accessPassword: accessPassword,
       commitment_json: budget.commitment,
+      commitment: budget.commitment,
     };
 
-    if (editId && isUUID(editId)) {
+    if (editId) {
       payload.id = editId;
     }
 
