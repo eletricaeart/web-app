@@ -5,6 +5,50 @@ import { toast } from 'sonner';
 
 const supabase = createClient();
 
+function isValidUUID(str: any): boolean {
+  if (typeof str !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    str,
+  );
+}
+
+/**
+ * Sanitiza o payload antes de enviar para o Supabase,
+ * evitando erros de tipos (como strings vazias em campos UUID).
+ */
+function sanitizePayload(entity: string, item: any, userId?: string) {
+  const clean: any = { ...item };
+
+  // Garante que o ID seja um UUID válido ou gera um novo
+  if (!clean.id || !isValidUUID(clean.id)) {
+    clean.id = crypto.randomUUID();
+  }
+
+  // Tratamento de owner_id
+  if (userId && isValidUUID(userId)) {
+    clean.owner_id = userId;
+  } else if (!clean.owner_id || !isValidUUID(clean.owner_id)) {
+    delete clean.owner_id;
+  }
+
+  // Limpeza de campos vazios ou nulos desnecessários em relações de chaves estrangeiras
+  if (entity === 'orcamentos') {
+    if (clean.client_id && !isValidUUID(clean.client_id)) {
+      clean.client_id = null;
+    }
+  }
+
+  if (entity === 'clientes') {
+    if (!clean.gender) clean.gender = 'masc';
+    if (clean.photo) {
+      clean.photo_url = clean.photo;
+      delete clean.photo;
+    }
+  }
+
+  return clean;
+}
+
 export function useEASyncSupabase<T>(entity: string) {
   // Chave única para o SWR e para o LocalStorage
   const CACHE_KEY = `ea_cache_${entity}`;
@@ -12,105 +56,166 @@ export function useEASyncSupabase<T>(entity: string) {
   // 1. Buscamos o dado inicial do LocalStorage (Instantâneo)
   const getLocalData = (): T[] => {
     if (typeof window === 'undefined') return [];
-    const local = localStorage.getItem(CACHE_KEY);
-    return local ? JSON.parse(local) : [];
+    try {
+      const local = localStorage.getItem(CACHE_KEY);
+      const parsed = local ? JSON.parse(local) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      console.warn(
+        `[EASyncSupabase] Erro ao ler LocalStorage para ${entity}:`,
+        err,
+      );
+      return [];
+    }
   };
 
-  // 2. Hook SWR: O cérebro da operação
+  // 2. Hook SWR: Busca no Supabase sem quebrar se offline ou não autenticado
   const { data, error, mutate, isValidating } = useSWR(
     entity,
     async () => {
-      // Busca no Supabase
-      const { data: remoteData, error: supabaseError } = await supabase
-        .from(entity)
-        .select('*')
-        .order('created_at', { ascending: false });
+      console.log(
+        `[EASyncSupabase] 🔄 Buscando dados remotos para '${entity}'...`,
+      );
+      try {
+        const { data: remoteData, error: supabaseError } = await supabase
+          .from(entity)
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (supabaseError) throw supabaseError;
+        if (supabaseError) {
+          console.warn(
+            `[EASyncSupabase] ⚠️ Aviso na consulta de '${entity}':`,
+            supabaseError.message,
+          );
+          return getLocalData();
+        }
 
-      // Atualiza o LocalStorage com o que veio do banco
-      localStorage.setItem(CACHE_KEY, JSON.stringify(remoteData));
-      return remoteData as T[];
+        if (Array.isArray(remoteData)) {
+          console.log(
+            `[EASyncSupabase] ✅ '${entity}' sincronizado com sucesso (${remoteData.length} registros).`,
+          );
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(remoteData));
+          }
+          return remoteData as T[];
+        }
+
+        return getLocalData();
+      } catch (err: any) {
+        console.error(
+          `[EASyncSupabase] ❌ Falha na sincronização de '${entity}':`,
+          err,
+        );
+        return getLocalData();
+      }
     },
     {
-      fallbackData: getLocalData(), // Usa o local enquanto o remoto não chega
-      revalidateOnFocus: false, // Não gasta internet ao trocar de aba
-      revalidateOnReconnect: true, // Sincroniza se a internet voltar
-      dedupingInterval: 10000, // Se o Rafael entrar e sair da tela em 10s, não faz nova requisição
+      fallbackData: getLocalData(),
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 8000,
     },
   );
 
-  // 3. Função de Salvar Otimista (Salva na tela e no banco)
+  // 3. Função de Salvar Otimista (Salva na tela, no LocalStorage e no Supabase)
   const save = async (
     payload: any,
     action: 'create' | 'update' | 'delete' = 'create',
-  ) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+  ): Promise<any> => {
+    console.log(
+      `[EASyncSupabase] 💾 Executando ${action.toUpperCase()} em '${entity}':`,
+      payload,
+    );
 
-    const previousData = data || [];
+    let authUser: any = null;
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      authUser = authData?.user || null;
+    } catch {
+      // Continua caso não haja autenticação ativa
+    }
+
+    const previousData = Array.isArray(data) ? data : getLocalData();
     let newData = [...previousData];
 
-    // Se for criação e não tiver ID, geramos um temporário para a UI não quebrar
-    const itemWithId = {
-      ...payload,
-      id:
-        payload.id || (action === 'create' ? crypto.randomUUID() : payload.id),
-      owner_id: user.id,
-    };
+    // Sanitiza e gera UUID consistente
+    const sanitizedItem = sanitizePayload(entity, payload, authUser?.id);
+    const targetId = sanitizedItem.id;
 
-    // Atualização Otimista da UI
-    if (action === 'create') newData = [itemWithId, ...newData];
-    if (action === 'update')
-      newData = newData.map((item) =>
-        (item as any).id === payload.id ? payload : item,
+    // Atualização Otimista da UI e LocalStorage
+    if (action === 'create') {
+      newData = [
+        sanitizedItem,
+        ...newData.filter((item: any) => item.id !== targetId),
+      ];
+    } else if (action === 'update') {
+      newData = newData.map((item: any) =>
+        item.id === targetId ? { ...item, ...sanitizedItem } : item,
       );
-    if (action === 'delete')
-      newData = newData.filter((item) => (item as any).id !== payload.id);
+    } else if (action === 'delete') {
+      newData = newData.filter((item: any) => item.id !== targetId);
+    }
 
-    // Aplica na tela na hora!
+    // Aplica na tela e cache local imediatamente
     mutate(newData, false);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
+    }
 
+    // Sincroniza com o Supabase
     try {
-      let result;
+      let result: any = null;
+
       if (action === 'create') {
-        // Pega o ID do usuário logado para o owner_id
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        result = await supabase
-          .from(entity)
-          .insert([{ ...payload, owner_id: user?.id }]);
+        result = await supabase.from(entity).insert([sanitizedItem]).select();
       } else if (action === 'update') {
         result = await supabase
           .from(entity)
-          .update(payload)
-          .eq('id', payload.id);
+          .update(sanitizedItem)
+          .eq('id', targetId)
+          .select();
       } else if (action === 'delete') {
-        result = await supabase.from(entity).delete().eq('id', payload.id);
+        result = await supabase.from(entity).delete().eq('id', targetId);
       }
 
-      if (result?.error) throw result.error;
+      if (result?.error) {
+        console.error(
+          `[EASyncSupabase] ❌ Erro retornado pelo Supabase em '${entity}':`,
+          result.error,
+        );
+        toast.info('Salvo localmente no dispositivo');
+        return sanitizedItem;
+      }
 
-      toast.success('Sincronizado com a nuvem');
-      return true;
-    } catch (err) {
-      // Se falhar (ex: sem net), o SWR manterá o dado local.
-      // Futuramente podemos implementar a fila de retentativa aqui.
-      toast.error('Salvo localmente (offline)');
-      return true;
+      console.log(
+        `[EASyncSupabase] 🚀 Sucesso ao persistir no Supabase '${entity}':`,
+        result?.data || result,
+      );
+      toast.success(
+        action === 'delete'
+          ? 'Removido com sucesso'
+          : action === 'create'
+            ? 'Cadastrado e sincronizado com a nuvem'
+            : 'Atualizado com sucesso',
+      );
+
+      return sanitizedItem;
+    } catch (err: any) {
+      console.error(
+        `[EASyncSupabase] ❌ Exceção ao sincronizar com nuvem em '${entity}':`,
+        err,
+      );
+      toast.info('Salvo no dispositivo (modo offline)');
+      return sanitizedItem;
     } finally {
-      mutate(); // Revalida para garantir consistência
+      mutate(); // Revalidação para sincronização final
     }
   };
 
   return {
-    data: data || [],
-    loading: isValidating && data?.length === 0, // Só mostra loading se estiver vazio e buscando
-    isSyncing: isValidating, // Para mostrar um micro-ícone de "sincronizando" se quiser
+    data: Array.isArray(data) ? data : [],
+    loading: isValidating && (!data || data.length === 0),
+    isSyncing: isValidating,
     save,
     pull: () => mutate(),
   };

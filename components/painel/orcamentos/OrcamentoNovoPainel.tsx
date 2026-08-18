@@ -189,6 +189,70 @@ export default function OrcamentoNovoPainel() {
     calculatedTotal,
   ]);
 
+  // --- DETECÇÃO E PRÉ-SELEÇÃO DE CLIENTE (Via Params ou LocalStorage) ---
+  useEffect(() => {
+    // 1. Cliente passado explicitamente via rota (ex: ao criar orçamento a partir do perfil do cliente)
+    const paramClientId = router.params.clienteId || router.params.clientId;
+    if (paramClientId && clientsCache?.length > 0 && !budget.client.name) {
+      const found = clientsCache.find(
+        (c: any) => String(c.id) === String(paramClientId),
+      );
+      if (found) {
+        setBudget((prev: any) => ({
+          ...prev,
+          client: {
+            id: found.id || '',
+            name: found.name || found['Nome Completo'] || '',
+            zip: found.zip || found.cep || '',
+            street: found.street || found.rua || '',
+            number: found.number || found.num || '',
+            neighborhood: found.neighborhood || found.bairro || '',
+            city: found.city || found.cidade || '',
+            complement: found.complement || found.complemento || '',
+            document: found.document || found['CPF / CNPJ'] || '',
+            whatsapp: found.whatsapp || '',
+            email: found.email || '',
+            category: found.category || '',
+            photo_url: found.photo_url || found.photo || '',
+          },
+        }));
+      }
+    }
+
+    // 2. Cliente salvo em trânsito no LocalStorage (se veio de clientes.novo)
+    if (typeof window !== 'undefined' && !budget.client.name) {
+      try {
+        const stored = localStorage.getItem('ea_selected_client_for_budget');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.name) {
+            setBudget((prev: any) => ({
+              ...prev,
+              client: {
+                id: parsed.id || '',
+                name: parsed.name || parsed['Nome Completo'] || '',
+                zip: parsed.zip || parsed.cep || '',
+                street: parsed.street || parsed.rua || '',
+                number: parsed.number || parsed.num || '',
+                neighborhood: parsed.neighborhood || parsed.bairro || '',
+                city: parsed.city || parsed.cidade || '',
+                complement: parsed.complement || parsed.complemento || '',
+                document: parsed.document || parsed['CPF / CNPJ'] || '',
+                whatsapp: parsed.whatsapp || '',
+                email: parsed.email || '',
+                category: parsed.category || '',
+                photo_url: parsed.photo_url || parsed.photo || '',
+              },
+            }));
+            localStorage.removeItem('ea_selected_client_for_budget');
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao restaurar cliente em trânsito:', err);
+      }
+    }
+  }, [router.params, clientsCache, budget.client.name]);
+
   useEffect(() => {
     if (editId && allBudgets.length > 0) {
       const budgetToEdit = allBudgets.find(

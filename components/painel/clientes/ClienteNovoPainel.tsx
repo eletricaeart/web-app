@@ -151,9 +151,21 @@ export default function ClienteNovoPainel() {
     };
     delete (payload as any).photo;
 
-    await saveClient(payload, action);
+    const saved = await saveClient(payload, action);
 
-    router.replace('clientes');
+    const returnTo = router.params.returnTo || router.params.from;
+    if (returnTo === 'orcamentos.novo' || returnTo === 'orcamento') {
+      if (typeof window !== 'undefined' && saved) {
+        localStorage.setItem(
+          'ea_selected_client_for_budget',
+          JSON.stringify(saved),
+        );
+      }
+      router.replace('orcamentos.novo', { clienteId: saved?.id });
+    } else {
+      router.replace('clientes');
+    }
+
     setLoading(false);
   };
 
