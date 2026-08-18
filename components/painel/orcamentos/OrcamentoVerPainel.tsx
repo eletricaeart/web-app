@@ -87,13 +87,6 @@ interface BudgetData {
   document_title?: string;
   issue_date?: string;
   access_password?: string;
-  commitment?: {
-    enabled?: boolean;
-    title?: string;
-    text?: string;
-    highlightText?: string;
-  };
-  commitment_json?: any;
 }
 
 export default function OrcamentoVerPainel() {
@@ -229,13 +222,6 @@ export default function OrcamentoVerPainel() {
       investmentTotal,
       grandTotal,
       services: servicesRaw,
-      commitment:
-        data.commitment_json ||
-        data.commitment ||
-        data.financial_json?.commitment ||
-        data.financial?.commitment ||
-        (data as any)['Compromisso JSON'] ||
-        undefined,
       address: {
         street:
           ref.street ||
