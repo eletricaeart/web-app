@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 // 1. Trocamos para o hook do Supabase
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import { processTextToHtml } from '@/utils/TextPreProcessor';
+import { getCleanDate } from '@/utils/helpers';
 import View from '@/components/layout/View';
 import EACard from '@/components/ui/EACard';
 import Text from '@/components/ui/Text';
@@ -152,10 +153,11 @@ export default function PublicBudgetValidator() {
             <span>
               <b>Data de Emissão:</b>
               <View tag="issue-date">
-                {budget.issue_date ||
-                  budget.issueDate ||
-                  budget.docTitle?.emissao ||
-                  '---'}
+                {getCleanDate(
+                  budget.issue_date ||
+                    budget.issueDate ||
+                    budget.docTitle?.emissao,
+                ) || '---'}
               </View>
             </span>
             <span>
@@ -275,7 +277,7 @@ export default function PublicBudgetValidator() {
         <div className="mt-20 text-center border-t border-slate-200 pt-10 pb-20">
           <div className="text-xs text-slate-400 mb-2">
             Este documento é uma cópia digital do original emitido em{' '}
-            {budget.issue_date || budget.issueDate}.
+            {getCleanDate(budget.issue_date || budget.issueDate)}.
           </div>
           <div className="font-black text-indigo-900 uppercase tracking-tighter">
             Rafael - Elétrica & Art

@@ -5,9 +5,9 @@ ea-card,
   /* Definimos o card como um container de tamanho */
   container-type: inline-size; 
 
-  font-size: 14px !important;
+  font-size: 15px !important;
   display: grid !important;
-  grid-template-columns: 0.35fr 0.65fr;
+  grid-template-columns: 0.30fr 0.70fr;
   width: 100%;
   aspect-ratio: 3.8 / 1;
   padding: 1vw;
@@ -25,9 +25,9 @@ ea-card,
 .card {
   background: var(--sv-sombra-azul);
   color: #f5f5f5 !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
   display: grid;
-  grid-template-columns: 0.35fr 0.65fr;
+  grid-template-columns: 0.30fr 0.70fr;
   width: 100%;
   aspect-ratio: 3.8 / 1;
   padding: 1vw;
@@ -64,10 +64,10 @@ ea-card,
   color: #f5f5f5 !important;
 
   /* Tamanho isolado do EACard */
-  font-size: clamp(10px, 3.2cqw, 15px) !important;
+  font-size: clamp(11px, 3.5cqw, 16.5px) !important;
 
   /* Reduzimos o espaçamento entre linhas para caber mais texto */
-  line-height: 1.15 !important; 
+  line-height: 1.18 !important; 
 
   height: 100% !important;
   padding: 0.5vw !important;
@@ -75,11 +75,11 @@ ea-card,
 
   box-sizing: border-box !important;
 
-  aspect-ratio: 1.8 / 1;
+  aspect-ratio: 1.9 / 1;
 }
 
 .description span {
-  font-size: 0.9em !important;
+  font-size: 0.95em !important;
   font-weight: bold !important;
   color: #f5f5f5 !important;
   display: block !important;
@@ -87,25 +87,32 @@ ea-card,
 }
 
 .description p {
-  font-size: 0.88em !important;
+  font-size: 0.92em !important;
   margin: 0.2em 0 !important;
   color: #f5f5f5 !important;
   line-height: 1.2 !important;
 }
 
 .description div {
-  font-size: 0.88em !important;
+  font-size: 0.92em !important;
   color: #f5f5f5 !important;
   line-height: 1.25 !important;
 }
 
+.eaName {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
 .nameImg {
-  /* Logo do nome proporcional ao card */
-  width: 80cqw; 
-  max-width: 90%;
-  max-height: 40% !important;
-  object-fit: contain;
-  margin-bottom: 0.5cqw;
+  width: 100% !important;
+  max-width: 370px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  margin-bottom: 0.35rem !important;
+  display: block !important;
 }
 
 .description t5,
@@ -128,21 +135,37 @@ ea-card,
   .card {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
+    grid-template-columns: 0.30fr 0.70fr !important;
   }
   .description {
-    font-size: 12px !important;
-    line-height: 1.15 !important;
+    font-size: 13.5px !important;
+    line-height: 1.18 !important;
+    width: 100% !important;
+  }
+  .eaName {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+  .nameImg {
+    width: 100% !important;
+    max-width: 370px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    margin-bottom: 4px !important;
+    display: block !important;
   }
   .description span {
-    font-size: 11px !important;
+    font-size: 12.2px !important;
   }
   .description p {
-    font-size: 10.5px !important;
+    font-size: 11.5px !important;
   }
   .description div,
   .contactLink {
-    font-size: 10.5px !important;
+    font-size: 11.5px !important;
   }
 }
 `;

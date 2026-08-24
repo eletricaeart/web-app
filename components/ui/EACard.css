@@ -3,11 +3,9 @@ ea-card,
   /* Definimos o card como um container de tamanho */
   container-type: inline-size;
 
-  /* font-size: 2.5vw; */
   display: grid !important;
-  grid-template-columns: 0.35fr 0.65fr;
+  grid-template-columns: 0.3fr 0.7fr;
   width: 100%;
-  /* height: 36.3vw; */
   aspect-ratio: 3.8 / 1;
   padding: 1vw;
   padding: 2cqw; /* Padding proporcional à largura do card */
@@ -23,21 +21,19 @@ ea-card,
   background-size: cover;
   border-radius: 1rem;
 }
+
 .card {
   background: var(--sv-sombra-azul);
   color: #f5f5f5;
   font-size: 2.5vw;
   display: grid;
-  grid-template-columns: 0.35fr 0.65fr;
+  grid-template-columns: 0.3fr 0.7fr;
   width: 100%;
   aspect-ratio: 3.8 / 1;
   padding: 1vw;
   box-sizing: border-box;
   font-family: 'Poppins', sans-serif !important;
   border-radius: 1rem;
-  /* background-image: url("/public/pix/bgs/bg4.png"); */
-  /* background-image: url("/public/pix/bgs/bg3.png"); */
-  /* background-image: url("https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png"); */
   background-size: cover;
   background-blend-mode: overlay;
 }
@@ -48,7 +44,6 @@ ea-card,
   aspect-ratio: 1;
   align-items: center;
   justify-content: center;
-
   padding: 1cqw;
 }
 
@@ -65,34 +60,31 @@ ea-card,
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 2.25vw;
-  font-size: clamp(8px, 2.25vw, 16px) !important;
-  /* A MÁGICA: Fonte baseada na largura do card (cqw) */
-  /* 4cqw costuma ser o 'sweet spot' para esse layout 3.8/1 */
-  font-size: clamp(10px, 4cqw, 18px) !important;
-  font-size: clamp(8px, 2.5cqw, 34px) !important;
+  font-size: clamp(9px, 2.8cqw, 20px) !important;
+  height: 98%;
+  aspect-ratio: 1.9 / 1;
+}
 
-  height: 95%;
-  aspect-ratio: 1.8 / 1;
+.eaName {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .nameImg {
   width: 100%;
-  margin-bottom: 0.2em;
-}
-
-.nameImg {
-  /* Logo do nome também proporcional ao card */
-  width: 80cqw;
-  max-width: 90%;
-  margin-bottom: 0.5cqw;
+  max-width: 370px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 0.35rem;
+  display: block;
 }
 
 .description t5,
 .description t {
   display: block;
   line-height: 1.2;
-
   white-space: nowrap; /* Evita quebra feia se o container for pequeno */
 }
 
@@ -102,8 +94,31 @@ ea-card,
 }
 
 @media print {
+  ea-card,
+  .ea_card,
   .card {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 14px !important;
+    grid-template-columns: 0.3fr 0.7fr !important;
+  }
+  .description {
+    font-size: 13.5px !important;
+    line-height: 1.18 !important;
+    width: 100% !important;
+  }
+  .eaName {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+  .nameImg {
+    width: 100% !important;
+    max-width: 370px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    margin-bottom: 4px !important;
+    display: block !important;
   }
 }

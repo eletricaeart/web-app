@@ -32,6 +32,7 @@ import {
   Plus,
 } from '@phosphor-icons/react';
 import { Mask } from '@/utils/mask';
+import { getCleanDate } from '@/utils/helpers';
 import { getNameGradient } from '@/lib/avatarColor';
 import { toast } from 'sonner';
 
@@ -683,10 +684,11 @@ export default function ClientePerfilPainel() {
                               </p>
                               <p className="text-xs text-slate-400">
                                 Emitido em:{' '}
-                                {orc.issue_date ||
-                                  orc.issueDate ||
-                                  (orc as any).docTitle?.emissao ||
-                                  '—'}
+                                {getCleanDate(
+                                  orc.issue_date ||
+                                    orc.issueDate ||
+                                    (orc as any).docTitle?.emissao,
+                                ) || '—'}
                               </p>
                             </div>
                           </div>

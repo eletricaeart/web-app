@@ -7,6 +7,7 @@ import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import AppBar from '@/components/layout/AppBar';
 import EACard from '@/components/ui/EACard';
 import View from '@/components/layout/View';
+import { getCleanDate } from '@/utils/helpers';
 import FAB from '@/components/ui/FAB';
 import { ShareNetwork, Printer } from '@phosphor-icons/react';
 
@@ -34,11 +35,7 @@ export default function ReciboVerPainel() {
 
   // Tratamento de data (Supabase DATE vs Legacy String)
   const rawDate = receipt.issue_date || receipt.issueDate;
-  const formattedDate = rawDate
-    ? rawDate.includes('-')
-      ? rawDate.split('-').reverse().join('/')
-      : rawDate
-    : '---';
+  const formattedDate = getCleanDate(rawDate) || '---';
 
   return (
     <>

@@ -113,25 +113,26 @@ export default function BudgetShareMenu({
         ea-card,
         .ea_card,
         .card {
-          font-size: 14px !important;
-          line-height: 1.15 !important;
+          font-size: 15px !important;
+          line-height: 1.18 !important;
           color: #f5f5f5 !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
+          grid-template-columns: 0.30fr 0.70fr !important;
         }
 
         ea-card .description,
         .ea_card .description,
         .card .description {
-          font-size: 12.5px !important;
-          line-height: 1.15 !important;
+          font-size: 13.5px !important;
+          line-height: 1.18 !important;
           color: #f5f5f5 !important;
         }
 
         ea-card .description span,
         .ea_card .description span,
         .card .description span {
-          font-size: 11.5px !important;
+          font-size: 12.5px !important;
           font-weight: bold !important;
           line-height: 1.2 !important;
           color: #f5f5f5 !important;
@@ -141,7 +142,7 @@ export default function BudgetShareMenu({
         ea-card .description p,
         .ea_card .description p,
         .card .description p {
-          font-size: 11px !important;
+          font-size: 12px !important;
           line-height: 1.2 !important;
           margin: 2.5px 0 !important;
           color: #f5f5f5 !important;
@@ -156,9 +157,31 @@ export default function BudgetShareMenu({
         ea-card .contactLink,
         .ea_card .contactLink,
         .card .contactLink {
-          font-size: 11px !important;
+          font-size: 12px !important;
           line-height: 1.25 !important;
           color: #f5f5f5 !important;
+        }
+
+        ea-card .eaName,
+        .ea_card .eaName,
+        .card .eaName,
+        .eaName {
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          width: 100% !important;
+        }
+
+        ea-card .nameImg,
+        .ea_card .nameImg,
+        .card .nameImg,
+        .nameImg {
+          width: 100% !important;
+          max-width: 370px !important;
+          height: auto !important;
+          object-fit: contain !important;
+          margin-bottom: 4px !important;
+          display: block !important;
         }
 
         budget-page {
