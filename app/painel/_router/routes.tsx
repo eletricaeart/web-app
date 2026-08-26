@@ -32,6 +32,7 @@ import ConfiguracoesPainel from '@/components/painel/configuracoes/Configuracoes
 import NotaVerPainel from '@/components/painel/notas/NotaVerPainel';
 import ServicosPainel from '@/components/painel/servicos/ServicosPainel';
 import ServicoEditorPainel from '@/components/painel/servicos/ServicoEditorPainel';
+import EletricaProfileSpotsPainel from '@/components/painel/ferramentas/eletrica/EletricaProfileSpotsPainel';
 
 const routes: Record<string, React.ComponentType> = {
   home: HomePainel,
@@ -52,6 +53,7 @@ const routes: Record<string, React.ComponentType> = {
   documentos: DocumentosPainel,
   ferramentas: FerramentasPainel,
   'ferramentas.eletrica': EletricaPainel,
+  'ferramentas.eletrica.profile-spots': EletricaProfileSpotsPainel,
   'ferramentas.pintura': PinturaPainel,
   // Drywall
   'ferramentas.drywall': DrywallToolsPage, // Página central
