@@ -57,7 +57,7 @@ export interface BudgetOption {
 }
 
 export interface BudgetFinancialsV2 {
-  schemaVersion: 2;
+  schemaVersion: 2 | 3;
   hasOptions?: boolean;
   activeOptionId?: string; // ID da aba que está sendo editada no momento ('opcao_a' | 'opcao_b')
   selectedOptionId?: string; // ID da opção escolhida pelo cliente (se houver)

@@ -94,7 +94,7 @@ export default function OrcamentoNovoPainel() {
     financial: { labor: 0, materials: 0, discount: 0, total: 0 },
     financial_v3: null,
     financialV2: {
-      schemaVersion: 3,
+      schemaVersion: 2,
       categories: [],
       totalLabor: 0,
       totalMaterials: 0,
