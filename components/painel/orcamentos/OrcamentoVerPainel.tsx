@@ -205,6 +205,7 @@ export default function OrcamentoVerPainel() {
         data.issueDate ||
         data.docTitle?.emissao ||
         (data as any)['Emissão'] ||
+        data.created_at ||
         '',
       expiration:
         data.expiration ||

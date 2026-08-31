@@ -8,10 +8,16 @@ import ClientForm from '@/components/forms/ClientForm';
 import ClauseManager from '@/components/forms/ClauseManager';
 import InvestmentDrawer, { PEEK_HEIGHT } from './InvestmentDrawer';
 import View from '@/components/layout/View';
-import { CircleNotch, Calculator, CalendarBlank } from '@phosphor-icons/react';
+import {
+  CircleNotch,
+  Calculator,
+  CalendarBlank,
+  Sparkle,
+} from '@phosphor-icons/react';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import * as Default_Divider from '@/components/Divider';
 import FinancialInvestmentV2Editor from './FinancialInvestmentV2Editor';
+import AiBudgetImportModal from './AiBudgetImportModal';
 import {
   InvestmentCategory,
   BudgetFinancialsV2,
@@ -54,6 +60,7 @@ export default function OrcamentoNovoPainel() {
   const { data: clientsCache } = useEASyncSupabase<any>('clientes');
 
   const [loading, setLoading] = useState<boolean>(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
 
   const [budget, setBudget] = useState<any>({
     id: null,
@@ -190,6 +197,15 @@ export default function OrcamentoNovoPainel() {
   ]);
 
   // --- DETECÇÃO E PRÉ-SELEÇÃO DE CLIENTE (Via Params ou LocalStorage) ---
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (sessionStorage.getItem('ea_open_ai_import') === 'true') {
+        sessionStorage.removeItem('ea_open_ai_import');
+        setIsAiModalOpen(true);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     // 1. Cliente passado explicitamente via rota (ex: ao criar orçamento a partir do perfil do cliente)
     const paramClientId = router.params.clienteId || router.params.clientId;
@@ -416,6 +432,24 @@ export default function OrcamentoNovoPainel() {
     }
   };
 
+  const handleApplyAiBudget = (extracted: any) => {
+    setBudget((prev: any) => ({
+      ...prev,
+      documentTitle: extracted.documentTitle || prev.documentTitle,
+      subtitle: extracted.subtitle || prev.subtitle,
+      issueDate: extracted.issueDate || prev.issueDate,
+      expiration: extracted.expiration || prev.expiration,
+      client: {
+        ...prev.client,
+        ...extracted.client,
+      },
+      services:
+        extracted.services?.length > 0 ? extracted.services : prev.services,
+      financialV2: extracted.financialV2 || prev.financialV2,
+      financial: extracted.financial || prev.financial,
+    }));
+  };
+
   const getSelectedDate = () => {
     const date = parseISO(budget.issueDate);
     return isValid(date) ? date : new Date();
@@ -430,7 +464,26 @@ export default function OrcamentoNovoPainel() {
 
       <View tag="page">
         <View tag="page-content">
-          <h3 className="page-subtitle">Dados do orçamento</h3>
+          {/* Cabeçalho com botão de Importar com IA */}
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <h3 className="page-subtitle mb-0">Dados do orçamento</h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAiModalOpen(true)}
+              className="h-9 px-3.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-900 border border-indigo-200/80 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs shrink-0"
+              title="Importar Proposta com IA (Gemini)"
+            >
+              <Sparkle
+                size={16}
+                weight="fill"
+                className="text-amber-500 shrink-0"
+              />
+              <span>Importar com IA</span>
+            </Button>
+          </div>
+
           <View className="formGroup">
             <label className="label">
               <View tag="t">Título</View>
@@ -457,7 +510,7 @@ export default function OrcamentoNovoPainel() {
                       className="w-full h-[45px] justify-start border-[#ccc]"
                     >
                       <CalendarBlank size={18} className="mr-2" />
-                      {format(getSelectedDate(), 'dd/MM/yyyy')}
+                      {format(getSelectedDate(), 'dd-MM-yyyy')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -604,6 +657,13 @@ export default function OrcamentoNovoPainel() {
           setBudget({ ...budget, financialV2: updatedV2 })
         }
         legacyClauseTotal={legacyClauseTotal}
+      />
+
+      <AiBudgetImportModal
+        isOpen={isAiModalOpen}
+        onOpenChange={setIsAiModalOpen}
+        onApplyExtractedBudget={handleApplyAiBudget}
+        clientsCache={clientsCache}
       />
     </>
   );

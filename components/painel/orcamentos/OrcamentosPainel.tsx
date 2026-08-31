@@ -18,7 +18,9 @@ import {
   DotsThreeOutlineVertical,
   PencilSimple,
   ShareNetwork,
+  Sparkle,
 } from '@phosphor-icons/react';
+import { Button } from '@/components/ui/button';
 import View from '@/components/layout/View';
 import { CID } from '@/utils/helpers';
 
@@ -147,6 +149,14 @@ export default function OrcamentosPainel() {
 
   const fabConfig = [
     {
+      icon: <Sparkle size={28} weight="fill" className="text-amber-400" />,
+      label: 'Importar com IA',
+      action: () => {
+        sessionStorage.setItem('ea_open_ai_import', 'true');
+        router.push('orcamentos.novo');
+      },
+    },
+    {
       icon: <FilePlus size={28} weight="duotone" />,
       label: 'Novo Orçamento',
       action: () => router.push('orcamentos.novo'),
@@ -191,6 +201,19 @@ export default function OrcamentosPainel() {
                 {orcamentos.length}{' '}
                 {orcamentos.length === 1 ? 'proposta' : 'propostas'}
               </span>
+            }
+            actions={
+              <Button
+                type="button"
+                onClick={() => {
+                  sessionStorage.setItem('ea_open_ai_import', 'true');
+                  router.push('orcamentos.novo');
+                }}
+                className="h-10 px-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-md shadow-indigo-200 text-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+              >
+                <Sparkle size={16} weight="fill" className="text-amber-300" />
+                <span>Importar com IA</span>
+              </Button>
             }
           />
         </div>

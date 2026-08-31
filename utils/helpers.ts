@@ -1,12 +1,65 @@
 /**
- * --- [ return clen date only ]
- *  */
-export function getCleanDate(date: string | null | undefined): string {
+ * --- [ Retorna a data limpa no formato dia-mês-ano (DD-MM-YYYY, ex: 31-08-2026) ]
+ */
+export function getCleanDate(
+  date: string | number | Date | null | undefined,
+): string {
   if (!date) return '';
 
-  return date.includes('T')
-    ? date.split('T')[0].split('-').reverse().join('/')
-    : date;
+  if (date instanceof Date) {
+    if (isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  if (typeof date === 'number') {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  let str = String(date).trim();
+  if (!str) return '';
+
+  // Se contiver ISO timestamp com 'T'
+  if (str.includes('T')) {
+    str = str.split('T')[0].trim();
+  }
+
+  // Se contiver horário com espaço "YYYY-MM-DD HH:mm:ss"
+  if (str.includes(' ')) {
+    str = str.split(' ')[0].trim();
+  }
+
+  // Padrão DD/MM/YYYY ou D/M/YYYY ou DD-MM-YYYY ou D-M-YYYY
+  const brMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (brMatch) {
+    const [, d, m, y] = brMatch;
+    return `${d.padStart(2, '0')}-${m.padStart(2, '0')}-${y}`;
+  }
+
+  // Padrão YYYY-MM-DD ou YYYY/MM/DD ou YYYY-M-D
+  const isoMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    return `${d.padStart(2, '0')}-${m.padStart(2, '0')}-${y}`;
+  }
+
+  // Fallback para conversão padrão do JS
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const day = String(parsed.getUTCDate()).padStart(2, '0');
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+    const year = parsed.getUTCFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  return str;
 }
 
 /**
