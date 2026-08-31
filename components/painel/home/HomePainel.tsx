@@ -107,7 +107,8 @@ export default function HomePainel() {
 
       orcamentos.forEach((orc: any) => {
         const normalized = getNormalizedBudgetFinancial(orc);
-        const grandTotal = normalized.total || normalized.grandTotal || 0;
+        const grandTotal =
+          normalized?.total ?? (normalized as any)?.grandTotal ?? 0;
         total += grandTotal;
 
         const dateStr = orc.issue_date || orc.issueDate || orc.created_at;
