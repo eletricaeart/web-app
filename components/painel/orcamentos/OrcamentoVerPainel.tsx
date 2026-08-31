@@ -87,6 +87,8 @@ interface BudgetData {
   document_title?: string;
   issue_date?: string;
   access_password?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function OrcamentoVerPainel() {

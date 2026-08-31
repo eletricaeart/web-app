@@ -8,7 +8,7 @@ export interface ServiceItem {
 }
 
 export interface DetailContent {
-  tipo: "brk" | "tagc" | "t6" | "ul" | "html" | string;
+  tipo: 'brk' | 'tagc' | 't6' | 'ul' | 'html' | string;
   conteudo: any;
 }
 
