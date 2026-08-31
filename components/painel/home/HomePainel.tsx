@@ -29,6 +29,7 @@ import {
 import Page from '@/components/layout/Page';
 import Section from '@/components/layout/Section';
 import { formatCurrency, getInvestmentTotal } from '@/lib/types/investment';
+import { getNormalizedBudgetFinancial } from '@/types/budget';
 
 export default function HomePainel() {
   const router = usePainelRouter();
@@ -86,21 +87,60 @@ export default function HomePainel() {
     );
   }, []);
 
-  const totalAReceber = useMemo(() => {
-    if (!orcamentos || !Array.isArray(orcamentos)) return 0;
-    return orcamentos.reduce((acc: number, orc: any) => {
-      if (orc.financialV2?.schemaVersion === 2 && orc.financialV2?.grandTotal) {
-        return acc + (Number(orc.financialV2.grandTotal) || 0);
+  const { totalAReceber, orcamentosEsteMes, breakdownCategorias } =
+    useMemo(() => {
+      if (!orcamentos || !Array.isArray(orcamentos)) {
+        return {
+          totalAReceber: 0,
+          orcamentosEsteMes: 0,
+          breakdownCategorias: [],
+        };
       }
-      if (orc.financial?.total) {
-        return acc + (Number(orc.financial.total) || 0);
-      }
-      if (orc.investmentCategories && Array.isArray(orc.investmentCategories)) {
-        return acc + getInvestmentTotal(orc.investmentCategories);
-      }
-      return acc;
-    }, 0);
-  }, [orcamentos]);
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      let total = 0;
+      let totalMes = 0;
+      const catMap: Record<string, number> = {};
+
+      orcamentos.forEach((orc: any) => {
+        const normalized = getNormalizedBudgetFinancial(orc);
+        const grandTotal = normalized.grandTotal || 0;
+        total += grandTotal;
+
+        const dateStr = orc.issue_date || orc.issueDate || orc.created_at;
+        if (dateStr) {
+          const d = new Date(dateStr);
+          if (
+            !isNaN(d.getTime()) &&
+            d.getMonth() === currentMonth &&
+            d.getFullYear() === currentYear
+          ) {
+            totalMes += grandTotal;
+          }
+        } else {
+          totalMes += grandTotal;
+        }
+
+        // Agregação de categorias para BI de gestão
+        normalized.categories.forEach((cat) => {
+          const label = cat.name || 'Geral';
+          catMap[label] = (catMap[label] || 0) + (cat.value || 0);
+        });
+      });
+
+      const breakdownCategorias = Object.entries(catMap)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+      return {
+        totalAReceber: total,
+        orcamentosEsteMes: totalMes,
+        breakdownCategorias,
+      };
+    }, [orcamentos]);
 
   const totalRecebidoMes = useMemo(() => {
     if (!recibos || !Array.isArray(recibos)) return 0;
@@ -214,6 +254,33 @@ export default function HomePainel() {
                 iconColorClass="text-emerald-600"
               />
             </div>
+
+            {breakdownCategorias.length > 0 && (
+              <div className="mt-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span>Distribuição por Especialidade</span>
+                  <span>Volume Previsto</span>
+                </div>
+                <div className="space-y-1.5">
+                  {breakdownCategorias.slice(0, 4).map((cat, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-50 border border-slate-100"
+                    >
+                      <span className="font-semibold text-slate-700">
+                        {cat.name}
+                      </span>
+                      <span className="font-bold text-indigo-700">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(cat.value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </Section>
 
           {/* Seção 1: Gestão Geral com Título à esquerda e Ação à direita */}

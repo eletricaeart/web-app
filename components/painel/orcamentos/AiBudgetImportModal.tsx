@@ -26,7 +26,11 @@ import {
   Info,
 } from '@phosphor-icons/react';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/types/investment';
+import {
+  formatCurrency,
+  buildInvestmentClause,
+  buildSummaryClause,
+} from '@/lib/types/investment';
 
 interface AiBudgetImportModalProps {
   isOpen: boolean;
@@ -123,16 +127,28 @@ export default function AiBudgetImportModal({
     }, 1200);
 
     try {
-      const response = await fetch('/api/gemini/extract-budget', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textInput }),
-      });
+      let response;
+      let result;
 
-      const result = await response.json();
+      try {
+        response = await fetch('/api/gemini/extract-budget', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: textInput }),
+        });
+        result = await response.json();
+      } catch {
+        // Fallback para rota Next.js
+        response = await fetch('/api/ai/parse-budget', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: textInput }),
+        });
+        result = await response.json();
+      }
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Erro ao processar proposta com IA.');
+        throw new Error(result?.error || 'Erro ao processar proposta com IA.');
       }
 
       setExtractedData(result.data);
@@ -208,32 +224,52 @@ export default function AiBudgetImportModal({
       photo_url: matchedClient?.photo_url || matchedClient?.photo || '',
     };
 
-    // Formatar cláusulas
-    const formattedServices = (extractedData.services || []).map(
-      (srv: any, srvIdx: number) => {
-        const clauseId = Date.now() + srvIdx * 100;
-        const items = (srv.items || []).map((it: any, itIdx: number) => ({
-          id: clauseId + itIdx + 1,
-          subtitulo: it.subtitulo || '',
-          content: it.content || '',
-          numbered: it.numbered !== false,
-        }));
+    // Formatar cláusulas (ignorando apenas "Considerações Finais", que é template padrão de rodapé)
+    const rawServices = (extractedData.services || []).filter((srv: any) => {
+      const title = (srv.titulo || '').toLowerCase().trim();
+      return (
+        !title.includes('considerações finais') &&
+        !title.includes('consideracoes finais')
+      );
+    });
 
-        return {
-          id: clauseId,
-          titulo: srv.titulo || `Cláusula ${srvIdx + 1}`,
-          items:
-            items.length > 0
-              ? items
-              : [{ id: clauseId + 1, subtitulo: '', content: '' }],
-        };
-      },
-    );
+    const formattedServices = rawServices.map((srv: any, srvIdx: number) => {
+      const clauseId = Date.now() + srvIdx * 100;
+      const items = (srv.items || []).map((it: any, itIdx: number) => ({
+        id: clauseId + itIdx + 1,
+        subtitulo: it.subtitulo || '',
+        content: it.content || '',
+        numbered: it.numbered !== false,
+      }));
 
-    // Formatar financeiro V2
+      return {
+        id: clauseId,
+        titulo: srv.titulo || `Cláusula ${srvIdx + 1}`,
+        items:
+          items.length > 0
+            ? items
+            : [{ id: clauseId + 1, subtitulo: '', content: '' }],
+      };
+    });
+
+    // Formatar financeiro V3 e V2
+    const finV3 = extractedData.financialV3 || {};
     const finV2 = extractedData.financialV2 || {};
-    const categories = (finV2.categories || []).map(
-      (cat: any, cIdx: number) => {
+
+    // Obter lista consolidada de serviços/categorias
+    let categories: any[] = [];
+    if (finV3.servicesBreakdown && finV3.servicesBreakdown.length > 0) {
+      categories = finV3.servicesBreakdown.map((s: any, idx: number) => ({
+        id: `cat_ai_v3_${Date.now()}_${idx}`,
+        category: s.type || 'outros',
+        categoryLabel: s.name || 'Serviço',
+        laborValue: Number(s.value) || 0,
+        materialsValue: 0,
+        totalValue: Number(s.value) || 0,
+        description: s.description || (s.area_m2 ? `Área: ${s.area_m2}m²` : ''),
+      }));
+    } else if (finV2.categories && finV2.categories.length > 0) {
+      categories = finV2.categories.map((cat: any, cIdx: number) => {
         const labor = Number(cat.laborValue) || 0;
         const materials = Number(cat.materialsValue) || 0;
         const total = Number(cat.totalValue) || labor + materials;
@@ -246,18 +282,47 @@ export default function AiBudgetImportModal({
           totalValue: total,
           description: cat.description || '',
         };
-      },
-    );
+      });
+    }
 
     const totalLabor =
+      finV3.totalLabor ||
       finV2.totalLabor ||
       categories.reduce((acc: number, c: any) => acc + c.laborValue, 0);
     const totalMaterials =
+      finV3.totalMaterials ||
       finV2.totalMaterials ||
       categories.reduce((acc: number, c: any) => acc + c.materialsValue, 0);
-    const grandTotal = finV2.grandTotal || totalLabor + totalMaterials;
+    const grandTotal =
+      finV3.grandTotal || finV2.grandTotal || totalLabor + totalMaterials;
+    const paymentCond =
+      finV3.paymentConditions || finV2.paymentConditions || '';
+    const deadlineVal = finV3.deadline || finV2.deadline || '';
+    const warrantyVal = finV3.warranty || finV2.warranty || '';
+
+    const constructedFinancialV2 = {
+      schemaVersion: 2,
+      categories,
+      totalLabor,
+      totalMaterials,
+      grandTotal,
+      paymentConditions: paymentCond,
+      deadline: deadlineVal,
+      warranty: warrantyVal,
+      generalNotes: [
+        paymentCond ? `Condições de Pagamento: ${paymentCond}` : null,
+        deadlineVal ? `Prazo de Execução: ${deadlineVal}` : null,
+        warrantyVal ? `Garantia: ${warrantyVal}` : null,
+      ]
+        .filter(Boolean)
+        .join(' | '),
+    };
+
+    // Usar fielmente as cláusulas extraídas do documento
+    const finalServices = [...formattedServices];
 
     const payload = {
+      schema_version: 'v3',
       documentTitle: extractedData.documentTitle || 'PROPOSTA DE SERVIÇOS',
       subtitle: extractedData.subtitle || 'PROPOSTA DE ORÇAMENTO',
       issueDate:
@@ -265,8 +330,8 @@ export default function AiBudgetImportModal({
       expiration: extractedData.expiration || '15 dias',
       client: mergedClient,
       services:
-        formattedServices.length > 0
-          ? formattedServices
+        finalServices.length > 0
+          ? finalServices
           : [
               {
                 id: Date.now(),
@@ -274,25 +339,26 @@ export default function AiBudgetImportModal({
                 items: [{ id: Date.now() + 1, subtitulo: '', content: '' }],
               },
             ],
-      financialV2: {
-        schemaVersion: 2,
-        categories,
-        totalLabor,
-        totalMaterials,
-        grandTotal,
-        paymentConditions: finV2.paymentConditions || '',
-        deadline: finV2.deadline || '',
-        warranty: finV2.warranty || '',
-        generalNotes: [
-          finV2.paymentConditions
-            ? `Condições de Pagamento: ${finV2.paymentConditions}`
-            : null,
-          finV2.deadline ? `Prazo de Execução: ${finV2.deadline}` : null,
-          finV2.warranty ? `Garantia: ${finV2.warranty}` : null,
-        ]
-          .filter(Boolean)
-          .join(' | '),
+      financial_v3: {
+        total: grandTotal,
+        servicesBreakdown: (finV3.servicesBreakdown || []).map((s: any) => ({
+          name: s.name,
+          value: Number(s.value) || 0,
+          type: s.type || 'misto',
+          description: s.description || '',
+          area_m2: s.area_m2 ? Number(s.area_m2) : undefined,
+          deadline_days: s.deadline_days ? Number(s.deadline_days) : undefined,
+        })),
+        categories: categories.map((c) => ({
+          name: c.categoryLabel,
+          value: c.totalValue,
+        })),
+        paymentConditions: paymentCond,
+        deadline: deadlineVal,
+        warranty: warrantyVal,
+        paymentSchedule: finV3.paymentSchedule || [],
       },
+      financialV2: constructedFinancialV2,
       financial: {
         labor: totalLabor,
         materials: totalMaterials,

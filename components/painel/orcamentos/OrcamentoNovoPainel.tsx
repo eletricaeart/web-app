@@ -64,6 +64,7 @@ export default function OrcamentoNovoPainel() {
 
   const [budget, setBudget] = useState<any>({
     id: null,
+    schema_version: 'v3',
     documentTitle: '',
     issueDate: new Date().toISOString().split('T')[0],
     expiration: '15 dias',
@@ -91,8 +92,9 @@ export default function OrcamentoNovoPainel() {
     ],
     investmentCategories: [] as InvestmentCategory[],
     financial: { labor: 0, materials: 0, discount: 0, total: 0 },
+    financial_v3: null,
     financialV2: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       categories: [],
       totalLabor: 0,
       totalMaterials: 0,
@@ -391,14 +393,29 @@ export default function OrcamentoNovoPainel() {
 
       services_json: budget.services,
       investment_categories: budget.investmentCategories,
+      schema_version: 'v3',
+      financial_v3: budget.financial_v3 || {
+        total: calculatedTotal,
+        categories:
+          budget.financialV2?.categories?.map((c: any) => ({
+            name: c.categoryLabel || c.name,
+            value: c.totalValue,
+          })) || [],
+        paymentConditions: budget.financialV2?.paymentConditions || '',
+        deadline: budget.financialV2?.deadline || '',
+        warranty: budget.financialV2?.warranty || '',
+      },
       financial_json:
         budget.financialV2?.categories?.length > 0
           ? {
-              schemaVersion: 2,
+              schemaVersion: 3,
               categories: budget.financialV2.categories,
               totalLabor: budget.financialV2.totalLabor || 0,
               totalMaterials: budget.financialV2.totalMaterials || 0,
               grandTotal: calculatedTotal,
+              paymentConditions: budget.financialV2.paymentConditions || '',
+              deadline: budget.financialV2.deadline || '',
+              warranty: budget.financialV2.warranty || '',
             }
           : {
               labor: Number(budget.financial.labor) || 0,
@@ -435,6 +452,7 @@ export default function OrcamentoNovoPainel() {
   const handleApplyAiBudget = (extracted: any) => {
     setBudget((prev: any) => ({
       ...prev,
+      schema_version: 'v3',
       documentTitle: extracted.documentTitle || prev.documentTitle,
       subtitle: extracted.subtitle || prev.subtitle,
       issueDate: extracted.issueDate || prev.issueDate,
@@ -445,6 +463,7 @@ export default function OrcamentoNovoPainel() {
       },
       services:
         extracted.services?.length > 0 ? extracted.services : prev.services,
+      financial_v3: extracted.financial_v3 || prev.financial_v3,
       financialV2: extracted.financialV2 || prev.financialV2,
       financial: extracted.financial || prev.financial,
     }));
