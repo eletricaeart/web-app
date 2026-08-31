@@ -107,7 +107,7 @@ export default function HomePainel() {
 
       orcamentos.forEach((orc: any) => {
         const normalized = getNormalizedBudgetFinancial(orc);
-        const grandTotal = normalized.grandTotal || 0;
+        const grandTotal = normalized.total || normalized.grandTotal || 0;
         total += grandTotal;
 
         const dateStr = orc.issue_date || orc.issueDate || orc.created_at;
@@ -125,7 +125,7 @@ export default function HomePainel() {
         }
 
         // Agregação de categorias para BI de gestão
-        normalized.categories.forEach((cat) => {
+        (normalized.categories || []).forEach((cat) => {
           const label = cat.name || 'Geral';
           catMap[label] = (catMap[label] || 0) + (cat.value || 0);
         });
