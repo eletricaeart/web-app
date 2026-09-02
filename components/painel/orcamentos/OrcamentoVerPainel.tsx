@@ -463,7 +463,9 @@ export default function OrcamentoVerPainel() {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() =>
-                      router.push('orcamentos.previa-pdf', { id: data.id })
+                      router.push('orcamentos.previa-pdf', {
+                        id: String(data.id),
+                      })
                     }
                     className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center gap-1 transition-colors border border-emerald-200/70 shadow-xs"
                     title="Visualizar exatamente como sairá no PDF final (A4)"
@@ -474,7 +476,9 @@ export default function OrcamentoVerPainel() {
                   </button>
                   <button
                     onClick={() =>
-                      router.push('orcamentos.ver-teste', { id: data.id })
+                      router.push('orcamentos.ver-teste', {
+                        id: String(data.id),
+                      })
                     }
                     className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 flex items-center gap-1 transition-colors border border-indigo-200/70 shadow-xs"
                     title="Abrir no Novo Modelo Unificado (Teste)"
