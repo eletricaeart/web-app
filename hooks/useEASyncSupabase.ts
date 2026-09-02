@@ -409,41 +409,29 @@ export function useEASyncSupabase<T>(entity: string) {
       if (action === 'delete') {
         result = await supabase.from(entity).delete().eq('id', targetId);
       } else {
-        // Tentativa 1: Envia com os dados sanitizados
+        // Envia diretamente o payload compatível com as colunas reais da tabela no Supabase,
+        // evitando erros 400 (PGRST204: Could not find column in schema cache) no console
+        const canonicalPayload = filterToCanonicalColumns(entity, fullSanitizedItem);
+
         if (action === 'create') {
-          result = await supabase.from(entity).insert([fullSanitizedItem]).select();
+          // Tentativa 1 com select
+          result = await supabase.from(entity).insert([canonicalPayload]).select();
+          // Se o insert funcionou mas o .select() foi bloqueado por RLS (comum em tabelas restritas)
+          if (result?.error && (result.error.code === '42501' || result.error.message?.includes('policy'))) {
+            console.warn(`[EASyncSupabase] RLS bloqueou o select de retorno. Tentando insert direto sem select...`);
+            result = await supabase.from(entity).insert([canonicalPayload]);
+          }
         } else if (action === 'update') {
           result = await supabase
             .from(entity)
-            .update(fullSanitizedItem)
+            .update(canonicalPayload)
             .eq('id', targetId)
             .select();
-        }
-
-        // Se o Supabase reclamar que alguma coluna não existe no schema da tabela
-        // (ex: column does not exist ou PGRST204)
-        if (
-          result?.error &&
-          (result.error.code === 'PGRST204' ||
-            result.error.code === '42703' ||
-            result.error.message?.includes('column') ||
-            result.error.message?.includes('schema cache'))
-        ) {
-          console.warn(
-            `[EASyncSupabase] ⚠️ Coluna não encontrada na tabela '${entity}'. Fazendo fallback seguro com colunas canônicas...`,
-            result.error.message,
-          );
-
-          const canonicalPayload = filterToCanonicalColumns(entity, fullSanitizedItem);
-
-          if (action === 'create') {
-            result = await supabase.from(entity).insert([canonicalPayload]).select();
-          } else {
+          if (result?.error && (result.error.code === '42501' || result.error.message?.includes('policy'))) {
             result = await supabase
               .from(entity)
               .update(canonicalPayload)
-              .eq('id', targetId)
-              .select();
+              .eq('id', targetId);
           }
         }
       }

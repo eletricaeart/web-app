@@ -129,23 +129,13 @@ export default function OrcamentosPainel() {
     orc['Título Doc'] ||
     'Sem título';
 
-  // LOGICA CORRIGIDA: Helper para normalizar a data
+  // Helper para normalizar a data
   const getIssueDate = (orc: Orcamento) =>
     orc.issue_date ||
     orc.issueDate ||
     orc.docTitle?.emissao ||
     (orc as any)['Emissão'] ||
     new Date().toISOString();
-
-  const filteredOrcamentos = orcamentos
-    .filter((orc) => {
-      const name = getClientName(orc).toLowerCase();
-      const title = getDocTitle(orc).toLowerCase();
-      const term = searchTerm.toLowerCase();
-
-      return name.includes(term) || title.includes(term);
-    })
-    .reverse();
 
   const fabConfig = [
     {
