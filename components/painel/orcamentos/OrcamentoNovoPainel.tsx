@@ -212,9 +212,7 @@ export default function OrcamentoNovoPainel() {
     // 1. Cliente passado explicitamente via rota (ex: ao criar orçamento a partir do perfil do cliente)
     const paramClientId = router.params.clienteId || router.params.clientId;
     if (paramClientId && clientsCache?.length > 0 && !budget.client.name) {
-      const found = clientsCache.find(
-        (c: any) => String(c.id) === String(paramClientId),
-      );
+      const found = clientsCache.find((c: any) => String(c.id) === String(paramClientId));
       if (found) {
         setBudget((prev: any) => ({
           ...prev,
@@ -396,17 +394,13 @@ export default function OrcamentoNovoPainel() {
       schema_version: 'v3',
       financial_v3: budget.financial_v3 || {
         total: calculatedTotal,
-        categories:
-          budget.financialV2?.categories?.map((c: any) => ({
-            name: c.categoryLabel || c.name,
-            value: c.totalValue,
-          })) || [],
+        categories: budget.financialV2?.categories?.map((c: any) => ({ name: c.categoryLabel || c.name, value: c.totalValue })) || [],
         paymentConditions: budget.financialV2?.paymentConditions || '',
         deadline: budget.financialV2?.deadline || '',
         warranty: budget.financialV2?.warranty || '',
       },
-      financial_json:
-        budget.financialV2?.categories?.length > 0
+      financial_json: {
+        ...(budget.financialV2?.categories?.length > 0
           ? {
               schemaVersion: 3,
               categories: budget.financialV2.categories,
@@ -422,7 +416,19 @@ export default function OrcamentoNovoPainel() {
               materials: Number(budget.financial.materials) || 0,
               discount: Number(budget.financial.discount) || 0,
               total: Number(calculatedTotal) || 0,
-            },
+              grandTotal: Number(calculatedTotal) || 0,
+            }),
+        address: {
+          zip: budget.client.zip || null,
+          street: budget.client.street || null,
+          number: budget.client.number || null,
+          neighborhood: budget.client.neighborhood || null,
+          city: budget.client.city || null,
+          complement: budget.client.complement || null,
+        },
+        investmentCategories: budget.investmentCategories || [],
+        financial_v3: budget.financial_v3 || null,
+      },
       access_password: accessPassword,
     };
 
@@ -461,8 +467,7 @@ export default function OrcamentoNovoPainel() {
         ...prev.client,
         ...extracted.client,
       },
-      services:
-        extracted.services?.length > 0 ? extracted.services : prev.services,
+      services: extracted.services?.length > 0 ? extracted.services : prev.services,
       financial_v3: extracted.financial_v3 || prev.financial_v3,
       financialV2: extracted.financialV2 || prev.financialV2,
       financial: extracted.financial || prev.financial,
@@ -494,11 +499,7 @@ export default function OrcamentoNovoPainel() {
               className="h-9 px-3.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-900 border border-indigo-200/80 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs shrink-0"
               title="Importar Proposta com IA (Gemini)"
             >
-              <Sparkle
-                size={16}
-                weight="fill"
-                className="text-amber-500 shrink-0"
-              />
+              <Sparkle size={16} weight="fill" className="text-amber-500 shrink-0" />
               <span>Importar com IA</span>
             </Button>
           </div>

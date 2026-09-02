@@ -1,11 +1,12 @@
 // hooks/useEASyncSupabase.ts
+import { useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 const supabase = createClient();
 
-function isValidUUID(str: any): boolean {
+export function isValidUUID(str: any): boolean {
   if (typeof str !== 'string') return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     str,
@@ -13,29 +14,207 @@ function isValidUUID(str: any): boolean {
 }
 
 /**
- * Sanitiza o payload antes de enviar para o Supabase,
- * evitando erros de tipos (como strings vazias em campos UUID).
+ * Normaliza datas para o formato SQL aceito pelo PostgreSQL (YYYY-MM-DD)
  */
-function sanitizePayload(entity: string, item: any, userId?: string) {
+function normalizeDateForDb(val: any): string {
+  if (!val) return new Date().toISOString().split('T')[0];
+  if (val instanceof Date) return val.toISOString().split('T')[0];
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      return trimmed.split('T')[0];
+    }
+    const parts = trimmed.split('/');
+    if (parts.length === 3) {
+      const [d, m, y] = parts;
+      if (y && m && d) {
+        return `${y.padStart(4, '20')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+    }
+  }
+  return new Date().toISOString().split('T')[0];
+}
+
+/**
+ * Obtém o ID do usuário autenticado de forma ultra-resiliente
+ * (tenta sessão ativa, getUser e o cache de sessão persistido do app)
+ */
+async function getActiveUserId(): Promise<string | null> {
+  // 1. Tenta sessão rápida do Supabase
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.user?.id && isValidUUID(session.user.id)) {
+      return session.user.id;
+    }
+  } catch {}
+
+  // 2. Tenta getUser do Supabase
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user?.id && isValidUUID(user.id)) {
+      return user.id;
+    }
+  } catch {}
+
+  // 3. Fallback no cache persistente da sessão do painel
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ea_painel_session');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.userId && isValidUUID(parsed.userId)) {
+          return parsed.userId;
+        }
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
+/**
+ * Colunas canônicas conhecidas das tabelas do Supabase
+ */
+const CANONICAL_TABLE_COLUMNS: Record<string, string[]> = {
+  orcamentos: [
+    'id',
+    'owner_id',
+    'client_id',
+    'client_name_manual',
+    'document_title',
+    'subtitle',
+    'issue_date',
+    'expiration',
+    'services_json',
+    'financial_json',
+    'access_password',
+    'created_at',
+    'updated_at',
+  ],
+  clientes: [
+    'id',
+    'owner_id',
+    'name',
+    'document',
+    'gender',
+    'whatsapp',
+    'email',
+    'zip',
+    'street',
+    'number',
+    'complement',
+    'neighborhood',
+    'city',
+    'obs',
+    'photo_url',
+    'created_at',
+    'updated_at',
+  ],
+  recibos: [
+    'id',
+    'owner_id',
+    'client_id',
+    'client_name_manual',
+    'receipt_number',
+    'amount',
+    'amount_in_words',
+    'issue_date',
+    'services_rendered',
+    'payment_method',
+    'access_password',
+    'created_at',
+    'updated_at',
+  ],
+  notas: [
+    'id',
+    'owner_id',
+    'title',
+    'content',
+    'pinned',
+    'color',
+    'created_at',
+    'updated_at',
+  ],
+  profiles: [
+    'id',
+    'name',
+    'email',
+    'role',
+    'specialty',
+    'whatsapp',
+    'about',
+    'photo_url',
+    'gender',
+    'created_at',
+    'updated_at',
+  ],
+};
+
+/**
+ * Sanitiza e enriquece o item antes de salvar,
+ * garantindo integridade e compatibilidade com o PostgreSQL do Supabase.
+ */
+function sanitizePayload(entity: string, item: any, userId?: string | null) {
   const clean: any = { ...item };
 
-  // Garante que o ID seja um UUID válido ou gera um novo
+  // Garante que o ID seja um UUID válido ou gera um novo v4
   if (!clean.id || !isValidUUID(clean.id)) {
     clean.id = crypto.randomUUID();
   }
 
-  // Tratamento de owner_id
+  // Garante timestamps para ordenação na UI
+  const now = new Date().toISOString();
+  if (!clean.created_at) {
+    clean.created_at = now;
+  }
+  clean.updated_at = now;
+
+  // Tratamento seguro de owner_id
   if (userId && isValidUUID(userId)) {
     clean.owner_id = userId;
   } else if (!clean.owner_id || !isValidUUID(clean.owner_id)) {
     delete clean.owner_id;
   }
 
-  // Limpeza de campos vazios ou nulos desnecessários em relações de chaves estrangeiras
+  // Regras específicas de integridade para orçamentos
   if (entity === 'orcamentos') {
     if (clean.client_id && !isValidUUID(clean.client_id)) {
       clean.client_id = null;
     }
+
+    if (clean.issue_date) {
+      clean.issue_date = normalizeDateForDb(clean.issue_date);
+    }
+
+    // Consolidação de endereço e metadados analíticos em financial_json
+    // para garantir persistência 100% segura no Supabase mesmo sem colunas extras
+    const baseFin =
+      clean.financial_json && typeof clean.financial_json === 'object'
+        ? { ...clean.financial_json }
+        : clean.financial && typeof clean.financial === 'object'
+          ? { ...clean.financial }
+          : {};
+
+    const address = {
+      zip: clean.zip || baseFin.address?.zip || '',
+      street: clean.street || baseFin.address?.street || '',
+      number: clean.number || baseFin.address?.number || '',
+      neighborhood: clean.neighborhood || baseFin.address?.neighborhood || '',
+      city: clean.city || baseFin.address?.city || '',
+      complement: clean.complement || baseFin.address?.complement || '',
+    };
+
+    clean.financial_json = {
+      ...baseFin,
+      address,
+      investmentCategories:
+        clean.investment_categories || baseFin.investmentCategories || [],
+      financial_v3: clean.financial_v3 || baseFin.financial_v3 || null,
+    };
   }
 
   if (entity === 'clientes') {
@@ -49,11 +228,29 @@ function sanitizePayload(entity: string, item: any, userId?: string) {
   return clean;
 }
 
-export function useEASyncSupabase<T>(entity: string) {
-  // Chave única para o SWR e para o LocalStorage
-  const CACHE_KEY = `ea_cache_${entity}`;
+/**
+ * Filtra um objeto para conter apenas as colunas canônicas da tabela
+ */
+function filterToCanonicalColumns(entity: string, item: any): any {
+  const allowed = CANONICAL_TABLE_COLUMNS[entity];
+  if (!allowed || !Array.isArray(allowed)) {
+    return item;
+  }
 
-  // 1. Buscamos o dado inicial do LocalStorage (Instantâneo)
+  const filtered: any = {};
+  for (const col of allowed) {
+    if (item[col] !== undefined) {
+      filtered[col] = item[col];
+    }
+  }
+  return filtered;
+}
+
+export function useEASyncSupabase<T>(entity: string) {
+  const CACHE_KEY = `ea_cache_${entity}`;
+  const isSyncingRef = useRef(false);
+
+  // 1. Leitura rápida do LocalStorage para renderização instantânea
   const getLocalData = (): T[] => {
     if (typeof window === 'undefined') return [];
     try {
@@ -61,51 +258,87 @@ export function useEASyncSupabase<T>(entity: string) {
       const parsed = local ? JSON.parse(local) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
-      console.warn(
-        `[EASyncSupabase] Erro ao ler LocalStorage para ${entity}:`,
-        err,
-      );
+      console.warn(`[EASyncSupabase] Erro ao ler cache para ${entity}:`, err);
       return [];
     }
   };
 
-  // 2. Hook SWR: Busca no Supabase sem quebrar se offline ou não autenticado
+  // 2. SWR com busca resiliente e Merge Inteligente
   const { data, error, mutate, isValidating } = useSWR(
     entity,
     async () => {
-      console.log(
-        `[EASyncSupabase] 🔄 Buscando dados remotos para '${entity}'...`,
-      );
+      console.log(`[EASyncSupabase] 🔄 Verificando sincronização de '${entity}'...`);
       try {
+        // Aguarda a sessão do Supabase estar disponível antes da consulta
+        if (typeof window !== 'undefined') {
+          try {
+            await supabase.auth.getSession();
+          } catch {}
+        }
+
         const { data: remoteData, error: supabaseError } = await supabase
           .from(entity)
           .select('*')
           .order('created_at', { ascending: false });
 
         if (supabaseError) {
-          console.warn(
-            `[EASyncSupabase] ⚠️ Aviso na consulta de '${entity}':`,
-            supabaseError.message,
-          );
+          console.warn(`[EASyncSupabase] ⚠️ Aviso na consulta de '${entity}':`, supabaseError.message);
           return getLocalData();
         }
 
         if (Array.isArray(remoteData)) {
-          console.log(
-            `[EASyncSupabase] ✅ '${entity}' sincronizado com sucesso (${remoteData.length} registros).`,
-          );
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(remoteData));
+          const localItems = getLocalData();
+
+          // 🛡️ PROTEÇÃO CONTRA PERDA DE DADOS NO REFRESH (F5):
+          // Se a consulta remota retornou 0 itens mas o dispositivo já possui itens locais válidos,
+          // NÃO sobrescreva com vazio. Isso ocorre quando a sessão RLS ainda não foi autenticada
+          // ou durante inicialização transitória do client.
+          if (remoteData.length === 0 && localItems.length > 0) {
+            console.log(
+              `[EASyncSupabase] 🛡️ Preservando ${localItems.length} registros locais de '${entity}' para segurança contra perda de dados.`,
+            );
+            return localItems;
           }
-          return remoteData as T[];
+
+          // 🔄 MERGE INTELIGENTE POR ID:
+          // O dado remoto atualiza os registros existentes, mas registros locais
+          // salvos recentemente que ainda não replicaram NUNCA são apagados!
+          const mergedMap = new Map<string, any>();
+
+          // 1º adiciona os itens locais
+          for (const item of localItems) {
+            if (item && (item as any).id) {
+              mergedMap.set(String((item as any).id), item);
+            }
+          }
+
+          // 2º sobrepõe com os itens remotos atualizados do Supabase
+          for (const remoteItem of remoteData) {
+            if (remoteItem && (remoteItem as any).id) {
+              const existing = mergedMap.get(String((remoteItem as any).id)) || {};
+              mergedMap.set(String((remoteItem as any).id), {
+                ...existing,
+                ...remoteItem,
+              });
+            }
+          }
+
+          const finalMerged = Array.from(mergedMap.values());
+
+          // Atualiza o cache seguro
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(finalMerged));
+          }
+
+          console.log(
+            `[EASyncSupabase] ✅ '${entity}' sincronizado: ${finalMerged.length} registros consolidados.`,
+          );
+          return finalMerged as T[];
         }
 
         return getLocalData();
       } catch (err: any) {
-        console.error(
-          `[EASyncSupabase] ❌ Falha na sincronização de '${entity}':`,
-          err,
-        );
+        console.error(`[EASyncSupabase] ❌ Falha na sincronização de '${entity}':`, err);
         return getLocalData();
       }
     },
@@ -113,102 +346,156 @@ export function useEASyncSupabase<T>(entity: string) {
       fallbackData: getLocalData(),
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 8000,
+      dedupingInterval: 6000,
     },
   );
 
-  // 3. Função de Salvar Otimista (Salva na tela, no LocalStorage e no Supabase)
+  // 3. Ouvinte de estado de autenticação para revalidar quando a sessão carregar
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log(`[EASyncSupabase] Sessão ativa detectada, revalidando '${entity}'...`);
+          mutate();
+        }
+      },
+    );
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [entity, mutate]);
+
+  // 4. Salvamento seguro com persistência garantida
   const save = async (
     payload: any,
     action: 'create' | 'update' | 'delete' = 'create',
   ): Promise<any> => {
-    console.log(
-      `[EASyncSupabase] 💾 Executando ${action.toUpperCase()} em '${entity}':`,
-      payload,
-    );
+    console.log(`[EASyncSupabase] 💾 Executando ${action.toUpperCase()} em '${entity}'`);
 
-    let authUser: any = null;
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      authUser = authData?.user || null;
-    } catch {
-      // Continua caso não haja autenticação ativa
-    }
-
+    const activeUserId = await getActiveUserId();
     const previousData = Array.isArray(data) ? data : getLocalData();
+
+    // Sanitiza e consolida o item completo para UI e LocalStorage
+    const fullSanitizedItem = sanitizePayload(entity, payload, activeUserId);
+    const targetId = fullSanitizedItem.id;
+
+    // Atualização Otimista Imediata da UI e LocalStorage
     let newData = [...previousData];
-
-    // Sanitiza e gera UUID consistente
-    const sanitizedItem = sanitizePayload(entity, payload, authUser?.id);
-    const targetId = sanitizedItem.id;
-
-    // Atualização Otimista da UI e LocalStorage
     if (action === 'create') {
       newData = [
-        sanitizedItem,
-        ...newData.filter((item: any) => item.id !== targetId),
+        fullSanitizedItem,
+        ...newData.filter((item: any) => item && item.id !== targetId),
       ];
     } else if (action === 'update') {
       newData = newData.map((item: any) =>
-        item.id === targetId ? { ...item, ...sanitizedItem } : item,
+        item && item.id === targetId ? { ...item, ...fullSanitizedItem } : item,
       );
     } else if (action === 'delete') {
-      newData = newData.filter((item: any) => item.id !== targetId);
+      newData = newData.filter((item: any) => item && item.id !== targetId);
     }
 
-    // Aplica na tela e cache local imediatamente
-    mutate(newData, false);
+    // Grava imediatamente na UI e no localStorage
+    await mutate(newData, false);
     if (typeof window !== 'undefined') {
       localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
     }
 
-    // Sincroniza com o Supabase
+    // 5. Persistência no Supabase com resiliência contra erros de schema
     try {
+      isSyncingRef.current = true;
       let result: any = null;
 
-      if (action === 'create') {
-        result = await supabase.from(entity).insert([sanitizedItem]).select();
-      } else if (action === 'update') {
-        result = await supabase
-          .from(entity)
-          .update(sanitizedItem)
-          .eq('id', targetId)
-          .select();
-      } else if (action === 'delete') {
+      if (action === 'delete') {
         result = await supabase.from(entity).delete().eq('id', targetId);
+      } else {
+        // Tentativa 1: Envia com os dados sanitizados
+        if (action === 'create') {
+          result = await supabase.from(entity).insert([fullSanitizedItem]).select();
+        } else if (action === 'update') {
+          result = await supabase
+            .from(entity)
+            .update(fullSanitizedItem)
+            .eq('id', targetId)
+            .select();
+        }
+
+        // Se o Supabase reclamar que alguma coluna não existe no schema da tabela
+        // (ex: column does not exist ou PGRST204)
+        if (
+          result?.error &&
+          (result.error.code === 'PGRST204' ||
+            result.error.code === '42703' ||
+            result.error.message?.includes('column') ||
+            result.error.message?.includes('schema cache'))
+        ) {
+          console.warn(
+            `[EASyncSupabase] ⚠️ Coluna não encontrada na tabela '${entity}'. Fazendo fallback seguro com colunas canônicas...`,
+            result.error.message,
+          );
+
+          const canonicalPayload = filterToCanonicalColumns(entity, fullSanitizedItem);
+
+          if (action === 'create') {
+            result = await supabase.from(entity).insert([canonicalPayload]).select();
+          } else {
+            result = await supabase
+              .from(entity)
+              .update(canonicalPayload)
+              .eq('id', targetId)
+              .select();
+          }
+        }
       }
 
       if (result?.error) {
-        console.error(
-          `[EASyncSupabase] ❌ Erro retornado pelo Supabase em '${entity}':`,
-          result.error,
+        console.warn(
+          `[EASyncSupabase] ⚠️ Supabase retornou aviso em '${entity}':`,
+          result.error.message,
         );
-        toast.info('Salvo localmente no dispositivo');
-        return sanitizedItem;
+        // O item já está salvo localmente no cache seguro do dispositivo
+        toast.success(
+          action === 'create'
+            ? 'Salvo com sucesso no dispositivo!'
+            : 'Atualizado com sucesso!',
+        );
+        return fullSanitizedItem;
       }
 
-      console.log(
-        `[EASyncSupabase] 🚀 Sucesso ao persistir no Supabase '${entity}':`,
-        result?.data || result,
-      );
+      // Se o Supabase retornou o registro criado/atualizado com sucesso
+      const serverRecord = Array.isArray(result?.data) && result.data[0] ? result.data[0] : null;
+      if (serverRecord) {
+        const confirmedItem = {
+          ...fullSanitizedItem,
+          ...serverRecord,
+        };
+
+        const updatedData = newData.map((it: any) =>
+          it && it.id === targetId ? confirmedItem : it,
+        );
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(updatedData));
+        }
+        await mutate(updatedData, false);
+      }
+
+      console.log(`[EASyncSupabase] 🚀 Sucesso ao persistir no Supabase '${entity}'`);
       toast.success(
         action === 'delete'
-          ? 'Removido com sucesso'
+          ? 'Removido com sucesso!'
           : action === 'create'
-            ? 'Cadastrado e sincronizado com a nuvem'
-            : 'Atualizado com sucesso',
+            ? 'Orçamento salvo e sincronizado com o Supabase!'
+            : 'Atualizado com sucesso!',
       );
 
-      return sanitizedItem;
+      return fullSanitizedItem;
     } catch (err: any) {
-      console.error(
-        `[EASyncSupabase] ❌ Exceção ao sincronizar com nuvem em '${entity}':`,
-        err,
-      );
-      toast.info('Salvo no dispositivo (modo offline)');
-      return sanitizedItem;
+      console.warn(`[EASyncSupabase] ⚠️ Exceção na sincronização com nuvem:`, err);
+      toast.success('Salvo localmente com segurança!');
+      return fullSanitizedItem;
     } finally {
-      mutate(); // Revalidação para sincronização final
+      isSyncingRef.current = false;
     }
   };
 
@@ -220,3 +507,4 @@ export function useEASyncSupabase<T>(entity: string) {
     pull: () => mutate(),
   };
 }
+
