@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json(
         { error: 'O texto da proposta não foi informado.' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     if (!apiKey) {
       return NextResponse.json(
         { error: 'GEMINI_API_KEY não configurada no ambiente.' },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -82,8 +82,7 @@ DIRETRIZES DE RIGOR ABSOLUTO:
             },
             subtitle: {
               type: Type.STRING,
-              description:
-                'Subtítulo (PROPOSTA DE ORÇAMENTO ou PROPOSTA COMERCIAL).',
+              description: 'Subtítulo (PROPOSTA DE ORÇAMENTO ou PROPOSTA COMERCIAL).',
             },
             issueDate: {
               type: Type.STRING,
@@ -107,8 +106,7 @@ DIRETRIZES DE RIGOR ABSOLUTO:
             },
             services: {
               type: Type.ARRAY,
-              description:
-                'Lista completa de todas as cláusulas técnicas e de escopo do documento.',
+              description: 'Lista completa de todas as cláusulas técnicas e de escopo do documento.',
               items: {
                 type: Type.OBJECT,
                 properties: {
@@ -123,18 +121,15 @@ DIRETRIZES DE RIGOR ABSOLUTO:
                       properties: {
                         subtitulo: {
                           type: Type.STRING,
-                          description:
-                            'Subtítulo do item/subcláusula ou vazio se único.',
+                          description: 'Subtítulo do item/subcláusula ou vazio se único.',
                         },
                         content: {
                           type: Type.STRING,
-                          description:
-                            'Conteúdo formatado com <p>, <ul>, <li>, <strong>, etc.',
+                          description: 'Conteúdo formatado com <p>, <ul>, <li>, <strong>, etc.',
                         },
                         numbered: {
                           type: Type.BOOLEAN,
-                          description:
-                            'Verdadeiro se for subcláusula numerada (2.1, 2.2, etc.).',
+                          description: 'Verdadeiro se for subcláusula numerada (2.1, 2.2, etc.).',
                         },
                       },
                       required: ['content'],
@@ -146,8 +141,7 @@ DIRETRIZES DE RIGOR ABSOLUTO:
             },
             financialV3: {
               type: Type.OBJECT,
-              description:
-                'Camada de inteligência financeira desacoplada para gestão e métricas.',
+              description: 'Camada de inteligência financeira desacoplada para gestão e métricas.',
               properties: {
                 totalLabor: { type: Type.NUMBER },
                 totalMaterials: { type: Type.NUMBER },
@@ -160,18 +154,9 @@ DIRETRIZES DE RIGOR ABSOLUTO:
                   items: {
                     type: Type.OBJECT,
                     properties: {
-                      name: {
-                        type: Type.STRING,
-                        description: 'Nome do serviço/etapa',
-                      },
-                      value: {
-                        type: Type.NUMBER,
-                        description: 'Valor numérico em Reais',
-                      },
-                      type: {
-                        type: Type.STRING,
-                        description: 'mao_de_obra, material ou misto',
-                      },
+                      name: { type: Type.STRING, description: 'Nome do serviço/etapa' },
+                      value: { type: Type.NUMBER, description: 'Valor numérico em Reais' },
+                      type: { type: Type.STRING, description: 'mao_de_obra, material ou misto' },
                       description: { type: Type.STRING },
                       area_m2: { type: Type.NUMBER },
                       deadline_days: { type: Type.NUMBER },
@@ -246,13 +231,15 @@ DIRETRIZES DE RIGOR ABSOLUTO:
       });
     };
 
-    // Priorizamos modelos com alta performance e estabilidade
+    // Modelos com prioridade máxima para cotas do plano gratuito (maior RPD/RPM e velocidade)
     let response;
     const modelsToTry = [
+      'gemini-2.5-flash-lite',
       'gemini-2.5-flash',
-      'gemini-flash-latest',
-      'gemini-3.7-flash',
       'gemini-3.1-flash-lite',
+      'gemini-flash-latest',
+      'gemini-2.0-flash',
+      'gemini-3.7-flash',
     ];
     let lastError: any = null;
 
@@ -265,18 +252,13 @@ DIRETRIZES DE RIGOR ABSOLUTO:
           break;
         }
       } catch (err: any) {
-        console.warn(
-          `Tentativa com ${modelName} falhou (${err.message}). Tentando próximo modelo...`,
-        );
+        console.warn(`Tentativa com ${modelName} falhou (${err.message}). Tentando próximo modelo...`);
         lastError = err;
       }
     }
 
     if (!response || !response.text) {
-      throw (
-        lastError ||
-        new Error('Não foi possível obter resposta dos modelos do Gemini.')
-      );
+      throw lastError || new Error('Não foi possível obter resposta dos modelos do Gemini.');
     }
 
     const rawJson = response.text?.trim() || '{}';
@@ -290,7 +272,7 @@ DIRETRIZES DE RIGOR ABSOLUTO:
     console.error('Erro na extração de orçamento via Gemini:', error);
     return NextResponse.json(
       { error: error.message || 'Falha ao processar orçamento com IA.' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
