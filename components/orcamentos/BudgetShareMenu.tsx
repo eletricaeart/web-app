@@ -10,6 +10,9 @@ import {
   Printer,
   SlidersHorizontal,
   CheckCircle,
+  Sparkle,
+  ArrowSquareOut,
+  Eye,
 } from '@phosphor-icons/react';
 import {
   Drawer,
@@ -19,6 +22,8 @@ import {
 } from '@/components/ui/drawer';
 import View from '../layout/View';
 import { toast } from 'sonner';
+import { useOptionalPainelRouter } from '@/app/painel/_router/PainelRouterContext';
+import { imprimirNovoModeloPdf } from './modelo-novo/geradorNovoPdf';
 import { styles4send } from './styles4send';
 import { prestyle } from './prestyle';
 import { EACardStyles } from './EACardStylesheet';
@@ -45,9 +50,22 @@ export default function BudgetShareMenu({
   open,
   onOpenChange,
 }: BudgetShareMenuProps) {
+  const router = useOptionalPainelRouter();
   const [generatedFile, setGeneratedFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const navigateToSection = (
+    section: string,
+    params: Record<string, string>,
+  ) => {
+    if (router?.push) {
+      router.push(section, params);
+    } else if (typeof window !== 'undefined') {
+      const qs = new URLSearchParams({ s: section, ...params });
+      window.location.search = `?${qs.toString()}`;
+    }
+  };
 
   // Estados de teste e otimização configuráveis
   const [density, setDensity] = useState<'compact' | 'standard' | 'minimal'>(
@@ -78,7 +96,7 @@ export default function BudgetShareMenu({
     }
 
     return `
-      @media print, all {
+      @media print {
         @page {
           size: A4 portrait;
           margin: 8mm 6mm 8mm 6mm;
@@ -91,14 +109,66 @@ export default function BudgetShareMenu({
           }
         }
 
+        /* Eliminar gavetas, modais, overlays e toasters na impressão */
+        [data-vaul-overlay],
+        [data-slot="drawer-overlay"],
+        [data-vaul-drawer],
+        [data-slot="drawer-content"],
+        [data-slot="drawer-portal"],
+        [data-radix-portal],
+        [data-radix-overlay],
+        [role="dialog"],
+        [role="alertdialog"],
+        .fixed.inset-0,
+        div[class*="bg-black"],
+        div[class*="backdrop"],
+        .drawer-overlay,
+        [data-sonner-toaster],
+        [data-sonner-toast],
+        .toaster,
+        #sonner-toaster,
+        [data-sonner-toaster] *,
+        div[data-sonner-toaster],
+        .no-print,
+        .print\:hidden,
+        [class*="no-print"],
+        [class*="print:hidden"],
+        header[data-slot="painel-appbar"],
+        header.sticky,
+        header[class*="sticky"],
+        header[class*="backdrop-blur"],
+        header.fixed,
+        .app-bar,
+        app-bar,
+        nav.bottom-nav,
+        .fab-container,
+        button,
+        .toast {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          max-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: hidden !important;
+          position: absolute !important;
+          top: -99999px !important;
+          left: -99999px !important;
+          background: transparent !important;
+          pointer-events: none !important;
+        }
+
         * {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
           box-sizing: border-box !important;
         }
 
-        html, body {
+        html, body, [data-vaul-drawer-wrapper], #root, main {
           background: #ffffff !important;
+          background-color: #ffffff !important;
           color: #0f172a !important;
           font-size: ${baseFontSize} !important;
           line-height: 1.45 !important;
@@ -107,6 +177,8 @@ export default function BudgetShareMenu({
           height: auto !important;
           min-height: auto !important;
           overflow: visible !important;
+          filter: none !important;
+          transform: none !important;
         }
 
         /* Isolação dos textos e layout do EACard para não sofrerem alterações de densidade/fonte do documento */
@@ -214,10 +286,18 @@ export default function BudgetShareMenu({
         footer-content_bottom,
         footer-content_top,
         footer-content,
-        subclause,
         .avoid {
           break-inside: avoid !important;
           page-break-inside: avoid !important;
+          overflow: visible !important;
+        }
+
+        subclause,
+        [data-tag="subclause"],
+        subclause-body,
+        [data-tag="subclause-body"] {
+          break-inside: auto !important;
+          page-break-inside: auto !important;
           overflow: visible !important;
         }
 
@@ -248,8 +328,21 @@ export default function BudgetShareMenu({
         }
 
         p, li {
-          orphans: 3 !important;
-          widows: 3 !important;
+          orphans: 2 !important;
+          widows: 2 !important;
+        }
+
+        ul, ol, subclause-body ul, subclause-body ol {
+          display: block !important;
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+        }
+
+        li, subclause-body li {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          break-before: auto !important;
+          break-after: auto !important;
         }
 
         /* Rodapé sem quebra forçada para evitar página 9 em branco */
@@ -534,7 +627,76 @@ export default function BudgetShareMenu({
           </div>
         </div>
 
-        {/* Botões de Ação */}
+        {/* Seção Novo Modelo (Teste e Validação) */}
+        <div className="px-4 mb-3">
+          <div className="p-3 bg-gradient-to-r from-indigo-50/90 to-purple-50/90 border border-indigo-100 rounded-2xl flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-indigo-900 font-bold text-xs">
+                <Sparkle size={15} weight="fill" className="text-indigo-600" />
+                <span>Novo Modelo de PDF</span>
+                <span className="bg-indigo-600 text-[9px] text-white px-1.5 py-0.5 rounded-full uppercase tracking-wider font-extrabold">
+                  Beta
+                </span>
+              </div>
+              {data?.id && (
+                <button
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigateToSection('orcamentos.ver-teste', {
+                      id: String(data.id),
+                    });
+                  }}
+                  className="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-0.5 hover:underline"
+                >
+                  <span>Abrir na Tela</span>
+                  <ArrowSquareOut size={12} />
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-600 leading-snug">
+              Modelo secundário isolado com estilização unificada e anti-cortes.
+              Não afeta o modelo original.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  onOpenChange(false);
+                  if (data?.id) {
+                    navigateToSection('orcamentos.previa-pdf', {
+                      id: String(data.id),
+                    });
+                  }
+                }}
+                className="py-2 px-3 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all"
+              >
+                <Eye size={15} weight="bold" />
+                <span>Prévia do PDF</span>
+              </button>
+              <button
+                onClick={() => {
+                  onOpenChange(false);
+                  toast.dismiss();
+                  // Espera o drawer fechar suavemente para limpar o backdrop da tela
+                  setTimeout(() => {
+                    imprimirNovoModeloPdf();
+                  }, 300);
+                }}
+                className="py-2 px-3 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+              >
+                <FilePdf size={15} weight="fill" />
+                <span>Gerar PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 mb-2">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Opções Clássicas
+          </span>
+        </div>
+
+        {/* Botões de Ação Originais */}
         <View className="grid grid-cols-3 gap-3 px-4">
           {/* Opção: Gerar PDF */}
           {!generatedFile ? (

@@ -12,7 +12,7 @@ import { processTextToHtml } from '@/utils/TextPreProcessor';
 import View from '@/components/layout/View';
 import BudgetSkeleton from './BudgetSkeleton';
 import BudgetShareMenu from '@/components/orcamentos/BudgetShareMenu';
-import { Pen, ShareNetwork, Trash } from '@phosphor-icons/react';
+import { Pen, ShareNetwork, Trash, Sparkle, Eye } from '@phosphor-icons/react';
 import { CID, getCleanDate } from '@/utils/helpers';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
@@ -454,7 +454,45 @@ export default function OrcamentoVerPainel() {
       `,
         }}
       />
-      {!isPrintMode && <AppBar backAction={() => router.back()} />}
+      {!isPrintMode && (
+        <div className="no-print print:hidden">
+          <AppBar
+            backAction={() => router.back()}
+            options={
+              data?.id ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() =>
+                      router.push('orcamentos.previa-pdf', { id: data.id })
+                    }
+                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center gap-1 transition-colors border border-emerald-200/70 shadow-xs"
+                    title="Visualizar exatamente como sairá no PDF final (A4)"
+                  >
+                    <Eye size={13} weight="bold" className="text-emerald-600" />
+                    <span className="hidden sm:inline">Prévia do PDF</span>
+                    <span className="sm:hidden">PDF</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      router.push('orcamentos.ver-teste', { id: data.id })
+                    }
+                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 flex items-center gap-1 transition-colors border border-indigo-200/70 shadow-xs"
+                    title="Abrir no Novo Modelo Unificado (Teste)"
+                  >
+                    <Sparkle
+                      size={13}
+                      weight="fill"
+                      className="text-indigo-600"
+                    />
+                    <span className="hidden sm:inline">Modelo Novo</span>
+                    <span className="sm:hidden">Novo</span>
+                  </button>
+                </div>
+              ) : undefined
+            }
+          />
+        </div>
+      )}
 
       <BudgetShareMenu
         open={isShareOpen}

@@ -1,0 +1,367 @@
+/* components/orcamentos/modelo-novo/OrcamentoPreviaPdf.css
+ * ESTILOS EXCLUSIVOS DA PÁGINA DE PRÉ-VISUALIZAÇÃO DO PDF
+ * Replica 100% fielmente as regras de impressão, layout A4 (210mm x 297mm) e margens
+ */
+
+/* Área de Trabalho / Workspace do visualizador de PDF (estilo Acrobat / Chrome PDF) */
+.ea-pdf-workspace {
+  background-color: #1e293b;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 80px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+/* Folha de Papel A4 em escala real */
+.ea-a4-sheet-container {
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top center;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.ea-a4-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  background-color: #ffffff;
+  color: #0f172a;
+  /* Margens oficiais de impressão do documento: 8mm topo/base e 6mm laterais */
+  padding: 8mm 6mm 8mm 6mm;
+  box-sizing: border-box;
+  position: relative;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.2),
+    0 20px 35px -5px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* Marcadores Visuais de Quebra de Página A4 (297mm cada) */
+.ea-a4-page-guide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed #f43f5e;
+  pointer-events: none;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.ea-a4-page-guide::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  right: -28px;
+  top: -1px;
+  border-top: 2px dashed rgba(244, 63, 94, 0.7);
+}
+
+.ea-a4-page-guide-badge {
+  background: #f43f5e;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(-50%);
+  position: relative;
+  z-index: 51;
+}
+
+/* ==========================================================================
+   REGRAS DE IMPRESSÃO APLICADAS EM TELA (.is-print-preview)
+   Garante fidelidade absoluta ao renderizar a prévia
+   ========================================================================== */
+
+.ea-modelo-novo-root.is-print-preview,
+.ea-modelo-novo-root.is-print-mode {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  color: #0f172a !important;
+  overflow: visible !important;
+}
+
+/* Cabeçalho */
+.ea-modelo-novo-root.is-print-preview page-header,
+.ea-modelo-novo-root.is-print-mode page-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-bottom: 0.8rem !important;
+}
+
+/* EACardNovo na prévia do PDF (altura reduzida em 25% e logo proporcional) */
+.ea-modelo-novo-root.is-print-preview ea-card-novo,
+.ea-modelo-novo-root.is-print-preview .ea_card_novo,
+.ea-modelo-novo-root.is-print-mode ea-card-novo,
+.ea-modelo-novo-root.is-print-mode .ea_card_novo {
+  display: grid !important;
+  grid-template-columns: 0.26fr 0.74fr !important;
+  width: 100% !important;
+  aspect-ratio: 5.07 / 1 !important;
+  min-height: 135px !important;
+  max-height: 155px !important;
+  padding: 1cqw 2cqw !important;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  box-sizing: border-box !important;
+  background-image: url('https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png') !important;
+  background-color: rgba(10, 15, 25, 0.9) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  border-radius: 1rem 1rem 0.25rem 0.25rem !important;
+  color: #f5f5f5 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  z-index: 1 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .logoAreaNovo,
+.ea-modelo-novo-root.is-print-mode .logoAreaNovo {
+  display: flex !important;
+  height: 100% !important;
+  aspect-ratio: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.5cqw !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .logoImgNovo,
+.ea-modelo-novo-root.is-print-mode .logoImgNovo {
+  height: 86% !important;
+  width: auto !important;
+  max-width: 90% !important;
+  aspect-ratio: 1 !important;
+  border-radius: 100vw !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .descriptionNovo,
+.ea-modelo-novo-root.is-print-mode .descriptionNovo {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  color: #f5f5f5 !important;
+  padding: 0 4px !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .eaNameNovo,
+.ea-modelo-novo-root.is-print-mode .eaNameNovo {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .nameImgNovo,
+.ea-modelo-novo-root.is-print-mode .nameImgNovo {
+  width: 100% !important;
+  max-width: 300px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  margin-bottom: 2px !important;
+  display: block !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .cnpjTextNovo,
+.ea-modelo-novo-root.is-print-mode .cnpjTextNovo {
+  font-size: 11px !important;
+  font-weight: bold !important;
+  color: #ffffff !important;
+  display: block !important;
+  line-height: 1.2 !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .addressTextNovo,
+.ea-modelo-novo-root.is-print-mode .addressTextNovo {
+  font-size: 10px !important;
+  margin: 1.5px 0 !important;
+  color: #f1f5f9 !important;
+  line-height: 1.2 !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .contactsAreaNovo,
+.ea-modelo-novo-root.is-print-preview .contactLinkNovo,
+.ea-modelo-novo-root.is-print-mode .contactsAreaNovo,
+.ea-modelo-novo-root.is-print-mode .contactLinkNovo {
+  font-size: 10px !important;
+  color: #f8fafc !important;
+  line-height: 1.22 !important;
+  text-decoration: none !important;
+}
+
+.ea-modelo-novo-root.is-print-preview .contactLinkNovo strong,
+.ea-modelo-novo-root.is-print-mode .contactLinkNovo strong {
+  color: #ffffff !important;
+}
+
+/* Doc ID: colado perfeitamente sob o card cabeçalho */
+.ea-modelo-novo-root.is-print-preview doc-id,
+.ea-modelo-novo-root.is-print-mode doc-id {
+  background: #ffffff !important;
+  width: calc(100% - 1.5rem) !important;
+  padding: 0.35em 1em !important;
+  margin: -1px auto 0 auto !important;
+  border-radius: 0 0 1rem 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1em !important;
+  border-left: 5px solid #e2e8f0 !important;
+  border-right: 5px solid #e2e8f0 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-top: none !important;
+  text-transform: uppercase !important;
+  color: #003b6b !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.ea-modelo-novo-root.is-print-preview doc-id span,
+.ea-modelo-novo-root.is-print-mode doc-id span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  font-size: 0.68rem !important;
+  color: #003b6b !important;
+}
+
+.ea-modelo-novo-root.is-print-preview doc-id b,
+.ea-modelo-novo-root.is-print-mode doc-id b {
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+/* Cláusulas, Subcláusulas e Listas */
+.ea-modelo-novo-root.is-print-preview clause,
+.ea-modelo-novo-root.is-print-preview clause-content,
+.ea-modelo-novo-root.is-print-preview subclause,
+.ea-modelo-novo-root.is-print-mode clause,
+.ea-modelo-novo-root.is-print-mode clause-content,
+.ea-modelo-novo-root.is-print-mode subclause {
+  display: block !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+.ea-modelo-novo-root.is-print-preview subclause-header,
+.ea-modelo-novo-root.is-print-mode subclause-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 4px !important;
+}
+
+.ea-modelo-novo-root.is-print-preview subclause-body,
+.ea-modelo-novo-root.is-print-preview .markdown-rendered-content,
+.ea-modelo-novo-root.is-print-mode subclause-body,
+.ea-modelo-novo-root.is-print-mode .markdown-rendered-content {
+  display: block !important;
+  width: 100% !important;
+}
+
+.ea-modelo-novo-root.is-print-preview ul,
+.ea-modelo-novo-root.is-print-mode ul {
+  display: block !important;
+  list-style: none !important;
+  margin-top: 6px !important;
+  margin-bottom: 6px !important;
+  padding-left: 0 !important;
+}
+
+.ea-modelo-novo-root.is-print-preview ol,
+.ea-modelo-novo-root.is-print-mode ol {
+  display: block !important;
+  list-style: none !important;
+  counter-reset: ea-ol-counter !important;
+  margin-top: 6px !important;
+  margin-bottom: 6px !important;
+  padding-left: 0 !important;
+}
+
+.ea-modelo-novo-root.is-print-preview ul > li,
+.ea-modelo-novo-root.is-print-mode ul > li {
+  display: block !important;
+  position: relative !important;
+  margin-bottom: 4px !important;
+  padding-left: 1.4rem !important;
+}
+
+.ea-modelo-novo-root.is-print-preview ul > li::before,
+.ea-modelo-novo-root.is-print-mode ul > li::before {
+  content: '•' !important;
+  position: absolute !important;
+  left: 0.35rem !important;
+  top: 0 !important;
+  color: #0075bd !important;
+  font-weight: 900 !important;
+  font-size: 1.25em !important;
+  line-height: 1.2 !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.ea-modelo-novo-root.is-print-preview ol > li,
+.ea-modelo-novo-root.is-print-mode ol > li {
+  display: block !important;
+  position: relative !important;
+  counter-increment: ea-ol-counter !important;
+  margin-bottom: 4px !important;
+  padding-left: 1.6rem !important;
+}
+
+.ea-modelo-novo-root.is-print-preview ol > li::before,
+.ea-modelo-novo-root.is-print-mode ol > li::before {
+  content: counter(ea-ol-counter) '.' !important;
+  position: absolute !important;
+  left: 0.15rem !important;
+  top: 0 !important;
+  color: #0075bd !important;
+  font-weight: 700 !important;
+  font-size: 0.95em !important;
+  line-height: inherit !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Rodapé e Assinaturas */
+.ea-modelo-novo-root.is-print-preview footer-content,
+.ea-modelo-novo-root.is-print-mode footer-content {
+  height: auto !important;
+  min-height: auto !important;
+  margin-top: 12px !important;
+}
+
+.ea-modelo-novo-root.is-print-preview signatures,
+.ea-modelo-novo-root.is-print-mode signatures {
+  margin-top: 1.2cm !important;
+  padding: 0.5cm 1cm !important;
+}

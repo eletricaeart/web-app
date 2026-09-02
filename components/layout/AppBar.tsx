@@ -28,12 +28,16 @@ export default function AppBar({
   transparent = false,
 }: AppBarProps) {
   return (
-    <PainelAppBar
-      backAction={backAction}
-      transparent={transparent}
-      actions={
-        typeof options === 'object' && !Array.isArray(options) ? options : null
-      }
-    />
+    <div className="no-print print:hidden">
+      <PainelAppBar
+        backAction={backAction}
+        transparent={transparent}
+        actions={
+          typeof options === 'object' && !Array.isArray(options)
+            ? options
+            : null
+        }
+      />
+    </div>
   );
 }

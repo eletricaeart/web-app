@@ -41,9 +41,8 @@ interface PainelRouterContextValue extends PainelRouterState {
 
 const DEFAULT_SECTION = 'home';
 
-const PainelRouterContext = createContext<PainelRouterContextValue | null>(
-  null,
-);
+export const PainelRouterContext =
+  createContext<PainelRouterContextValue | null>(null);
 
 /** Monta a query string a partir da seção + params, pra refletir na URL visível */
 function buildSearch(section: string, params: PainelParams): string {
@@ -119,4 +118,9 @@ export function usePainelRouter() {
     );
   }
   return ctx;
+}
+
+/** Hook opcional que não dispara erro se estiver fora do Provider */
+export function useOptionalPainelRouter() {
+  return useContext(PainelRouterContext);
 }

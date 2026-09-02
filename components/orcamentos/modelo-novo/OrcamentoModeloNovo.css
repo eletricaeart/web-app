@@ -1,0 +1,1182 @@
+/* components/orcamentos/modelo-novo/OrcamentoModeloNovo.css
+ * ESTILIZAÇÃO UNIFICADA DO MODELO NOVO DE ORÇAMENTO & PDF
+ * 
+ * Este arquivo unifica e padroniza com fidelidade absoluta:
+ * 1. As variáveis de cores corporativas (Suvinil, CEO, Lyh)
+ * 2. As regras estruturais de exibição do documento (tela e viewport)
+ * 3. A estilização dos componentes (EACard, cabeçalhos, títulos, cliente, cláusulas, markdown, rodapé e assinaturas)
+ * 4. As regras de impressão para geração de PDF sem cortes indevidos (@media print e @page)
+ */
+
+:root {
+  /* Cores Corporativas Elétrica & Art */
+  --ea-bg: #f5f5f5;
+  --ea-ceo-golden: #daa520;
+  --ea-ceo-amber: #ffab00;
+  --ea-ceo-blue: #2277ff;
+  --ea-ceo-sky: #2999ff;
+
+  /* Cores Suvinil Oficiais */
+  --ea-sv-calopsita: rgb(219, 218, 215);
+  --ea-sv-cromio: rgb(209, 208, 202);
+  --ea-sv-azul-bebe: rgb(183, 213, 229);
+  --ea-sv-marine: rgb(125, 136, 187);
+  --ea-sv-beija-flor: rgb(61, 88, 132);
+  --ea-sv-sodalita: rgb(86, 108, 155);
+  --ea-sv-sombra-azul: rgb(21, 74, 143);
+  --ea-blue-dark: #003b6b;
+  --ea-blue-accent: #00559c;
+}
+
+/* ==========================================================================
+   CONTAINER RAIZ DO NOVO MODELO (TELA E BASE)
+   ========================================================================== */
+
+.ea-modelo-novo-root {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  color: #0f172a;
+  background-color: #f5f5f5;
+  padding: 1rem 1rem 120px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cabeçalho do documento */
+.ea-modelo-novo-root page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.8rem;
+}
+
+/* Identificador do documento (Emissão e Validade) - Colado diretamente sob o card */
+.ea-modelo-novo-root doc-id {
+  background: #ffffff;
+  width: calc(100% - 1.5rem);
+  padding: 0.35em 1em;
+  margin: -1px auto 0 auto;
+  border-radius: 0 0 1rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  border-left: 5px solid #e2e8f0;
+  border-right: 5px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  border-top: none;
+  text-transform: uppercase;
+  color: var(--ea-blue-dark);
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 2;
+}
+
+.ea-modelo-novo-root doc-id span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  color: #003b6b;
+}
+
+.ea-modelo-novo-root doc-id b {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   NOVO CARTÃO INSTITUCIONAL (EA-CARD-NOVO) - 25% menor com logo proporcional
+   ========================================================================== */
+
+.ea-modelo-novo-root ea-card-novo,
+.ea-modelo-novo-root .ea_card_novo {
+  display: grid !important;
+  grid-template-columns: 0.26fr 0.74fr;
+  width: 100%;
+  aspect-ratio: 5.07 / 1;
+  min-height: 145px;
+  padding: 1cqw 2cqw;
+  box-sizing: border-box;
+  color: #f5f5f5 !important;
+  margin: 0;
+  background-image: url('https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png');
+  background-color: rgba(10, 15, 25, 0.9);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 1rem 1rem 0.25rem 0.25rem;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+}
+
+.ea-modelo-novo-root .logoAreaNovo {
+  display: flex;
+  height: 100%;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5cqw;
+}
+
+.ea-modelo-novo-root .logoImgNovo {
+  height: 86%;
+  width: auto;
+  max-width: 90%;
+  aspect-ratio: 1;
+  border-radius: 100vw;
+  object-fit: contain;
+}
+
+.ea-modelo-novo-root .descriptionNovo {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #f5f5f5;
+  padding: 0 4px;
+}
+
+.ea-modelo-novo-root .eaNameNovo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.ea-modelo-novo-root .nameImgNovo {
+  width: 100%;
+  max-width: 310px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.ea-modelo-novo-root .cnpjTextNovo {
+  font-size: clamp(9px, 1.8cqw, 12px);
+  font-weight: 700;
+  color: #ffffff;
+  display: block;
+  line-height: 1.2;
+}
+
+.ea-modelo-novo-root .addressTextNovo {
+  font-size: clamp(8.5px, 1.6cqw, 11px);
+  margin: 2px 0;
+  color: #f1f5f9;
+  line-height: 1.2;
+}
+
+.ea-modelo-novo-root .contactsAreaNovo,
+.ea-modelo-novo-root .contactLinkNovo {
+  font-size: clamp(8.5px, 1.6cqw, 11px);
+  color: #f8fafc;
+  line-height: 1.22;
+  text-decoration: none;
+}
+
+.ea-modelo-novo-root .contactLinkNovo strong {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   CARTÃO INSTITUCIONAL CLÁSSICO (EA-CARD)
+   ========================================================================== */
+
+.ea-modelo-novo-root ea-card,
+.ea-modelo-novo-root .ea_card {
+  display: grid !important;
+  grid-template-columns: 0.3fr 0.7fr;
+  width: 100%;
+  aspect-ratio: 3.8 / 1;
+  padding: 2cqw;
+  box-sizing: border-box;
+  color: #f5f5f5 !important;
+  margin: 0;
+  background-image: url('https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png');
+  background-color: rgba(0, 0, 0, 0.6);
+  background-size: cover;
+  border-radius: 1rem;
+  overflow: hidden;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+}
+
+.ea-modelo-novo-root .logoArea {
+  display: flex;
+  height: 100%;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 1cqw;
+}
+
+.ea-modelo-novo-root .logoImg {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 100vw;
+  object-fit: contain;
+}
+
+.ea-modelo-novo-root .description {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #f5f5f5;
+  font-size: clamp(9px, 2.8cqw, 14px);
+  line-height: 1.25;
+}
+
+.ea-modelo-novo-root .eaName {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.ea-modelo-novo-root .nameImg {
+  width: 100%;
+  max-width: 370px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.ea-modelo-novo-root .contactLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   TÍTULO DO DOCUMENTO
+   ========================================================================== */
+
+.ea-modelo-novo-root doc-title {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  text-transform: uppercase;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: transparent;
+}
+
+.ea-modelo-novo-root doc-title_layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.75rem 0;
+  background: transparent;
+}
+
+.ea-modelo-novo-root doc-title_type {
+  padding: 0.5rem 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ea-sv-sombra-azul);
+  text-align: center;
+}
+
+.ea-modelo-novo-root doc-title_title {
+  background: var(--ea-sv-sombra-azul);
+  padding: 0.5rem 1rem;
+  color: #ffffff !important;
+  font-weight: 700;
+  display: block;
+  font-size: 1rem;
+  font-family: 'inter', 'Roboto', sans-serif;
+  border-radius: 8px;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+
+/* ==========================================================================
+   SEÇÃO DO CLIENTE
+   ========================================================================== */
+
+.ea-modelo-novo-root cliente-section {
+  display: flex;
+  padding-top: 1em;
+  width: 100%;
+}
+
+.ea-modelo-novo-root cliente-section > ui {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  width: 100%;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ea-modelo-novo-root cliente-section > ui > header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: center;
+  color: var(--ea-sv-azul-bebe);
+  padding: 0.5em;
+  background: var(--ea-sv-sombra-azul);
+  border-radius: 1rem 1rem 0 0;
+}
+
+.ea-modelo-novo-root cliente-section > ui > header > ui {
+  height: 26px;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95em;
+  background: var(--ea-sv-sodalita);
+  padding: 0 1.5rem;
+}
+
+.ea-modelo-novo-root cliente-section > ui > content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 1em;
+  box-sizing: border-box;
+}
+
+.ea-modelo-novo-root cliente-section > ui > content > card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: 0.8em;
+  background: #bdcfea;
+  overflow: hidden;
+}
+
+.ea-modelo-novo-root cliente-section > ui > content > card > ui {
+  padding: 1em;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   CORPO DO ORÇAMENTO E CLÁUSULAS
+   ========================================================================== */
+
+.ea-modelo-novo-root budget-body {
+  display: block;
+  width: 100%;
+}
+
+.ea-modelo-novo-root budget-body > clause {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.5em 0;
+  background: transparent;
+  margin: 10px 0;
+  border-radius: 12px;
+}
+
+.ea-modelo-novo-root budget-body > clause > ui {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ea-modelo-novo-root clause-header {
+  color: var(--ea-sv-azul-bebe);
+  width: 100%;
+  padding: 0.4em 0.5em;
+  background: var(--ea-sv-sodalita);
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.ea-modelo-novo-root clause-header > ui {
+  display: flex;
+  width: 100%;
+  height: 28px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95em;
+  background: var(--ea-sv-sombra-azul);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ea-modelo-novo-root clause-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 1em 1.25em;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.ea-modelo-novo-root subclause {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0.5em 0;
+}
+
+.ea-modelo-novo-root subclause-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6em 0.2em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: bold;
+}
+
+.ea-modelo-novo-root subclause-header t6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  font-size: 0.98rem;
+  color: #1e293b;
+}
+
+.ea-modelo-novo-root subclause-body {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.75em 0.25em;
+  text-align: justify;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+/* Estilização dos itens de lista e blocos do markdown */
+.ea-modelo-novo-root ul,
+.ea-modelo-novo-root [tag='subclause-body'] ul,
+.ea-modelo-novo-root .markdown-rendered-content ul {
+  list-style: none !important;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  padding-left: 0 !important;
+}
+
+.ea-modelo-novo-root ol,
+.ea-modelo-novo-root [tag='subclause-body'] ol,
+.ea-modelo-novo-root .markdown-rendered-content ol {
+  list-style: none !important;
+  counter-reset: ea-ol-counter !important;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  padding-left: 0 !important;
+}
+
+.ea-modelo-novo-root ul > li,
+.ea-modelo-novo-root [tag='subclause-body'] ul > li,
+.ea-modelo-novo-root .markdown-rendered-content ul > li {
+  display: block !important;
+  position: relative !important;
+  padding-left: 1.5rem !important;
+  margin-bottom: 4px !important;
+}
+
+.ea-modelo-novo-root ul > li::before,
+.ea-modelo-novo-root [tag='subclause-body'] ul > li::before,
+.ea-modelo-novo-root .markdown-rendered-content ul > li::before {
+  content: '•' !important;
+  position: absolute !important;
+  left: 0.4rem !important;
+  top: 0 !important;
+  color: var(--ea-blue-accent, #0075bd) !important;
+  font-weight: 900 !important;
+  font-size: 1.25em !important;
+  line-height: 1.2 !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.ea-modelo-novo-root ol > li,
+.ea-modelo-novo-root [tag='subclause-body'] ol > li,
+.ea-modelo-novo-root .markdown-rendered-content ol > li {
+  display: block !important;
+  position: relative !important;
+  counter-increment: ea-ol-counter !important;
+  padding-left: 1.6rem !important;
+  margin-bottom: 4px !important;
+}
+
+.ea-modelo-novo-root ol > li::before,
+.ea-modelo-novo-root [tag='subclause-body'] ol > li::before,
+.ea-modelo-novo-root .markdown-rendered-content ol > li::before {
+  content: counter(ea-ol-counter) '.' !important;
+  position: absolute !important;
+  left: 0.15rem !important;
+  top: 0 !important;
+  color: var(--ea-blue-accent, #0075bd) !important;
+  font-weight: 700 !important;
+  font-size: 0.95em !important;
+  line-height: inherit !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.ea-modelo-novo-root blockquote,
+.ea-modelo-novo-root tagc,
+.ea-modelo-novo-root .tagc {
+  display: block;
+  padding: 10px 14px;
+  background: #e8f1ff;
+  color: #0075bd;
+  border-radius: 12px;
+  margin: 8px 0;
+  border-left: 4px solid var(--ea-ceo-blue);
+  font-size: 0.92rem;
+}
+
+/* ==========================================================================
+   RODAPÉ (COMPROMISSO, ASSINATURAS E VALIDAÇÃO)
+   ========================================================================== */
+
+.ea-modelo-novo-root footer-content {
+  display: block;
+  color: #64748b;
+  margin-top: 15px;
+}
+
+.ea-modelo-novo-root footer-content_top {
+  padding: 1em 0;
+  background: transparent;
+}
+
+.ea-modelo-novo-root footer-content_top > content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1em;
+  background: #ffffff;
+  border-radius: 12px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ea-modelo-novo-root footer-content_top t6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.ea-modelo-novo-root footer-content_top p {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.ea-modelo-novo-root tagb {
+  display: block;
+  padding: 1em 1.25em;
+  background: #e0f7fa;
+  color: var(--ea-blue-accent);
+  border-radius: 16px;
+  margin-top: 0.75rem;
+}
+
+.ea-modelo-novo-root footer-content_bottom {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.ea-modelo-novo-root footer-content_bottom > ui {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ea-modelo-novo-root footer-content_bottom > ui > header {
+  color: var(--ea-sv-azul-bebe);
+  width: 100%;
+  padding: 0.4em 0.5em;
+  background: var(--ea-sv-sodalita);
+}
+
+.ea-modelo-novo-root footer-content_bottom > ui > header > ui {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95em;
+  background: var(--ea-sv-sombra-azul);
+  border-radius: 8px;
+  text-transform: uppercase;
+}
+
+.ea-modelo-novo-root signatures {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  gap: 2rem !important;
+  padding: 2.5rem 2rem 1.5rem !important;
+}
+
+.ea-modelo-novo-root signature {
+  flex: 1 !important;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.ea-modelo-novo-root sig-name {
+  border-top: 2px solid #1e293b;
+  padding-top: 0.75rem;
+  font-size: 0.88rem;
+  font-weight: bold;
+  color: var(--ea-blue-accent);
+  display: block;
+}
+
+/* ==========================================================================
+   REGRAS DE IMPRESSÃO & GERAÇÃO DE PDF (@MEDIA PRINT)
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 6mm 8mm 6mm;
+    @bottom-right {
+      content: 'Pág. ' counter(page) ' de ' counter(pages);
+      font-size: 8.5pt;
+      color: #64748b;
+      padding-bottom: 4px;
+      padding-right: 4px;
+    }
+  }
+
+  /* 1. Ocultar overlays escuros, gavetas (vaul), modais e toasters */
+  [data-vaul-overlay],
+  [data-slot='drawer-overlay'],
+  [data-vaul-drawer],
+  [data-slot='drawer-content'],
+  [data-slot='drawer-portal'],
+  [data-radix-portal],
+  [data-radix-overlay],
+  [role='dialog'],
+  [role='alertdialog'],
+  .fixed.inset-0,
+  div[class*='bg-black'],
+  div[class*='backdrop'],
+  .drawer-overlay,
+  [data-sonner-toaster],
+  [data-sonner-toast],
+  .toaster,
+  #sonner-toaster,
+  [data-sonner-toaster] *,
+  div[data-sonner-toaster],
+  .no-print,
+  .print\:hidden,
+  [class*='no-print'],
+  [class*='print:hidden'],
+  header[data-slot='painel-appbar'],
+  header.sticky,
+  header[class*='sticky'],
+  header[class*='backdrop-blur'],
+  header.fixed,
+  .app-bar,
+  app-bar,
+  nav.bottom-nav,
+  .fab-container,
+  button,
+  .toast {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    top: -99999px !important;
+    left: -99999px !important;
+    background: transparent !important;
+    pointer-events: none !important;
+  }
+
+  /* 2. Fundo totalmente limpo sem filtros ou escalas do Vaul */
+  html,
+  body,
+  [data-vaul-drawer-wrapper],
+  #root,
+  main {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    filter: none !important;
+    transform: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+
+  .ea-modelo-novo-root {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 0 10px 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  /* 3. Estrutura do Cabeçalho (EACard e Doc-ID) */
+  .ea-modelo-novo-root page-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 0.8rem !important;
+  }
+
+  /* Novo Card no Print - Altura 25% menor */
+  .ea-modelo-novo-root ea-card-novo,
+  .ea-modelo-novo-root .ea_card_novo {
+    display: grid !important;
+    grid-template-columns: 0.26fr 0.74fr !important;
+    width: 100% !important;
+    aspect-ratio: 5.07 / 1 !important;
+    min-height: 135px !important;
+    max-height: 155px !important;
+    padding: 1cqw 2cqw !important;
+    margin: 0 !important;
+    margin-bottom: 0 !important;
+    box-sizing: border-box !important;
+    background-image: url('https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png') !important;
+    background-color: rgba(10, 15, 25, 0.9) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1rem 1rem 0.25rem 0.25rem !important;
+    color: #f5f5f5 !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .ea-modelo-novo-root .logoAreaNovo {
+    display: flex !important;
+    height: 100% !important;
+    aspect-ratio: 1 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.5cqw !important;
+  }
+
+  .ea-modelo-novo-root .logoImgNovo {
+    height: 86% !important;
+    width: auto !important;
+    max-width: 90% !important;
+    aspect-ratio: 1 !important;
+    border-radius: 100vw !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+  }
+
+  .ea-modelo-novo-root .descriptionNovo {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: #f5f5f5 !important;
+    padding: 0 4px !important;
+  }
+
+  .ea-modelo-novo-root .eaNameNovo {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .ea-modelo-novo-root .nameImgNovo {
+    width: 100% !important;
+    max-width: 300px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    margin-bottom: 2px !important;
+    display: block !important;
+  }
+
+  .ea-modelo-novo-root .cnpjTextNovo {
+    font-size: 11px !important;
+    font-weight: bold !important;
+    color: #ffffff !important;
+    display: block !important;
+    line-height: 1.2 !important;
+  }
+
+  .ea-modelo-novo-root .addressTextNovo {
+    font-size: 10px !important;
+    margin: 1.5px 0 !important;
+    color: #f1f5f9 !important;
+    line-height: 1.2 !important;
+  }
+
+  .ea-modelo-novo-root .contactsAreaNovo,
+  .ea-modelo-novo-root .contactLinkNovo {
+    font-size: 10px !important;
+    color: #f8fafc !important;
+    line-height: 1.22 !important;
+    text-decoration: none !important;
+  }
+
+  .ea-modelo-novo-root .contactLinkNovo strong {
+    color: #ffffff !important;
+  }
+
+  .ea-modelo-novo-root ea-card,
+  .ea-modelo-novo-root .ea_card {
+    display: grid !important;
+    grid-template-columns: 0.3fr 0.7fr !important;
+    width: 100% !important;
+    aspect-ratio: 3.8 / 1 !important;
+    padding: 1.5cqw 2cqw !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    background-image: url('https://res.cloudinary.com/dyycxyttb/image/upload/v1772753715/bg3_jwcwgx.png') !important;
+    background-color: rgba(10, 15, 25, 0.9) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1rem !important;
+    color: #f5f5f5 !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .ea-modelo-novo-root .logoArea {
+    display: flex !important;
+    height: 100% !important;
+    aspect-ratio: 1 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1cqw !important;
+  }
+
+  .ea-modelo-novo-root .logoImg {
+    width: 100% !important;
+    aspect-ratio: 1 !important;
+    border-radius: 100vw !important;
+    object-fit: contain !important;
+  }
+
+  .ea-modelo-novo-root .description {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: #f5f5f5 !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    padding: 0 4px !important;
+  }
+
+  .ea-modelo-novo-root .description span {
+    font-size: 11.5px !important;
+    font-weight: bold !important;
+    color: #ffffff !important;
+    display: block !important;
+    line-height: 1.2 !important;
+  }
+
+  .ea-modelo-novo-root .description p {
+    font-size: 11px !important;
+    margin: 2px 0 !important;
+    color: #f1f5f9 !important;
+    line-height: 1.2 !important;
+  }
+
+  .ea-modelo-novo-root .description div,
+  .ea-modelo-novo-root .contactLink {
+    font-size: 11px !important;
+    color: #f8fafc !important;
+    line-height: 1.25 !important;
+    text-decoration: none !important;
+  }
+
+  .ea-modelo-novo-root .contactLink strong {
+    color: #ffffff !important;
+  }
+
+  .ea-modelo-novo-root .eaName {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .ea-modelo-novo-root .nameImg {
+    width: 100% !important;
+    max-width: 360px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
+
+  .ea-modelo-novo-root doc-id {
+    background: #ffffff !important;
+    width: calc(100% - 1.5rem) !important;
+    padding: 0.35em 1em !important;
+    margin: -1px auto 0 auto !important;
+    border-radius: 0 0 1rem 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1em !important;
+    border-left: 5px solid #e2e8f0 !important;
+    border-right: 5px solid #e2e8f0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-top: none !important;
+    text-transform: uppercase !important;
+    color: #003b6b !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+    position: relative !important;
+    z-index: 2 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .ea-modelo-novo-root doc-id span {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    font-size: 0.68rem !important;
+    color: #003b6b !important;
+  }
+
+  .ea-modelo-novo-root doc-id b {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+  }
+
+  /* 4. Prevenção de corte em blocos indivisíveis */
+  .ea-modelo-novo-root cliente-section,
+  .ea-modelo-novo-root doc-title,
+  .ea-modelo-novo-root tagb,
+  .ea-modelo-novo-root tagc,
+  .ea-modelo-novo-root .tagc,
+  .ea-modelo-novo-root blockquote,
+  .ea-modelo-novo-root signatures,
+  .ea-modelo-novo-root signature,
+  .ea-modelo-novo-root footer-content_top,
+  .ea-modelo-novo-root footer-content_bottom,
+  .ea-modelo-novo-root .avoid-page-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    overflow: visible !important;
+  }
+
+  /* 5. Cláusulas e Subcláusulas: quebra fluida e contínua */
+  .ea-modelo-novo-root clause,
+  .ea-modelo-novo-root clause > ui,
+  .ea-modelo-novo-root clause-content,
+  .ea-modelo-novo-root subclause,
+  .ea-modelo-novo-root subclause > ui {
+    display: block !important;
+    width: 100% !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Cabeçalhos: não quebram ao meio e não ficam órfãos no fim da folha */
+  .ea-modelo-novo-root clause-header,
+  .ea-modelo-novo-root subclause-header {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .ea-modelo-novo-root subclause-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* Corpo da subcláusula flui livremente */
+  .ea-modelo-novo-root subclause-body,
+  .ea-modelo-novo-root .markdown-rendered-content {
+    display: block !important;
+    width: 100% !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  /* 6. Listas (ul, ol) e itens (li): quebra natural entre itens sem empurrar lista toda */
+  .ea-modelo-novo-root ul,
+  .ea-modelo-novo-root [tag='subclause-body'] ul,
+  .ea-modelo-novo-root .markdown-rendered-content ul {
+    display: block !important;
+    list-style: none !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    margin-top: 6px !important;
+    margin-bottom: 6px !important;
+    padding-left: 0 !important;
+  }
+
+  .ea-modelo-novo-root ol,
+  .ea-modelo-novo-root [tag='subclause-body'] ol,
+  .ea-modelo-novo-root .markdown-rendered-content ol {
+    display: block !important;
+    list-style: none !important;
+    counter-reset: ea-ol-counter !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    margin-top: 6px !important;
+    margin-bottom: 6px !important;
+    padding-left: 0 !important;
+  }
+
+  .ea-modelo-novo-root ul > li,
+  .ea-modelo-novo-root [tag='subclause-body'] ul > li,
+  .ea-modelo-novo-root .markdown-rendered-content ul > li {
+    display: block !important;
+    position: relative !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: auto !important;
+    break-after: auto !important;
+    margin-bottom: 4px !important;
+    padding-left: 1.4rem !important;
+  }
+
+  .ea-modelo-novo-root ul > li::before,
+  .ea-modelo-novo-root [tag='subclause-body'] ul > li::before,
+  .ea-modelo-novo-root .markdown-rendered-content ul > li::before {
+    content: '•' !important;
+    position: absolute !important;
+    left: 0.35rem !important;
+    top: 0 !important;
+    color: #0075bd !important;
+    font-weight: 900 !important;
+    font-size: 1.25em !important;
+    line-height: 1.2 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .ea-modelo-novo-root ol > li,
+  .ea-modelo-novo-root [tag='subclause-body'] ol > li,
+  .ea-modelo-novo-root .markdown-rendered-content ol > li {
+    display: block !important;
+    position: relative !important;
+    counter-increment: ea-ol-counter !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: auto !important;
+    break-after: auto !important;
+    margin-bottom: 4px !important;
+    padding-left: 1.6rem !important;
+  }
+
+  .ea-modelo-novo-root ol > li::before,
+  .ea-modelo-novo-root [tag='subclause-body'] ol > li::before,
+  .ea-modelo-novo-root .markdown-rendered-content ol > li::before {
+    content: counter(ea-ol-counter) '.' !important;
+    position: absolute !important;
+    left: 0.15rem !important;
+    top: 0 !important;
+    color: #0075bd !important;
+    font-weight: 700 !important;
+    font-size: 0.95em !important;
+    line-height: inherit !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .ea-modelo-novo-root subclause-body p,
+  .ea-modelo-novo-root subclause-body > div:not(.tagc),
+  .ea-modelo-novo-root .markdown-rendered-content p,
+  .ea-modelo-novo-root .markdown-rendered-content > div:not(.tagc) {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    orphans: 2 !important;
+    widows: 2 !important;
+  }
+
+  /* Rodapé proporcional sem forçar página vazia */
+  .ea-modelo-novo-root footer-content {
+    height: auto !important;
+    min-height: auto !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
+    margin-top: 12px !important;
+  }
+
+  .ea-modelo-novo-root signatures {
+    margin-top: 1.2cm !important;
+    padding: 0.5cm 1cm !important;
+  }
+}

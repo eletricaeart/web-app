@@ -41,7 +41,7 @@ import ModeloVisualStudio from './modelos/ModeloVisualStudio';
 import ModeloMobilePro from './modelos/ModeloMobilePro';
 import ModeloComercialBIM from './modelos/ModeloComercialBIM';
 import { ShareBlueprintButton } from './ShareBlueprintButton';
-import '../Drywall.css';
+import './Drywall.css';
 
 import { toPng } from 'html-to-image';
 import { saveAs } from 'file-saver';

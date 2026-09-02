@@ -76,7 +76,8 @@ export function PainelAppBar({
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+      data-slot="painel-appbar"
+      className={`no-print print:hidden sticky top-0 z-40 w-full transition-all duration-300 ${
         transparent
           ? 'bg-transparent'
           : isScrolled
