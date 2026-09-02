@@ -1,6 +1,6 @@
 // app/api/gemini/extract-budget/route.ts
 import { NextResponse } from 'next/server';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 
 export async function POST(req: Request) {
   try {
@@ -69,6 +69,167 @@ DIRETRIZES DE RIGOR ABSOLUTO:
      - "paymentSchedule": Parcelamento ou etapas financeiras identificadas.`;
 
     const tryGenerate = async (modelName: string) => {
+      const config: any = {
+        systemInstruction,
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            documentTitle: {
+              type: Type.STRING,
+              description: 'Título principal da proposta de serviço.',
+            },
+            subtitle: {
+              type: Type.STRING,
+              description:
+                'Subtítulo (PROPOSTA DE ORÇAMENTO ou PROPOSTA COMERCIAL).',
+            },
+            issueDate: {
+              type: Type.STRING,
+              description: 'Data de emissão no formato YYYY-MM-DD.',
+            },
+            expiration: {
+              type: Type.STRING,
+              description: 'Prazo de validade da proposta.',
+            },
+            client: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                street: { type: Type.STRING },
+                number: { type: Type.STRING },
+                complement: { type: Type.STRING },
+                neighborhood: { type: Type.STRING },
+                city: { type: Type.STRING },
+                zip: { type: Type.STRING },
+              },
+            },
+            services: {
+              type: Type.ARRAY,
+              description:
+                'Lista completa de todas as cláusulas técnicas e de escopo do documento.',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  titulo: {
+                    type: Type.STRING,
+                    description: 'Título da cláusula (sem número prefixado).',
+                  },
+                  items: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        subtitulo: {
+                          type: Type.STRING,
+                          description:
+                            'Subtítulo do item/subcláusula ou vazio se único.',
+                        },
+                        content: {
+                          type: Type.STRING,
+                          description:
+                            'Conteúdo formatado com <p>, <ul>, <li>, <strong>, etc.',
+                        },
+                        numbered: {
+                          type: Type.BOOLEAN,
+                          description:
+                            'Verdadeiro se for subcláusula numerada (2.1, 2.2, etc.).',
+                        },
+                      },
+                      required: ['content'],
+                    },
+                  },
+                },
+                required: ['titulo', 'items'],
+              },
+            },
+            financialV3: {
+              type: Type.OBJECT,
+              description:
+                'Camada de inteligência financeira desacoplada para gestão e métricas.',
+              properties: {
+                totalLabor: { type: Type.NUMBER },
+                totalMaterials: { type: Type.NUMBER },
+                grandTotal: { type: Type.NUMBER },
+                paymentConditions: { type: Type.STRING },
+                deadline: { type: Type.STRING },
+                warranty: { type: Type.STRING },
+                servicesBreakdown: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      name: {
+                        type: Type.STRING,
+                        description: 'Nome do serviço/etapa',
+                      },
+                      value: {
+                        type: Type.NUMBER,
+                        description: 'Valor numérico em Reais',
+                      },
+                      type: {
+                        type: Type.STRING,
+                        description: 'mao_de_obra, material ou misto',
+                      },
+                      description: { type: Type.STRING },
+                      area_m2: { type: Type.NUMBER },
+                      deadline_days: { type: Type.NUMBER },
+                    },
+                    required: ['name', 'value'],
+                  },
+                },
+                paymentSchedule: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      stage: { type: Type.STRING },
+                      percentage: { type: Type.NUMBER },
+                      value: { type: Type.NUMBER },
+                    },
+                    required: ['stage', 'value'],
+                  },
+                },
+              },
+              required: ['grandTotal'],
+            },
+            financialV2: {
+              type: Type.OBJECT,
+              description: 'Retrocompatibilidade V2',
+              properties: {
+                totalLabor: { type: Type.NUMBER },
+                totalMaterials: { type: Type.NUMBER },
+                grandTotal: { type: Type.NUMBER },
+                paymentConditions: { type: Type.STRING },
+                deadline: { type: Type.STRING },
+                warranty: { type: Type.STRING },
+                categories: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      category: { type: Type.STRING },
+                      categoryLabel: { type: Type.STRING },
+                      laborValue: { type: Type.NUMBER },
+                      materialsValue: { type: Type.NUMBER },
+                      totalValue: { type: Type.NUMBER },
+                      description: { type: Type.STRING },
+                    },
+                    required: ['category', 'categoryLabel', 'totalValue'],
+                  },
+                },
+              },
+            },
+          },
+          required: ['documentTitle', 'services', 'financialV3'],
+        },
+      };
+
+      if (modelName.startsWith('gemini-3')) {
+        config.thinkingConfig = { thinkingLevel: ThinkingLevel.LOW };
+      }
+
       return await ai.models.generateContent({
         model: modelName,
         contents: [
@@ -81,191 +242,34 @@ DIRETRIZES DE RIGOR ABSOLUTO:
             ],
           },
         ],
-        config: {
-          systemInstruction,
-          temperature: 0.0,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              documentTitle: {
-                type: Type.STRING,
-                description: 'Título principal da proposta de serviço.',
-              },
-              subtitle: {
-                type: Type.STRING,
-                description:
-                  'Subtítulo (PROPOSTA DE ORÇAMENTO ou PROPOSTA COMERCIAL).',
-              },
-              issueDate: {
-                type: Type.STRING,
-                description: 'Data de emissão no formato YYYY-MM-DD.',
-              },
-              expiration: {
-                type: Type.STRING,
-                description: 'Prazo de validade da proposta.',
-              },
-              client: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING },
-                  street: { type: Type.STRING },
-                  number: { type: Type.STRING },
-                  complement: { type: Type.STRING },
-                  neighborhood: { type: Type.STRING },
-                  city: { type: Type.STRING },
-                  zip: { type: Type.STRING },
-                },
-                required: ['name'],
-              },
-              services: {
-                type: Type.ARRAY,
-                description:
-                  'Lista completa de todas as cláusulas técnicas e de escopo do documento.',
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    titulo: {
-                      type: Type.STRING,
-                      description: 'Título da cláusula (sem número prefixado).',
-                    },
-                    items: {
-                      type: Type.ARRAY,
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          subtitulo: {
-                            type: Type.STRING,
-                            description:
-                              'Subtítulo do item/subcláusula ou vazio se único.',
-                          },
-                          content: {
-                            type: Type.STRING,
-                            description:
-                              'Conteúdo formatado com <p>, <ul>, <li>, <strong>, etc.',
-                          },
-                          numbered: {
-                            type: Type.BOOLEAN,
-                            description:
-                              'Verdadeiro se for subcláusula numerada (2.1, 2.2, etc.).',
-                          },
-                        },
-                        required: ['content'],
-                      },
-                    },
-                  },
-                  required: ['titulo', 'items'],
-                },
-              },
-              financialV3: {
-                type: Type.OBJECT,
-                description:
-                  'Camada de inteligência financeira desacoplada para gestão e métricas.',
-                properties: {
-                  totalLabor: { type: Type.NUMBER },
-                  totalMaterials: { type: Type.NUMBER },
-                  grandTotal: { type: Type.NUMBER },
-                  paymentConditions: { type: Type.STRING },
-                  deadline: { type: Type.STRING },
-                  warranty: { type: Type.STRING },
-                  servicesBreakdown: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        name: {
-                          type: Type.STRING,
-                          description: 'Nome do serviço/etapa',
-                        },
-                        value: {
-                          type: Type.NUMBER,
-                          description: 'Valor numérico em Reais',
-                        },
-                        type: {
-                          type: Type.STRING,
-                          description: 'mao_de_obra, material ou misto',
-                        },
-                        description: { type: Type.STRING },
-                        area_m2: { type: Type.NUMBER },
-                        deadline_days: { type: Type.NUMBER },
-                      },
-                      required: ['name', 'value'],
-                    },
-                  },
-                  paymentSchedule: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        stage: { type: Type.STRING },
-                        percentage: { type: Type.NUMBER },
-                        value: { type: Type.NUMBER },
-                      },
-                      required: ['stage', 'value'],
-                    },
-                  },
-                },
-                required: ['grandTotal'],
-              },
-              financialV2: {
-                type: Type.OBJECT,
-                description: 'Retrocompatibilidade V2',
-                properties: {
-                  totalLabor: { type: Type.NUMBER },
-                  totalMaterials: { type: Type.NUMBER },
-                  grandTotal: { type: Type.NUMBER },
-                  paymentConditions: { type: Type.STRING },
-                  deadline: { type: Type.STRING },
-                  warranty: { type: Type.STRING },
-                  categories: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        category: { type: Type.STRING },
-                        categoryLabel: { type: Type.STRING },
-                        laborValue: { type: Type.NUMBER },
-                        materialsValue: { type: Type.NUMBER },
-                        totalValue: { type: Type.NUMBER },
-                        description: { type: Type.STRING },
-                      },
-                      required: ['category', 'categoryLabel', 'totalValue'],
-                    },
-                  },
-                },
-              },
-            },
-            required: ['documentTitle', 'client', 'services', 'financialV3'],
-          },
-        },
+        config,
       });
     };
 
-    // Priorizamos modelos com alta quota e maior folga de uso diário
+    // Priorizamos modelos com alta performance e estabilidade
     let response;
     const modelsToTry = [
+      'gemini-2.5-flash',
       'gemini-flash-latest',
-      'gemini-3.1-flash-lite',
       'gemini-3.7-flash',
+      'gemini-3.1-flash-lite',
     ];
     let lastError: any = null;
 
     for (const modelName of modelsToTry) {
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          response = await tryGenerate(modelName);
-          if (response && response.text) break;
-        } catch (err: any) {
-          console.warn(
-            `Tentativa ${attempt} com ${modelName} falhou (${err.message})...`,
-          );
-          lastError = err;
-          if (attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 800));
-          }
+      try {
+        console.log(`Iniciando extração com ${modelName}...`);
+        response = await tryGenerate(modelName);
+        if (response && response.text && response.text.trim().length > 0) {
+          console.log(`Sucesso na extração com ${modelName}!`);
+          break;
         }
+      } catch (err: any) {
+        console.warn(
+          `Tentativa com ${modelName} falhou (${err.message}). Tentando próximo modelo...`,
+        );
+        lastError = err;
       }
-      if (response && response.text) break;
     }
 
     if (!response || !response.text) {

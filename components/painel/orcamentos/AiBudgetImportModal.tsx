@@ -48,16 +48,17 @@ export default function AiBudgetImportModal({
   const [textInput, setTextInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [extractedData, setExtractedData] = useState<any | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadingSteps = [
     'Conectando ao Gemini AI...',
-    'Analisando cabeçalho, cliente e endereço...',
-    'Estruturando cláusulas, escopo e especificações técnicas...',
-    'Calculando mão de obra, materiais e condições financeiras...',
-    'Finalizando padronização do orçamento...',
+    'Analisando cabeçalho, cliente e localização...',
+    'Estruturando todas as cláusulas e escopos na íntegra...',
+    'Consolidando quantitativos, mão de obra e cronograma financeiro...',
+    'Finalizando padronização do orçamento com precisão total...',
   ];
 
   const handlePasteClipboard = async () => {
@@ -119,35 +120,53 @@ export default function AiBudgetImportModal({
 
     setLoading(true);
     setLoadingStep(0);
+    setElapsedSeconds(0);
+
+    const timerInterval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
 
     const stepInterval = setInterval(() => {
       setLoadingStep((prev) =>
         prev < loadingSteps.length - 1 ? prev + 1 : prev,
       );
-    }, 1200);
+    }, 2500);
 
     try {
-      let response;
-      let result;
+      let response: Response | null = null;
+      let result: any = null;
 
+      // 1. Tenta rota Express principal
       try {
         response = await fetch('/api/gemini/extract-budget', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: textInput }),
         });
-        result = await response.json();
-      } catch {
-        // Fallback para rota Next.js
-        response = await fetch('/api/ai/parse-budget', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: textInput }),
-        });
-        result = await response.json();
+        if (response && response.ok) {
+          result = await response.json();
+        }
+      } catch (e) {
+        console.warn('Falha na rota /api/gemini/extract-budget:', e);
       }
 
-      if (!response.ok || !result.success) {
+      // 2. Se a primeira falhou, tenta rota Next.js de contingência
+      if (!result || !result.success) {
+        try {
+          response = await fetch('/api/ai/parse-budget', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: textInput }),
+          });
+          if (response && response.ok) {
+            result = await response.json();
+          }
+        } catch (e) {
+          console.warn('Falha na rota /api/ai/parse-budget:', e);
+        }
+      }
+
+      if (!result || !result.success || !result.data) {
         throw new Error(result?.error || 'Erro ao processar proposta com IA.');
       }
 
@@ -157,6 +176,7 @@ export default function AiBudgetImportModal({
       console.error(err);
       toast.error(err.message || 'Falha ao processar proposta com IA.');
     } finally {
+      clearInterval(timerInterval);
       clearInterval(stepInterval);
       setLoading(false);
     }
@@ -518,20 +538,32 @@ export default function AiBudgetImportModal({
               {/* Progresso durante o loading */}
               {loading && (
                 <div className="mt-4 p-4 rounded-xl bg-indigo-50/70 border border-indigo-100 text-center animate-fade-in">
-                  <CircleNotch
-                    size={28}
-                    className="animate-spin text-indigo-600 mx-auto mb-2"
-                  />
-                  <p className="text-xs font-semibold text-indigo-900">
-                    {loadingSteps[loadingStep]}
-                  </p>
-                  <div className="w-full bg-indigo-200 h-1.5 rounded-full mt-3 overflow-hidden">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <CircleNotch
+                      size={24}
+                      className="animate-spin text-indigo-600"
+                    />
+                    <span className="text-xs font-bold text-indigo-900">
+                      {loadingSteps[loadingStep]}
+                    </span>
+                  </div>
+                  <div className="w-full bg-indigo-200 h-1.5 rounded-full mt-2 overflow-hidden">
                     <div
                       className="bg-indigo-600 h-full transition-all duration-500 rounded-full"
                       style={{
-                        width: `${Math.min(100, ((loadingStep + 1) / loadingSteps.length) * 100)}%`,
+                        width: `${Math.min(95, ((loadingStep + 1) / loadingSteps.length) * 100)}%`,
                       }}
                     />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-indigo-600/80 mt-2 font-medium">
+                    <span>
+                      {elapsedSeconds > 10
+                        ? 'Processando documento técnico integral...'
+                        : 'Lendo conteúdo da proposta...'}
+                    </span>
+                    <span className="font-mono bg-indigo-100/80 px-2 py-0.5 rounded text-indigo-800">
+                      {elapsedSeconds}s decorridos
+                    </span>
                   </div>
                 </div>
               )}
