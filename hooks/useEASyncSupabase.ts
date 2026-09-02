@@ -93,7 +93,6 @@ const CANONICAL_TABLE_COLUMNS: Record<string, string[]> = {
     'financial_json',
     'access_password',
     'created_at',
-    'updated_at',
   ],
   clientes: [
     'id',
@@ -112,7 +111,6 @@ const CANONICAL_TABLE_COLUMNS: Record<string, string[]> = {
     'obs',
     'photo_url',
     'created_at',
-    'updated_at',
   ],
   recibos: [
     'id',
@@ -124,10 +122,10 @@ const CANONICAL_TABLE_COLUMNS: Record<string, string[]> = {
     'amount_in_words',
     'issue_date',
     'services_rendered',
+    'description',
     'payment_method',
     'access_password',
     'created_at',
-    'updated_at',
   ],
   notas: [
     'id',
@@ -137,7 +135,6 @@ const CANONICAL_TABLE_COLUMNS: Record<string, string[]> = {
     'pinned',
     'color',
     'created_at',
-    'updated_at',
   ],
   profiles: [
     'id',
@@ -150,7 +147,6 @@ const CANONICAL_TABLE_COLUMNS: Record<string, string[]> = {
     'photo_url',
     'gender',
     'created_at',
-    'updated_at',
   ],
 };
 
@@ -267,7 +263,9 @@ export function useEASyncSupabase<T>(entity: string) {
   const { data, error, mutate, isValidating } = useSWR(
     entity,
     async () => {
-      console.log(`[EASyncSupabase] 🔄 Verificando sincronização de '${entity}'...`);
+      console.log(
+        `[EASyncSupabase] 🔄 Verificando sincronização de '${entity}'...`,
+      );
       try {
         // Aguarda a sessão do Supabase estar disponível antes da consulta
         if (typeof window !== 'undefined') {
@@ -282,7 +280,10 @@ export function useEASyncSupabase<T>(entity: string) {
           .order('created_at', { ascending: false });
 
         if (supabaseError) {
-          console.warn(`[EASyncSupabase] ⚠️ Aviso na consulta de '${entity}':`, supabaseError.message);
+          console.warn(
+            `[EASyncSupabase] ⚠️ Aviso na consulta de '${entity}':`,
+            supabaseError.message,
+          );
           return getLocalData();
         }
 
@@ -315,7 +316,8 @@ export function useEASyncSupabase<T>(entity: string) {
           // 2º sobrepõe com os itens remotos atualizados do Supabase
           for (const remoteItem of remoteData) {
             if (remoteItem && (remoteItem as any).id) {
-              const existing = mergedMap.get(String((remoteItem as any).id)) || {};
+              const existing =
+                mergedMap.get(String((remoteItem as any).id)) || {};
               mergedMap.set(String((remoteItem as any).id), {
                 ...existing,
                 ...remoteItem,
@@ -338,7 +340,10 @@ export function useEASyncSupabase<T>(entity: string) {
 
         return getLocalData();
       } catch (err: any) {
-        console.error(`[EASyncSupabase] ❌ Falha na sincronização de '${entity}':`, err);
+        console.error(
+          `[EASyncSupabase] ❌ Falha na sincronização de '${entity}':`,
+          err,
+        );
         return getLocalData();
       }
     },
@@ -355,7 +360,9 @@ export function useEASyncSupabase<T>(entity: string) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          console.log(`[EASyncSupabase] Sessão ativa detectada, revalidando '${entity}'...`);
+          console.log(
+            `[EASyncSupabase] Sessão ativa detectada, revalidando '${entity}'...`,
+          );
           mutate();
         }
       },
@@ -371,7 +378,9 @@ export function useEASyncSupabase<T>(entity: string) {
     payload: any,
     action: 'create' | 'update' | 'delete' = 'create',
   ): Promise<any> => {
-    console.log(`[EASyncSupabase] 💾 Executando ${action.toUpperCase()} em '${entity}'`);
+    console.log(
+      `[EASyncSupabase] 💾 Executando ${action.toUpperCase()} em '${entity}'`,
+    );
 
     const activeUserId = await getActiveUserId();
     const previousData = Array.isArray(data) ? data : getLocalData();
@@ -409,30 +418,68 @@ export function useEASyncSupabase<T>(entity: string) {
       if (action === 'delete') {
         result = await supabase.from(entity).delete().eq('id', targetId);
       } else {
-        // Envia diretamente o payload compatível com as colunas reais da tabela no Supabase,
-        // evitando erros 400 (PGRST204: Could not find column in schema cache) no console
-        const canonicalPayload = filterToCanonicalColumns(entity, fullSanitizedItem);
+        // Envia diretamente o payload compatível com as colunas reais da tabela no Supabase
+        const canonicalPayload = filterToCanonicalColumns(
+          entity,
+          fullSanitizedItem,
+        );
+        const currentPayload = { ...canonicalPayload };
+        let attempts = 0;
+        const maxAttempts = 6;
 
-        if (action === 'create') {
-          // Tentativa 1 com select
-          result = await supabase.from(entity).insert([canonicalPayload]).select();
-          // Se o insert funcionou mas o .select() foi bloqueado por RLS (comum em tabelas restritas)
-          if (result?.error && (result.error.code === '42501' || result.error.message?.includes('policy'))) {
-            console.warn(`[EASyncSupabase] RLS bloqueou o select de retorno. Tentando insert direto sem select...`);
-            result = await supabase.from(entity).insert([canonicalPayload]);
-          }
-        } else if (action === 'update') {
-          result = await supabase
-            .from(entity)
-            .update(canonicalPayload)
-            .eq('id', targetId)
-            .select();
-          if (result?.error && (result.error.code === '42501' || result.error.message?.includes('policy'))) {
+        while (attempts < maxAttempts) {
+          attempts++;
+          if (action === 'create') {
             result = await supabase
               .from(entity)
-              .update(canonicalPayload)
-              .eq('id', targetId);
+              .insert([currentPayload])
+              .select();
+            if (
+              result?.error &&
+              (result.error.code === '42501' ||
+                result.error.message?.includes('policy'))
+            ) {
+              console.warn(
+                `[EASyncSupabase] RLS bloqueou o select de retorno. Tentando insert direto sem select...`,
+              );
+              result = await supabase.from(entity).insert([currentPayload]);
+            }
+          } else if (action === 'update') {
+            result = await supabase
+              .from(entity)
+              .update(currentPayload)
+              .eq('id', targetId)
+              .select();
+            if (
+              result?.error &&
+              (result.error.code === '42501' ||
+                result.error.message?.includes('policy'))
+            ) {
+              result = await supabase
+                .from(entity)
+                .update(currentPayload)
+                .eq('id', targetId);
+            }
           }
+
+          if (result?.error) {
+            const errorMsg = result.error.message || '';
+            const match =
+              errorMsg.match(/Could not find the '([^']+)' column/i) ||
+              errorMsg.match(/column "?([a-zA-Z0-9_]+)"? of/i) ||
+              errorMsg.match(/column "?([a-zA-Z0-9_]+)"? does not exist/i);
+
+            if (match && match[1] && currentPayload[match[1]] !== undefined) {
+              const badCol = match[1];
+              console.warn(
+                `[EASyncSupabase] ⚠️ Auto-healing: removendo coluna '${badCol}' não existente na tabela '${entity}' e reenviando...`,
+              );
+              delete currentPayload[badCol];
+              continue;
+            }
+          }
+
+          break;
         }
       }
 
@@ -451,7 +498,8 @@ export function useEASyncSupabase<T>(entity: string) {
       }
 
       // Se o Supabase retornou o registro criado/atualizado com sucesso
-      const serverRecord = Array.isArray(result?.data) && result.data[0] ? result.data[0] : null;
+      const serverRecord =
+        Array.isArray(result?.data) && result.data[0] ? result.data[0] : null;
       if (serverRecord) {
         const confirmedItem = {
           ...fullSanitizedItem,
@@ -468,7 +516,9 @@ export function useEASyncSupabase<T>(entity: string) {
         await mutate(updatedData, false);
       }
 
-      console.log(`[EASyncSupabase] 🚀 Sucesso ao persistir no Supabase '${entity}'`);
+      console.log(
+        `[EASyncSupabase] 🚀 Sucesso ao persistir no Supabase '${entity}'`,
+      );
       toast.success(
         action === 'delete'
           ? 'Removido com sucesso!'
@@ -479,7 +529,10 @@ export function useEASyncSupabase<T>(entity: string) {
 
       return fullSanitizedItem;
     } catch (err: any) {
-      console.warn(`[EASyncSupabase] ⚠️ Exceção na sincronização com nuvem:`, err);
+      console.warn(
+        `[EASyncSupabase] ⚠️ Exceção na sincronização com nuvem:`,
+        err,
+      );
       toast.success('Salvo localmente com segurança!');
       return fullSanitizedItem;
     } finally {
@@ -495,4 +548,3 @@ export function useEASyncSupabase<T>(entity: string) {
     pull: () => mutate(),
   };
 }
-
