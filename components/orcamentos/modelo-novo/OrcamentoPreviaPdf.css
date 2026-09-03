@@ -117,10 +117,11 @@
   display: grid !important;
   grid-template-columns: 0.26fr 0.74fr !important;
   width: 100% !important;
-  aspect-ratio: 5.07 / 1 !important;
-  min-height: 135px !important;
-  max-height: 155px !important;
-  padding: 1cqw 2cqw !important;
+  height: auto !important;
+  min-height: 130px !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  padding: 8px 16px !important;
   margin: 0 !important;
   margin-bottom: 0 !important;
   box-sizing: border-box !important;
@@ -141,7 +142,6 @@
 .ea-modelo-novo-root.is-print-mode .logoAreaNovo {
   display: flex !important;
   height: 100% !important;
-  aspect-ratio: 1 !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 0.5cqw !important;
@@ -149,7 +149,7 @@
 
 .ea-modelo-novo-root.is-print-preview .logoImgNovo,
 .ea-modelo-novo-root.is-print-mode .logoImgNovo {
-  height: 86% !important;
+  max-height: 105px !important;
   width: auto !important;
   max-width: 90% !important;
   aspect-ratio: 1 !important;
@@ -181,7 +181,7 @@
 .ea-modelo-novo-root.is-print-preview .nameImgNovo,
 .ea-modelo-novo-root.is-print-mode .nameImgNovo {
   width: 100% !important;
-  max-width: 300px !important;
+  max-width: 270px !important;
   height: auto !important;
   object-fit: contain !important;
   margin-bottom: 2px !important;
@@ -190,7 +190,7 @@
 
 .ea-modelo-novo-root.is-print-preview .cnpjTextNovo,
 .ea-modelo-novo-root.is-print-mode .cnpjTextNovo {
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   font-weight: bold !important;
   color: #ffffff !important;
   display: block !important;
@@ -199,8 +199,8 @@
 
 .ea-modelo-novo-root.is-print-preview .addressTextNovo,
 .ea-modelo-novo-root.is-print-mode .addressTextNovo {
-  font-size: 10px !important;
-  margin: 1.5px 0 !important;
+  font-size: 9.5px !important;
+  margin: 1px 0 !important;
   color: #f1f5f9 !important;
   line-height: 1.2 !important;
 }
@@ -209,9 +209,9 @@
 .ea-modelo-novo-root.is-print-preview .contactLinkNovo,
 .ea-modelo-novo-root.is-print-mode .contactsAreaNovo,
 .ea-modelo-novo-root.is-print-mode .contactLinkNovo {
-  font-size: 10px !important;
+  font-size: 9.5px !important;
   color: #f8fafc !important;
-  line-height: 1.22 !important;
+  line-height: 1.2 !important;
   text-decoration: none !important;
 }
 
@@ -226,7 +226,7 @@
   background: #ffffff !important;
   width: calc(100% - 1.5rem) !important;
   padding: 0.35em 1em !important;
-  margin: -1px auto 0 auto !important;
+  margin: 0 auto !important;
   border-radius: 0 0 1rem 1rem !important;
   display: flex !important;
   align-items: center !important;
@@ -242,6 +242,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
   position: relative !important;
   z-index: 2 !important;
+  clear: both !important;
 }
 
 .ea-modelo-novo-root.is-print-preview doc-id span,
@@ -364,4 +365,12 @@
 .ea-modelo-novo-root.is-print-mode signatures {
   margin-top: 1.2cm !important;
   padding: 0.5cm 1cm !important;
+}
+
+/* Remove contornos e sombras duplicadas no título em modo impressão / prévia */
+.ea-modelo-novo-root.is-print-preview doc-title_type .textShadow::before,
+.ea-modelo-novo-root.is-print-mode doc-title_type .textShadow::before {
+  display: none !important;
+  -webkit-text-stroke: 0 !important;
+  filter: none !important;
 }

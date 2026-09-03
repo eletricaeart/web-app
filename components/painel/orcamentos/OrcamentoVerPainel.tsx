@@ -505,6 +505,7 @@ export default function OrcamentoVerPainel() {
         data={data}
         clientName={displayData.clientName}
         budgetTitle={displayData.documentTitle}
+        displayData={displayData}
       />
 
       <View tag="pageContainer">

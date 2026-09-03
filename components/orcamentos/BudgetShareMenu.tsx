@@ -1,7 +1,7 @@
 // components/orcamentos/BudgetShareMenu.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { domToBlob } from 'modern-screenshot';
 import {
   ImageIcon,
@@ -24,6 +24,8 @@ import View from '../layout/View';
 import { toast } from 'sonner';
 import { useOptionalPainelRouter } from '@/app/painel/_router/PainelRouterContext';
 import { imprimirNovoModeloPdf } from './modelo-novo/geradorNovoPdf';
+import OrcamentoModeloNovoView from './modelo-novo/OrcamentoModeloNovoView';
+import { OrcamentoModeloNovoStyles } from './modelo-novo/OrcamentoModeloNovoStyles';
 import { styles4send } from './styles4send';
 import { prestyle } from './prestyle';
 import { EACardStyles } from './EACardStylesheet';
@@ -41,6 +43,7 @@ interface BudgetShareMenuProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   budgetTitle?: string;
+  displayData?: any;
 }
 
 export default function BudgetShareMenu({
@@ -49,11 +52,21 @@ export default function BudgetShareMenu({
   data,
   open,
   onOpenChange,
+  budgetTitle,
+  displayData,
 }: BudgetShareMenuProps) {
   const router = useOptionalPainelRouter();
+
+  // Estados do gerador clássico de PDF
   const [generatedFile, setGeneratedFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Estados do NOVO gerador de PDF (Backend Puppeteer + Novo Modelo)
+  const [isGeneratingNovoPdf, setIsGeneratingNovoPdf] = useState(false);
+  const [generatedNovoFile, setGeneratedNovoFile] = useState<File | null>(null);
+  const [novoPdfUrl, setNovoPdfUrl] = useState<string | null>(null);
+  const novoModeloRef = useRef<HTMLDivElement | null>(null);
 
   const navigateToSection = (
     section: string,
@@ -66,6 +79,107 @@ export default function BudgetShareMenu({
       window.location.search = `?${qs.toString()}`;
     }
   };
+
+  // Montagem segura e consistente dos dados do Novo Modelo
+  const effectiveDisplayData = useMemo(() => {
+    if (displayData) return displayData;
+    if (!data) {
+      return {
+        clientName: clientName || 'Cliente',
+        documentTitle: budgetTitle || 'ORÇAMENTO',
+        issueDate: new Date().toISOString(),
+        expiration: '15 dias',
+        subtitle: 'PROPOSTA DE ORÇAMENTO',
+        services: [],
+        address: {},
+      };
+    }
+
+    const financial = data.financial_json ||
+      data.financial || {
+        labor: 0,
+        materials: 0,
+        discount: 0,
+        total: 0,
+      };
+
+    const servicesRaw = (() => {
+      const raw =
+        data.services_json ||
+        data.services ||
+        data.servicos ||
+        data['Serviços JSON'];
+      if (!raw) return [];
+      if (typeof raw === 'string') {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return [];
+        }
+      }
+      return Array.isArray(raw) ? raw : [];
+    })();
+
+    return {
+      clientName:
+        data.client_name_manual ||
+        data.clientName ||
+        data.cliente?.name ||
+        clientName ||
+        'Cliente',
+      documentTitle:
+        data.docTitle?.title ||
+        data.title ||
+        data['Título do Documento'] ||
+        budgetTitle ||
+        'ORÇAMENTO',
+      issueDate:
+        data.issueDate ||
+        data.data ||
+        data.created_at ||
+        new Date().toISOString(),
+      expiration: data.expiration || data.validade || '15 dias',
+      subtitle:
+        data.subtitle ||
+        data.docTitle?.subtitle ||
+        data['Subtítulo'] ||
+        'PROPOSTA DE ORÇAMENTO',
+      financial,
+      services: servicesRaw,
+      address: {
+        street:
+          data.street ||
+          data.clientAddress?.street ||
+          data.cliente?.rua ||
+          data.financial_json?.address?.street ||
+          '',
+        number:
+          data.number ||
+          data.clientAddress?.number ||
+          data.cliente?.num ||
+          data.financial_json?.address?.number ||
+          '',
+        neighborhood:
+          data.neighborhood ||
+          data.clientAddress?.neighborhood ||
+          data.cliente?.bairro ||
+          data.financial_json?.address?.neighborhood ||
+          '',
+        city:
+          data.city ||
+          data.clientAddress?.city ||
+          data.cliente?.cidade ||
+          data.financial_json?.address?.city ||
+          '',
+        complement:
+          data.complement ||
+          data.clientAddress?.complement ||
+          data.cliente?.complemento ||
+          data.financial_json?.address?.complement ||
+          '',
+      },
+    };
+  }, [data, clientName, budgetTitle, displayData]);
 
   // Estados de teste e otimização configuráveis
   const [density, setDensity] = useState<'compact' | 'standard' | 'minimal'>(
@@ -478,22 +592,148 @@ export default function BudgetShareMenu({
   };
 
   /**
-   * --- [ handle native browser print ]
+   * --- [ handle native browser print (utiliza o NOVO MODELO definitivamente) ]
    * */
   const handleNativePrint = () => {
-    const styleEl = document.createElement('style');
-    styleEl.id = 'ea-print-custom-rules';
-    styleEl.innerHTML = getPdfCustomStyles();
-    document.head.appendChild(styleEl);
-
     onOpenChange(false);
+    toast.dismiss();
     setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        const el = document.getElementById('ea-print-custom-rules');
-        if (el) el.remove();
-      }, 2000);
-    }, 500);
+      imprimirNovoModeloPdf();
+    }, 300);
+  };
+
+  /**
+   * --- [ GERAÇÃO DO NOVO MODELO NO BACKEND COM PUPPETEER ]
+   */
+  const generateNovoPdfOnServerAndReturnIt = async () => {
+    if (!novoModeloRef.current) return;
+    setIsGeneratingNovoPdf(true);
+    setGeneratedNovoFile(null);
+
+    try {
+      const contentHtml = novoModeloRef.current.innerHTML;
+      const inlineStyles = Array.from(document.querySelectorAll('style'))
+        .map((s) => s.innerHTML)
+        .join('\n');
+
+      const htmlFull = `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${effectiveDisplayData.documentTitle || 'Orçamento Elétrica & Art'}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+      ${inlineStyles}
+    </style>
+    <style id="ea-novo-modelo-complete-styles">
+      ${OrcamentoModeloNovoStyles}
+      ${TextStylesheet}
+      ${EACardStyles}
+
+      @page {
+        size: A4 portrait;
+        margin: 8mm 6mm 8mm 6mm;
+      }
+
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      body {
+        background-color: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .no-print, [data-vaul-overlay], [data-slot="drawer-overlay"], .toaster, [data-sonner-toaster] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body class="ea-modelo-novo-root is-print-mode is-print-preview bg-white">
+    <div id="print-root" class="w-full">
+      ${contentHtml}
+    </div>
+  </body>
+</html>`;
+
+      const safeName = (clientName || 'Cliente').replace(
+        /[^a-zA-Z0-9_\-]/g,
+        '_',
+      );
+      const filename = `Orcamento_${safeName}_NovoModelo.pdf`;
+
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html: htmlFull, filename }),
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Erro no servidor ao gerar PDF');
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], filename, {
+        type: 'application/pdf',
+      });
+
+      setGeneratedNovoFile(file);
+      setNovoPdfUrl(window.URL.createObjectURL(blob));
+
+      toast.success('PDF do Novo Modelo gerado com sucesso via Puppeteer!');
+    } catch (err: any) {
+      console.error('[Puppeteer Novo Modelo]', err);
+      toast.error(
+        err.message || 'Erro ao gerar PDF do Novo Modelo no servidor',
+      );
+    } finally {
+      setIsGeneratingNovoPdf(false);
+    }
+  };
+
+  /**
+   * --- [ Compartilha ou baixa o PDF gerado pelo Puppeteer no Novo Modelo ]
+   */
+  const handleShareNovoPdf = async () => {
+    if (!generatedNovoFile || !novoPdfUrl) return;
+
+    try {
+      if (
+        navigator.share &&
+        navigator.canShare({ files: [generatedNovoFile] })
+      ) {
+        await navigator.share({
+          files: [generatedNovoFile],
+          title:
+            effectiveDisplayData.documentTitle || 'Orçamento Elétrica & Art',
+          text: `Olá! Segue o orçamento de ${clientName} gerado com o novo modelo.`,
+        });
+      } else {
+        const a = document.createElement('a');
+        a.href = novoPdfUrl;
+        a.download = generatedNovoFile.name;
+        a.click();
+        toast.info('Download do PDF iniciado!');
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        const a = document.createElement('a');
+        a.href = novoPdfUrl;
+        a.download = generatedNovoFile.name;
+        a.click();
+      }
+    }
   };
 
   /**
@@ -627,9 +867,34 @@ export default function BudgetShareMenu({
           </div>
         </div>
 
+        {/* Contêiner invisível para renderização em memória do Novo Modelo (usado pelo Puppeteer) */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            left: '-99999px',
+            top: 0,
+            width: '794px',
+            pointerEvents: 'none',
+            opacity: 0,
+            zIndex: -9999,
+          }}
+        >
+          <div
+            ref={novoModeloRef}
+            className="ea-modelo-novo-root is-print-mode is-print-preview bg-white"
+          >
+            <OrcamentoModeloNovoView
+              data={data}
+              displayData={effectiveDisplayData}
+              isPrintMode={true}
+            />
+          </div>
+        </div>
+
         {/* Seção Novo Modelo (Teste e Validação) */}
         <div className="px-4 mb-3">
-          <div className="p-3 bg-gradient-to-r from-indigo-50/90 to-purple-50/90 border border-indigo-100 rounded-2xl flex flex-col gap-2">
+          <div className="p-3 bg-gradient-to-r from-indigo-50/90 to-purple-50/90 border border-indigo-100 rounded-2xl flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-indigo-900 font-bold text-xs">
                 <Sparkle size={15} weight="fill" className="text-indigo-600" />
@@ -654,38 +919,88 @@ export default function BudgetShareMenu({
               )}
             </div>
             <p className="text-[11px] text-slate-600 leading-snug">
-              Modelo secundário isolado com estilização unificada e anti-cortes.
-              Não afeta o modelo original.
+              Estrutura com cabeçalho compacto, sem sobreposições e anti-quebra
+              de páginas testado e validado.
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  onOpenChange(false);
-                  if (data?.id) {
-                    navigateToSection('orcamentos.previa-pdf', {
-                      id: String(data.id),
-                    });
-                  }
-                }}
-                className="py-2 px-3 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all"
-              >
-                <Eye size={15} weight="bold" />
-                <span>Prévia do PDF</span>
-              </button>
-              <button
-                onClick={() => {
-                  onOpenChange(false);
-                  toast.dismiss();
-                  // Espera o drawer fechar suavemente para limpar o backdrop da tela
-                  setTimeout(() => {
-                    imprimirNovoModeloPdf();
-                  }, 300);
-                }}
-                className="py-2 px-3 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
-              >
-                <FilePdf size={15} weight="fill" />
-                <span>Gerar PDF</span>
-              </button>
+
+            {/* Ações do Novo Modelo */}
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    onOpenChange(false);
+                    if (data?.id) {
+                      navigateToSection('orcamentos.previa-pdf', {
+                        id: String(data.id),
+                      });
+                    }
+                  }}
+                  className="py-2 px-3 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Eye size={15} weight="bold" />
+                  <span>Prévia do PDF</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onOpenChange(false);
+                    toast.dismiss();
+                    setTimeout(() => {
+                      imprimirNovoModeloPdf();
+                    }, 300);
+                  }}
+                  className="py-2 px-3 bg-sky-600 hover:bg-sky-700 active:scale-[0.99] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                  title="Abre a janela de impressão nativa do navegador com o Novo Modelo"
+                >
+                  <Printer size={15} weight="bold" />
+                  <span>Imprimir Direto</span>
+                </button>
+              </div>
+
+              {/* Botão de Testes Solicitado: Gerar PDF no Backend com Puppeteer */}
+              {!generatedNovoFile ? (
+                <button
+                  onClick={generateNovoPdfOnServerAndReturnIt}
+                  disabled={isGeneratingNovoPdf}
+                  className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-75 active:scale-[0.99] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                  title="Gera o arquivo PDF no backend utilizando Puppeteer e a estrutura do Novo Modelo"
+                >
+                  {isGeneratingNovoPdf ? (
+                    <>
+                      <SpinnerGap
+                        className="animate-spin text-white"
+                        size={16}
+                      />
+                      <span>Renderizando no Servidor (Puppeteer)...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FilePdf size={16} weight="fill" />
+                      <span>Testar Gerar PDF no Backend (Puppeteer)</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleShareNovoPdf}
+                    className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                    title="Compartilhar ou baixar o PDF gerado pelo Puppeteer"
+                  >
+                    <CheckCircle size={16} weight="fill" />
+                    <span>Compartilhar / Baixar PDF Novo</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setGeneratedNovoFile(null);
+                      setNovoPdfUrl(null);
+                    }}
+                    className="py-2.5 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+                    title="Gerar novamente"
+                  >
+                    Gerar Outro
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

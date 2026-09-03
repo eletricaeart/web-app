@@ -10,11 +10,16 @@ import {
   ArrowCounterClockwise,
   Sparkle,
   Eye,
+  SpinnerGap,
+  CheckCircle,
 } from '@phosphor-icons/react';
 import { useEASyncSupabase } from '@/hooks/useEASyncSupabase';
 import BudgetSkeleton from './BudgetSkeleton';
 import OrcamentoModeloNovoView from '@/components/orcamentos/modelo-novo/OrcamentoModeloNovoView';
-import { imprimirNovoModeloPdf } from '@/components/orcamentos/modelo-novo/geradorNovoPdf';
+import {
+  imprimirNovoModeloPdf,
+  gerarPdfPuppeteerBackend,
+} from '@/components/orcamentos/modelo-novo/geradorNovoPdf';
 import { toast } from 'sonner';
 
 export default function OrcamentoVerPainelNovo() {
@@ -27,6 +32,8 @@ export default function OrcamentoVerPainelNovo() {
   const budgetRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGeneratingPuppeteer, setIsGeneratingPuppeteer] = useState(false);
+  const [puppeteerPdfUrl, setPuppeteerPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (orcamentos && id) {
@@ -155,6 +162,47 @@ export default function OrcamentoVerPainelNovo() {
     imprimirNovoModeloPdf();
   };
 
+  const handleGerarPuppeteer = async () => {
+    if (!budgetRef.current) {
+      toast.error('Elemento do orçamento não carregado para renderização.');
+      return;
+    }
+    setIsGeneratingPuppeteer(true);
+    toast.loading('Renderizando PDF no servidor via Puppeteer...', {
+      id: 'puppeteer-toast',
+    });
+
+    try {
+      const result = await gerarPdfPuppeteerBackend(
+        budgetRef.current,
+        displayData?.clientName || 'Cliente',
+      );
+
+      if (result) {
+        setPuppeteerPdfUrl(result.url);
+        toast.success('PDF gerado com sucesso via Puppeteer!', {
+          id: 'puppeteer-toast',
+        });
+        // Abre o PDF gerado em nova aba ou inicia download
+        const a = document.createElement('a');
+        a.href = result.url;
+        a.target = '_blank';
+        a.download = result.file.name;
+        a.click();
+      } else {
+        toast.error('Falha ao gerar PDF no backend. Verifique o servidor.', {
+          id: 'puppeteer-toast',
+        });
+      }
+    } catch (e) {
+      toast.error('Erro na requisição ao Puppeteer.', {
+        id: 'puppeteer-toast',
+      });
+    } finally {
+      setIsGeneratingPuppeteer(false);
+    }
+  };
+
   const handleVoltarAoClassico = () => {
     router.push('orcamentos.ver', { id });
   };
@@ -205,10 +253,29 @@ export default function OrcamentoVerPainelNovo() {
               </button>
               <button
                 onClick={handleImprimir}
-                className="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-sm transition-colors"
+                className="text-xs font-bold px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-1.5 shadow-sm transition-colors"
+                title="Imprimir direto pelo navegador"
               >
                 <FilePdf size={16} weight="duotone" />
-                <span>Gerar Novo PDF</span>
+                <span>Imprimir Direto</span>
+              </button>
+              <button
+                onClick={handleGerarPuppeteer}
+                disabled={isGeneratingPuppeteer}
+                className="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-75 text-white flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                title="Gerar PDF no backend com Puppeteer"
+              >
+                {isGeneratingPuppeteer ? (
+                  <>
+                    <SpinnerGap size={16} className="animate-spin" />
+                    <span>Gerando Puppeteer...</span>
+                  </>
+                ) : (
+                  <>
+                    <FilePdf size={16} weight="fill" />
+                    <span>Testar Puppeteer</span>
+                  </>
+                )}
               </button>
             </div>
           }
@@ -229,6 +296,19 @@ export default function OrcamentoVerPainelNovo() {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleGerarPuppeteer}
+            disabled={isGeneratingPuppeteer}
+            className="text-indigo-700 font-bold hover:text-indigo-900 underline flex items-center gap-1 cursor-pointer"
+          >
+            <FilePdf size={14} weight="fill" />
+            <span>
+              {isGeneratingPuppeteer
+                ? 'Gerando no Puppeteer...'
+                : 'Testar Gerar PDF no Backend (Puppeteer)'}
+            </span>
+          </button>
+          <span className="text-indigo-300">•</span>
           <button
             onClick={() => router.push('orcamentos.previa-pdf', { id })}
             className="text-emerald-700 font-bold hover:text-emerald-800 underline flex items-center gap-1"

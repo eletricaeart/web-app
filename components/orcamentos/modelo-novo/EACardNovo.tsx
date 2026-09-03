@@ -27,17 +27,17 @@ const EACardNovo: React.FC = () => {
   return (
     <View
       tag="ea-card-novo"
-      className="ea_card_novo relative z-10 w-full grid grid-cols-[0.26fr_0.74fr] aspect-[5.07/1] min-h-[140px] max-h-[160px] p-[1cqw_2cqw] box-border text-slate-100 m-0 overflow-hidden shadow-md rounded-t-2xl rounded-b [print-color-adjust:exact] [WebkitPrintColorAdjust:exact] bg-cover bg-center bg-no-repeat bg-[#0a0f19]/90 print:grid print:grid-cols-[0.26fr_0.74fr] print:aspect-[5.07/1] print:min-h-[140px] print:max-h-[155px] print:break-inside-avoid print:p-[1cqw_2cqw] print:rounded-t-2xl print:rounded-b"
+      className="ea_card_novo relative z-10 w-full grid grid-cols-[0.26fr_0.74fr] h-auto min-h-[135px] p-[1.2cqw_2cqw] box-border text-slate-100 m-0 overflow-hidden shadow-md rounded-t-2xl rounded-b [print-color-adjust:exact] [WebkitPrintColorAdjust:exact] bg-cover bg-center bg-no-repeat bg-[#0a0f19]/90 print:grid print:grid-cols-[0.26fr_0.74fr] print:h-auto print:min-h-[130px] print:break-inside-avoid print:p-[8px_16px] print:rounded-t-2xl print:rounded-b"
       style={{
         backgroundImage: `url(${IMAGE_PATHS.bgUri})`,
       }}
     >
       {/* Logotipo à esquerda proporcional à nova altura */}
-      <div className="logoAreaNovo flex h-full aspect-square items-center justify-center p-[0.5cqw] box-border print:h-full print:flex print:items-center print:justify-center">
+      <div className="logoAreaNovo flex h-full items-center justify-center p-[0.5cqw] box-border print:h-full print:flex print:items-center print:justify-center">
         <img
           src={IMAGE_PATHS.logoUri}
           alt="EA Logo"
-          className="logoImgNovo h-[86%] w-auto max-w-[90%] aspect-square rounded-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] print:h-[86%] print:w-auto print:max-w-[90%] print:object-contain"
+          className="logoImgNovo max-h-[110px] w-auto max-w-[90%] aspect-square rounded-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] print:max-h-[105px] print:w-auto print:max-w-[90%] print:object-contain"
         />
       </div>
 
@@ -47,20 +47,20 @@ const EACardNovo: React.FC = () => {
           <img
             src={IMAGE_PATHS.nameUri}
             alt="Elétrica & Art"
-            className="nameImgNovo w-full max-w-[310px] h-auto object-contain mb-0.5 block print:max-w-[300px] print:mb-0.5"
+            className="nameImgNovo w-full max-w-[290px] h-auto object-contain mb-0.5 block print:max-w-[270px] print:mb-0.5"
           />
         </div>
 
-        <span className="cnpjTextNovo text-[clamp(9px,1.8cqw,12px)] font-bold text-white block leading-tight print:text-[11px] print:leading-tight">
+        <span className="cnpjTextNovo text-[clamp(9px,1.8cqw,11.5px)] font-bold text-white block leading-tight print:text-[10.5px] print:leading-tight">
           CNPJ 32.858.892/0001-52 - IM 67358/0001
         </span>
 
-        <p className="addressTextNovo text-[clamp(8.5px,1.6cqw,11px)] my-0.5 text-slate-100 leading-tight print:text-[10px] print:leading-tight print:my-[1.5px]">
+        <p className="addressTextNovo text-[clamp(8.5px,1.6cqw,10.5px)] my-0.5 text-slate-100 leading-tight print:text-[9.5px] print:leading-tight print:my-[1px]">
           Rua José Alves Maciel, 40 - Aviação <br />
           Praia Grande - São Paulo - SP - Cep 11702-440
         </p>
 
-        <div className="contactsAreaNovo text-[clamp(8.5px,1.6cqw,11px)] text-slate-50 leading-[1.22] print:text-[10px] print:leading-[1.22]">
+        <div className="contactsAreaNovo text-[clamp(8.5px,1.6cqw,10.5px)] text-slate-50 leading-[1.22] print:text-[9.5px] print:leading-[1.2]">
           <a
             href="tel:+5513997685853"
             className="contactLinkNovo text-inherit no-underline hover:text-white print:text-inherit print:no-underline"
