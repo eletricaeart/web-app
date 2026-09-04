@@ -9,14 +9,16 @@ subclause-body {
   flex-direction: column;
 }
 /* novo acima*/
-[tag='subclause-body'] ul {
+[tag='subclause-body'] ul,
+subclause-body ul {
   list-style-type: disc !important;
   margin-left: 1.5rem !important;
   margin-bottom: 1rem !important;
   display: block !important;
 }
 
-[tag='subclause-body'] li {
+[tag='subclause-body'] li,
+subclause-body li {
   display: list-item !important;
   margin-bottom: 0.25rem !important;
 }

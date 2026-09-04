@@ -446,10 +446,11 @@ export default function OrcamentoVerPainel() {
         dangerouslySetInnerHTML={{
           __html: `
         @media print { ul, li { list-style-type: disc !important; display: list-item !important; } }
-        [tag="subclause-body"] ul { list-style-type: none !important; margin-top: 8px !important; margin-bottom: 8px !important; }
-        [tag="subclause-body"] li { display: block !important; position: relative !important; padding-left: 1.5rem !important; margin-bottom: 4px !important; }
-        [tag="subclause-body"] li::before { content: "•" !important; position: absolute !important; left: 0.5rem !important; color: #00559c !important; font-weight: bold !important; }
+        subclause-body ul, [tag="subclause-body"] ul { list-style-type: none !important; margin-top: 8px !important; margin-bottom: 8px !important; }
+        subclause-body li, [tag="subclause-body"] li { display: block !important; position: relative !important; padding-left: 1.5rem !important; margin-bottom: 4px !important; }
+        subclause-body li::before, [tag="subclause-body"] li::before { content: "•" !important; position: absolute !important; left: 0.5rem !important; color: #00559c !important; font-weight: bold !important; }
         tagc, .tagc, blockquote { display: block; padding: 10px 14px; background: #e8f1ff; color: #0075bd; border-radius: 12px; margin: 8px 0; border-left: 4px solid #27f; }
+        tagb, .tagb { display: block; margin: 8px 0; }
         @media print { ul { list-style-type: none !important; } li { list-style-type: disc !important; display: list-item !important; } }
       `,
         }}

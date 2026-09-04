@@ -16,146 +16,6 @@ export interface ViewProps {
   className?: string;
 }
 
-const VALID_HTML_TAGS = new Set([
-  'a',
-  'abbr',
-  'address',
-  'area',
-  'article',
-  'aside',
-  'audio',
-  'b',
-  'base',
-  'bdi',
-  'bdo',
-  'blockquote',
-  'body',
-  'br',
-  'button',
-  'canvas',
-  'caption',
-  'cite',
-  'code',
-  'col',
-  'colgroup',
-  'data',
-  'datalist',
-  'dd',
-  'del',
-  'details',
-  'dfn',
-  'dialog',
-  'div',
-  'dl',
-  'dt',
-  'em',
-  'embed',
-  'fieldset',
-  'figcaption',
-  'figure',
-  'footer',
-  'form',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'head',
-  'header',
-  'hgroup',
-  'hr',
-  'html',
-  'i',
-  'iframe',
-  'img',
-  'input',
-  'ins',
-  'kbd',
-  'label',
-  'legend',
-  'li',
-  'link',
-  'main',
-  'map',
-  'mark',
-  'menu',
-  'meta',
-  'meter',
-  'nav',
-  'noscript',
-  'object',
-  'ol',
-  'optgroup',
-  'option',
-  'output',
-  'p',
-  'picture',
-  'pre',
-  'progress',
-  'q',
-  'rp',
-  'rt',
-  'ruby',
-  's',
-  'samp',
-  'script',
-  'search',
-  'section',
-  'select',
-  'slot',
-  'small',
-  'source',
-  'span',
-  'strong',
-  'style',
-  'sub',
-  'summary',
-  'sup',
-  'table',
-  'tbody',
-  'td',
-  'template',
-  'textarea',
-  'tfoot',
-  'th',
-  'thead',
-  'time',
-  'title',
-  'tr',
-  'track',
-  'u',
-  'ul',
-  'var',
-  'video',
-  'wbr',
-]);
-
-function getSafeTag(tag?: string | ElementType): {
-  SafeTag: ElementType;
-  dataTag?: string;
-} {
-  if (!tag) return { SafeTag: 'div' };
-  if (typeof tag !== 'string') return { SafeTag: tag };
-
-  const normalized = tag.toLowerCase().trim();
-
-  // Elementos customizados com hífen (ex: 'page-header', 'card-client') são válidos no HTML5
-  if (normalized.includes('-')) {
-    return { SafeTag: normalized as ElementType, dataTag: normalized };
-  }
-
-  // Tags HTML nativas padrão (ex: 'div', 'section', 'span', 'p')
-  if (VALID_HTML_TAGS.has(normalized)) {
-    return { SafeTag: normalized as ElementType };
-  }
-
-  // Tags não padronizadas sem hífen (ex: 'page', 't', 'ui', 'card', 'content', etc.)
-  // Renderizamos como elemento nativo seguro com data-tag para evitar o erro do React
-  const SafeTag = normalized === 't' ? 'span' : 'div';
-  return { SafeTag, dataTag: normalized };
-}
-
 function ViewComponent(
   {
     tag,
@@ -174,7 +34,10 @@ function ViewComponent(
   }: ViewProps & React.HTMLAttributes<HTMLDivElement>,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
-  const { SafeTag, dataTag } = getSafeTag(tag);
+  // Mantemos a lógica original de Tag dinâmica do sistema Elétrica & Art
+  const Tag = (tag || 'div') as any;
+  const tagString =
+    typeof tag === 'string' ? tag.toLowerCase().trim() : undefined;
 
   const style: React.CSSProperties = {
     ...(bg && { background: bg }),
@@ -188,22 +51,17 @@ function ViewComponent(
     ...styleProp,
   };
 
-  const safeClassName = [className, dataTag ? `tag-${dataTag}` : null]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <SafeTag
+    <Tag
       ref={ref}
       style={style}
-      className={safeClassName || undefined}
-      data-tag={dataTag}
-      // @ts-ignore
-      tag={dataTag}
+      className={className}
+      data-tag={tagString}
+      tag={tagString}
       {...props}
     >
       {children}
-    </SafeTag>
+    </Tag>
   );
 }
 
