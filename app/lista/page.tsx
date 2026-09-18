@@ -2,6 +2,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
+import { createClient } from '@/lib/supabase/client';
 import {
   CheckCircle,
   Package,
@@ -22,6 +23,8 @@ import {
   Link as LinkIcon,
   Copy,
   Check,
+  CloudCheck,
+  ArrowsClockwise,
 } from '@phosphor-icons/react';
 
 interface MaterialItem {
@@ -53,7 +56,7 @@ interface MaterialList {
   clientEdits?: Record<string, ClientItemEdit>;
 }
 
-// Prefixo e chave para ofuscação binária segura (não legível para leigos na URL e URL-safe)
+// Prefixo e chave para ofuscação binária segura (fallback retrocompatível para links com dados embutidos)
 const OBFUSCATE_PREFIX = 'eart_v2_';
 const MASK_KEY = [0x45, 0x41, 0x5f, 0x32, 0x30, 0x32, 0x36]; // 'EA_2026'
 
@@ -78,7 +81,6 @@ function encodePayload(data: unknown): string {
 function decodePayload(raw: string): MaterialList | null {
   if (!raw) return null;
 
-  // 1. Formato novo com ofuscação binária e proteção contra leitura a olho nu
   if (raw.startsWith(OBFUSCATE_PREFIX)) {
     try {
       const cleanB64 = raw
@@ -101,7 +103,6 @@ function decodePayload(raw: string): MaterialList | null {
     }
   }
 
-  // 2. Fallback retrocompatível para Base64 convencional encodeURIComponent
   try {
     const padded = raw.replace(/-/g, '+').replace(/_/g, '/');
     const full = padded.padEnd(
@@ -131,7 +132,6 @@ function decodePayload(raw: string): MaterialList | null {
   }
 }
 
-// Utilitário para separar número e unidade (ex: "9 un", "100m", "5")
 function parseQuantity(qtyStr?: string): { number: number; unit: string } {
   if (!qtyStr) return { number: 1, unit: 'un' };
   const clean = qtyStr.trim();
@@ -166,107 +166,241 @@ function ListContent() {
   const searchParams = useSearchParams();
   const [list, setList] = useState<MaterialList | null>(null);
   const [error, setError] = useState(false);
+  const [isLoadingDb, setIsLoadingDb] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
 
-  // Customizações do cliente (quantidade comprada, preço pago real, check)
   const [itemEdits, setItemEdits] = useState<Record<string, ClientItemEdit>>(
     {},
   );
   const [isLoadedFromSharedLink, setIsLoadedFromSharedLink] = useState(false);
 
-  // Controle do menu flutuante e sobreposto de envio
   const [isSendMenuOpen, setIsSendMenuOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Item selecionado para edição detalhada no Modal
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
   const [editQty, setEditQty] = useState<number>(1);
   const [editPrice, setEditPrice] = useState<string>('');
 
-  useEffect(() => {
-    const d = searchParams.get('d');
-    if (d) {
+  const syncTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const syncWithSupabase = (
+    listId: string,
+    currentItems: MaterialItem[],
+    edits: Record<string, ClientItemEdit>,
+  ) => {
+    if (!listId || listId.length < 5) return;
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+
+    setSyncStatus('saving');
+    syncTimeoutRef.current = setTimeout(async () => {
       try {
-        const decoded = decodePayload(d);
-        if (!decoded || !decoded.items) {
-          throw new Error('Lista inválida ou corrompida');
-        }
-        setList(decoded);
-
-        // Carrega edição do cliente gravada localmente no navegador
-        const editsKey = `@ea:public-list-edits:${decoded.id}`;
-        const storedEdits = localStorage.getItem(editsKey);
-
-        // Verifica se o link traz marcações ou estado atualizado explícito compartilhado
-        const hasSharedState =
-          Boolean(decoded.sharedAt) ||
-          Boolean(
-            decoded.clientEdits && Object.keys(decoded.clientEdits).length > 0,
-          ) ||
-          decoded.items.some(
-            (it) => it.checked || it.purchasedQty !== undefined,
-          );
-
-        if (hasSharedState) {
-          const reconstructed: Record<string, ClientItemEdit> = {
-            ...(decoded.clientEdits || {}),
+        const supabase = createClient();
+        const updatedItems = currentItems.map((it) => {
+          const edit = edits[it.id];
+          const req = parseQuantity(it.quantity);
+          const isChecked = edit?.checked ?? it.checked ?? false;
+          return {
+            ...it,
+            checked: isChecked,
+            purchasedQty:
+              edit?.purchasedQty !== undefined
+                ? edit.purchasedQty
+                : isChecked
+                  ? req.number
+                  : undefined,
+            actualUnitPrice:
+              edit?.actualUnitPrice !== undefined
+                ? edit.actualUnitPrice
+                : it.actualUnitPrice || it.unitPrice || '',
           };
+        });
 
-          decoded.items.forEach((it) => {
-            if (!reconstructed[it.id]) {
-              const req = parseQuantity(it.quantity);
-              if (it.checked || it.purchasedQty !== undefined) {
-                reconstructed[it.id] = {
-                  checked: it.checked ?? false,
+        const { error: updateErr } = await supabase
+          .from('listas_materiais')
+          .update({
+            items: updatedItems,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', listId);
+
+        if (updateErr) {
+          console.warn(
+            '[ListaPublica] Aviso na sincronização do Supabase:',
+            updateErr.message,
+          );
+          setSyncStatus('error');
+        } else {
+          setSyncStatus('saved');
+          setTimeout(() => setSyncStatus('idle'), 3500);
+        }
+      } catch (e) {
+        console.error('[ListaPublica] Erro na sincronização:', e);
+        setSyncStatus('error');
+      }
+    }, 600);
+  };
+
+  useEffect(() => {
+    const listId = searchParams.get('id');
+    const d = searchParams.get('d');
+
+    const loadList = async () => {
+      // 1. Prioridade: Link Curto pelo ID do Supabase
+      if (listId) {
+        try {
+          setIsLoadingDb(true);
+          const supabase = createClient();
+          const { data: row, error: fetchErr } = await supabase
+            .from('listas_materiais')
+            .select('*')
+            .eq('id', listId)
+            .maybeSingle();
+
+          if (fetchErr) {
+            console.warn(
+              '[ListaPublica] Aviso ao consultar lista por ID no Supabase:',
+              fetchErr.message,
+            );
+          }
+
+          if (row) {
+            let parsedItems: MaterialItem[] = [];
+            if (typeof row.items === 'string') {
+              try {
+                parsedItems = JSON.parse(row.items);
+              } catch {}
+            } else if (Array.isArray(row.items)) {
+              parsedItems = row.items;
+            }
+
+            const loadedList: MaterialList = {
+              id: row.id,
+              title: row.title || 'Lista de Materiais',
+              items: parsedItems,
+              createdAt: row.created_at
+                ? new Date(row.created_at).getTime()
+                : Date.now(),
+              updatedAt: row.updated_at
+                ? new Date(row.updated_at).getTime()
+                : Date.now(),
+              clientName: row.client_name || '',
+              orcamentoName: row.orcamento_name || '',
+            };
+
+            setList(loadedList);
+
+            const editsKey = `@ea:public-list-edits:${row.id}`;
+            const storedEdits = localStorage.getItem(editsKey);
+            const initialEdits: Record<string, ClientItemEdit> = {};
+
+            parsedItems.forEach((it) => {
+              if (
+                it.checked ||
+                it.purchasedQty !== undefined ||
+                it.actualUnitPrice
+              ) {
+                const req = parseQuantity(it.quantity);
+                initialEdits[it.id] = {
+                  checked: Boolean(it.checked),
                   purchasedQty:
                     it.purchasedQty !== undefined
                       ? it.purchasedQty
                       : it.checked
                         ? req.number
                         : 0,
-                  actualUnitPrice: it.actualUnitPrice ?? it.unitPrice ?? '',
-                };
-              }
-            }
-          });
-
-          setItemEdits(reconstructed);
-          localStorage.setItem(editsKey, JSON.stringify(reconstructed));
-          setIsLoadedFromSharedLink(true);
-        } else if (storedEdits) {
-          try {
-            setItemEdits(JSON.parse(storedEdits));
-          } catch (e) {
-            console.error('Erro ao ler edições:', e);
-          }
-        } else {
-          // Migração retrocompatível de marcações antigas se houver
-          const legacyKey = `@ea:public-list-checked:${decoded.id}`;
-          const legacyRaw = localStorage.getItem(legacyKey);
-          if (legacyRaw) {
-            const legacyMap = JSON.parse(legacyRaw) as Record<string, boolean>;
-            const initialEdits: Record<string, ClientItemEdit> = {};
-            decoded.items.forEach((it) => {
-              if (legacyMap[it.id]) {
-                const parsed = parseQuantity(it.quantity);
-                initialEdits[it.id] = {
-                  checked: true,
-                  purchasedQty: parsed.number,
-                  actualUnitPrice: it.unitPrice || '',
+                  actualUnitPrice: it.actualUnitPrice || it.unitPrice || '',
                 };
               }
             });
+
+            if (storedEdits) {
+              try {
+                const local = JSON.parse(storedEdits);
+                Object.assign(initialEdits, local);
+              } catch {}
+            }
+
             setItemEdits(initialEdits);
-            localStorage.setItem(editsKey, JSON.stringify(initialEdits));
+            setIsLoadedFromSharedLink(true);
+            setIsLoadingDb(false);
+            return;
           }
+        } catch (err) {
+          console.error('[ListaPublica] Falha ao carregar do banco:', err);
+        } finally {
+          setIsLoadingDb(false);
         }
-      } catch (e) {
-        console.error('Erro ao decodificar lista:', e);
+      }
+
+      // 2. Fallback Retrocompatível para links antigos com payload 'd'
+      if (d) {
+        try {
+          const decoded = decodePayload(d);
+          if (!decoded || !decoded.items) {
+            throw new Error('Lista inválida ou corrompida');
+          }
+          setList(decoded);
+
+          const editsKey = `@ea:public-list-edits:${decoded.id}`;
+          const storedEdits = localStorage.getItem(editsKey);
+
+          const hasSharedState =
+            Boolean(decoded.sharedAt) ||
+            Boolean(
+              decoded.clientEdits &&
+              Object.keys(decoded.clientEdits).length > 0,
+            ) ||
+            decoded.items.some(
+              (it) => it.checked || it.purchasedQty !== undefined,
+            );
+
+          if (hasSharedState) {
+            const reconstructed: Record<string, ClientItemEdit> = {
+              ...(decoded.clientEdits || {}),
+            };
+
+            decoded.items.forEach((it) => {
+              if (!reconstructed[it.id]) {
+                const req = parseQuantity(it.quantity);
+                if (it.checked || it.purchasedQty !== undefined) {
+                  reconstructed[it.id] = {
+                    checked: it.checked ?? false,
+                    purchasedQty:
+                      it.purchasedQty !== undefined
+                        ? it.purchasedQty
+                        : it.checked
+                          ? req.number
+                          : 0,
+                    actualUnitPrice: it.actualUnitPrice ?? it.unitPrice ?? '',
+                  };
+                }
+              }
+            });
+
+            setItemEdits(reconstructed);
+            localStorage.setItem(editsKey, JSON.stringify(reconstructed));
+            setIsLoadedFromSharedLink(true);
+          } else if (storedEdits) {
+            try {
+              setItemEdits(JSON.parse(storedEdits));
+            } catch (e) {
+              console.error('Erro ao ler edições:', e);
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao decodificar lista:', e);
+          setError(true);
+        }
+      } else if (!listId) {
         setError(true);
       }
-    }
+    };
+
+    loadList();
   }, [searchParams]);
 
-  // Salva no localStorage sempre que itemEdits mudar
   const saveEdits = (newEdits: Record<string, ClientItemEdit>) => {
     setItemEdits(newEdits);
     if (list?.id) {
@@ -274,10 +408,10 @@ function ListContent() {
         `@ea:public-list-edits:${list.id}`,
         JSON.stringify(newEdits),
       );
+      syncWithSupabase(list.id, list.items, newEdits);
     }
   };
 
-  // Toggle simples ao clicar na caixa circular de check
   const toggleItemCheck = (item: MaterialItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const current = itemEdits[item.id];
@@ -297,7 +431,6 @@ function ListContent() {
     saveEdits(newEdits);
   };
 
-  // Máscara brasileira de digitação de valores monetários (ex: 1050 -> 10,50 / 150 -> 1,50)
   const handlePriceChange = (val: string) => {
     const digits = val.replace(/\D/g, '');
     if (!digits) {
@@ -313,7 +446,6 @@ function ListContent() {
     );
   };
 
-  // Abrir Modal de Edição da Quantidade / Preço
   const openEditModal = (item: MaterialItem) => {
     const edit = itemEdits[item.id];
     const req = parseQuantity(item.quantity);
@@ -341,7 +473,6 @@ function ListContent() {
     }
   };
 
-  // Salvar alterações do Modal
   const handleSaveModal = () => {
     if (!editingItem) return;
     const isPurchased = editQty > 0;
@@ -357,9 +488,18 @@ function ListContent() {
     setEditingItem(null);
   };
 
-  // Gera URL codificada com todos os dados e o estado atual da lista
   const getUpdatedShareUrl = () => {
     if (!list) return typeof window !== 'undefined' ? window.location.href : '';
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const pathname =
+      typeof window !== 'undefined' ? window.location.pathname : '/lista';
+
+    // Se a lista possui ID salvo no banco compartilhado, gera link curto
+    if (list.id && list.id.length > 5) {
+      return `${origin}${pathname}?id=${encodeURIComponent(list.id)}`;
+    }
+
+    // Fallback retrocompatível
     const consolidatedItems: MaterialItem[] = list.items.map((it) => {
       const edit = itemEdits[it.id];
       const req = parseQuantity(it.quantity);
@@ -389,9 +529,6 @@ function ListContent() {
     };
 
     const payload = encodePayload(updatedList);
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const pathname =
-      typeof window !== 'undefined' ? window.location.pathname : '/lista';
     return `${origin}${pathname}?d=${payload}`;
   };
 
@@ -416,7 +553,6 @@ function ListContent() {
     window.print();
   };
 
-  // Opção 1: Enviar Resumo em Texto no WhatsApp (como funciona hoje)
   const handleSendWhatsappSummary = () => {
     if (!list) return;
     setIsSendMenuOpen(false);
@@ -436,54 +572,60 @@ function ListContent() {
           : isChecked
             ? req.number
             : 0;
-      const unitP = parseCurrency(edit?.actualUnitPrice || it.unitPrice);
+      const price = parseCurrency(edit?.actualUnitPrice || it.unitPrice);
 
       if (isChecked && purchased > 0) {
-        totalGasto += purchased * unitP;
-        if (purchased < req.number) {
-          const falta = req.number - purchased;
-          itensParciais.push(
-            `• *${it.name}*: comprou ${purchased} ${req.unit} (faltam ${falta} ${req.unit})`,
-          );
-        } else {
+        totalGasto += purchased * price;
+        if (purchased >= req.number) {
           itensCompletos++;
+        } else {
+          itensParciais.push(
+            `${it.name} (${purchased}/${req.number} ${req.unit})`,
+          );
         }
       } else {
-        itensNaoComprados.push(`• *${it.name}*: ${req.number} ${req.unit}`);
+        itensNaoComprados.push(`${req.number} ${req.unit} - ${it.name}`);
       }
     });
 
-    let msg = `📋 *Resumo de Compras - ${list.title}*\n`;
+    let msg = `📋 *Status da Lista de Materiais*\n`;
+    msg += `*${list.title}*\n`;
     if (list.clientName) msg += `👤 *Cliente:* ${list.clientName}\n`;
     if (list.orcamentoName) msg += `🏗️ *Obra / Ref:* ${list.orcamentoName}\n`;
     msg += `---------------------------------\n`;
-    msg += `✅ *Itens 100% Atendidos:* ${itensCompletos} de ${list.items.length}\n`;
+    msg += `✅ *Itens Comprados:* ${itensCompletos} de ${list.items.length}\n`;
     if (totalGasto > 0) {
-      msg += `💰 *Total Investido / Gasto:* R$ ${formatBRL(totalGasto)}\n`;
+      msg += `💰 *Total Investido:* R$ ${formatBRL(totalGasto)}\n`;
     }
 
     if (itensParciais.length > 0) {
-      msg += `\n⚠️ *Compras Parciais (Faltou estoque):*\n${itensParciais.join('\n')}\n`;
+      msg += `\n⚠️ *Comprados Parcialmente (${itensParciais.length}):*\n`;
+      itensParciais.forEach((item) => {
+        msg += `• ${item}\n`;
+      });
     }
 
     if (itensNaoComprados.length > 0) {
-      msg += `\n⏳ *Ainda Não Comprados:*\n${itensNaoComprados.join('\n')}\n`;
+      msg += `\n🛒 *Faltando Comprar (${itensNaoComprados.length}):*\n`;
+      itensNaoComprados.forEach((item) => {
+        msg += `• ${item}\n`;
+      });
     }
 
-    msg += `\nLink da lista atualizada: ${getUpdatedShareUrl()}`;
+    msg += `\n🔗 *Acessar lista completa interativa:*\n${getUpdatedShareUrl()}`;
 
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   };
 
-  // Opção 2: Enviar Link da Lista Atualizada com os valores e marcações codificados na URL
   const handleSendWhatsappUpdatedLink = () => {
     if (!list) return;
     setIsSendMenuOpen(false);
-    const updatedUrl = getUpdatedShareUrl();
 
+    const updatedUrl = getUpdatedShareUrl();
     let totalGasto = 0;
     let marcadosCount = 0;
+
     list.items.forEach((it) => {
       const edit = itemEdits[it.id];
       const req = parseQuantity(it.quantity);
@@ -494,10 +636,11 @@ function ListContent() {
           : isChecked
             ? req.number
             : 0;
-      const unitP = parseCurrency(edit?.actualUnitPrice || it.unitPrice);
-      if (isChecked) marcadosCount++;
+      const price = parseCurrency(edit?.actualUnitPrice || it.unitPrice);
+
       if (isChecked && purchased > 0) {
-        totalGasto += purchased * unitP;
+        marcadosCount++;
+        totalGasto += purchased * price;
       }
     });
 
@@ -539,14 +682,15 @@ function ListContent() {
             Erro ao carregar lista
           </p>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
-            O link fornecido pode estar quebrado, incompleto ou corrompido.
+            O link fornecido pode estar quebrado, incompleto ou não encontrado
+            no banco.
           </p>
         </div>
       </div>
     );
   }
 
-  if (!list) {
+  if (!list || isLoadingDb) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#13151A]">
         <div className="w-10 h-10 border-4 border-[#00559c]/20 border-t-[#00559c] rounded-full animate-spin"></div>
@@ -557,7 +701,6 @@ function ListContent() {
     );
   }
 
-  // Cálculos consolidados da lista
   const totalItemsCount = list.items.length;
   let fullyPurchasedCount = 0;
   let partialPurchasedCount = 0;
@@ -632,7 +775,6 @@ function ListContent() {
           }}
         />
 
-        {/* EACard Oficial Elétrica & Art com degradê azul sofisticado */}
         <div
           style={{
             display: 'grid',
@@ -747,7 +889,6 @@ function ListContent() {
           </div>
         </div>
 
-        {/* Card Informativo */}
         <div
           style={{
             border: '1px solid rgba(0, 85, 156, 0.2)',
@@ -770,62 +911,91 @@ function ListContent() {
             <div>
               <span
                 style={{
-                  fontSize: '9.5px',
-                  fontWeight: 700,
-                  color: '#00559c',
+                  fontSize: '10px',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  display: 'block',
+                  letterSpacing: '1px',
+                  color: '#00559c',
+                  fontWeight: 800,
                 }}
               >
-                Documento de Quantitativos & Compras
+                Documento Oficial
               </span>
               <h1
                 style={{
-                  fontSize: '17px',
+                  fontSize: '18px',
                   fontWeight: 800,
                   color: '#0f172a',
                   margin: 0,
-                  lineHeight: 1.2,
                 }}
               >
-                {list.title || 'Lista de Materiais'}
+                {list.title}
               </h1>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <span
-                style={{ fontSize: '10px', color: '#64748b', display: 'block' }}
-              >
+              <span style={{ fontSize: '10px', color: '#64748b' }}>
                 Data de Emissão
               </span>
-              <strong style={{ fontSize: '12px', color: '#0f172a' }}>
-                {new Date(list.createdAt || Date.now()).toLocaleDateString(
-                  'pt-BR',
-                )}
-              </strong>
+              <div
+                style={{ fontSize: '12px', fontWeight: 600, color: '#0f172a' }}
+              >
+                {new Date(list.createdAt).toLocaleDateString('pt-BR')}
+              </div>
             </div>
           </div>
+
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '1.2fr 1fr 1fr 1.2fr',
-              gap: '10px',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '8px',
+              fontSize: '11px',
             }}
           >
+            {list.clientName && (
+              <div>
+                <span
+                  style={{
+                    color: '#64748b',
+                    fontSize: '9.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                  }}
+                >
+                  Cliente
+                </span>
+                <strong style={{ color: '#0f172a' }}>{list.clientName}</strong>
+              </div>
+            )}
+            {list.orcamentoName && (
+              <div>
+                <span
+                  style={{
+                    color: '#64748b',
+                    fontSize: '9.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                  }}
+                >
+                  Orçamento / Ref
+                </span>
+                <strong style={{ color: '#0f172a' }}>
+                  {list.orcamentoName}
+                </strong>
+              </div>
+            )}
             <div>
               <span
                 style={{
                   color: '#64748b',
                   fontSize: '9.5px',
                   textTransform: 'uppercase',
-                  fontWeight: 600,
                   display: 'block',
                 }}
               >
-                Cliente
+                Total de Itens
               </span>
-              <strong style={{ color: '#1e293b', fontSize: '12px' }}>
-                {list.clientName || 'Não especificado'}
+              <strong style={{ color: '#0f172a' }}>
+                {totalItemsCount} itens
               </strong>
             </div>
             <div>
@@ -834,134 +1004,79 @@ function ListContent() {
                   color: '#64748b',
                   fontSize: '9.5px',
                   textTransform: 'uppercase',
-                  fontWeight: 600,
                   display: 'block',
                 }}
               >
-                Orçamento / Obra Ref.
+                Progresso de Compra
               </span>
-              <strong style={{ color: '#1e293b', fontSize: '12px' }}>
-                {list.orcamentoName || 'Geral'}
-              </strong>
-            </div>
-            <div>
-              <span
-                style={{
-                  color: '#64748b',
-                  fontSize: '9.5px',
-                  textTransform: 'uppercase',
-                  fontWeight: 600,
-                  display: 'block',
-                }}
-              >
-                Status da Compra
-              </span>
-              <strong style={{ color: '#00559c', fontSize: '12px' }}>
-                {fullyPurchasedCount}/{totalItemsCount} ({progress}%)
-              </strong>
-            </div>
-            <div>
-              <span
-                style={{
-                  color: '#64748b',
-                  fontSize: '9.5px',
-                  textTransform: 'uppercase',
-                  fontWeight: 600,
-                  display: 'block',
-                }}
-              >
-                Total Gasto Comprado
-              </span>
-              <strong style={{ color: '#00559c', fontSize: '13px' }}>
-                R$ {formatBRL(totalGastoCliente)}
+              <strong style={{ color: isComplete ? '#16a34a' : '#00559c' }}>
+                {checkedCount} / {totalItemsCount} ({progress}%)
               </strong>
             </div>
           </div>
         </div>
 
-        {/* Tabela de Materiais Estilizada */}
         <table
           className="print-table"
           style={{
             width: '100%',
             borderCollapse: 'collapse',
-            fontSize: '11px',
-            marginTop: '8px',
+            fontSize: '10.5px',
           }}
         >
           <thead>
-            <tr style={{ backgroundColor: '#00559c', color: '#ffffff' }}>
+            <tr
+              style={{
+                backgroundColor: '#003366',
+                color: '#ffffff',
+                textAlign: 'left',
+              }}
+            >
               <th
                 style={{
+                  padding: '6px 8px',
                   width: '32px',
-                  padding: '8px 4px',
                   textAlign: 'center',
-                  fontWeight: 800,
-                  borderRight: '1px solid rgba(255,255,255,0.2)',
                 }}
               >
                 #
               </th>
-              <th
-                style={{
-                  padding: '8px 10px',
-                  textAlign: 'left',
-                  fontWeight: 800,
-                  borderRight: '1px solid rgba(255,255,255,0.2)',
-                }}
-              >
-                Material / Descrição
+              <th style={{ padding: '6px 8px', width: '85px' }}>
+                Qtd Requisitada
               </th>
+              <th style={{ padding: '6px 8px' }}>Descrição do Material</th>
               <th
                 style={{
-                  width: '85px',
-                  padding: '8px',
-                  textAlign: 'center',
-                  fontWeight: 800,
-                  borderRight: '1px solid rgba(255,255,255,0.2)',
-                }}
-              >
-                Qtd. Necessária
-              </th>
-              <th
-                style={{
-                  width: '105px',
-                  padding: '8px',
-                  textAlign: 'center',
-                  fontWeight: 800,
-                  borderRight: '1px solid rgba(255,255,255,0.2)',
-                }}
-              >
-                Qtd. Comprada
-              </th>
-              <th
-                style={{
-                  width: '85px',
-                  padding: '8px 10px',
-                  textAlign: 'right',
-                  fontWeight: 800,
-                  borderRight: '1px solid rgba(255,255,255,0.2)',
-                }}
-              >
-                Preço Unit.
-              </th>
-              <th
-                style={{
+                  padding: '6px 8px',
                   width: '90px',
-                  padding: '8px 10px',
-                  textAlign: 'right',
-                  fontWeight: 800,
-                  borderRight: '1px solid rgba(255,255,255,0.2)',
+                  textAlign: 'center',
                 }}
               >
-                Total Item
+                Qtd Comprada
               </th>
               <th
                 style={{
-                  width: '45px',
-                  padding: '8px',
+                  padding: '6px 8px',
+                  width: '85px',
+                  textAlign: 'right',
+                }}
+              >
+                Vlr. Unitário
+              </th>
+              <th
+                style={{
+                  padding: '6px 8px',
+                  width: '90px',
+                  textAlign: 'right',
+                }}
+              >
+                Subtotal
+              </th>
+              <th
+                style={{
+                  padding: '6px 8px',
+                  width: '55px',
                   textAlign: 'center',
-                  fontWeight: 800,
                 }}
               >
                 Status
@@ -969,9 +1084,7 @@ function ListContent() {
             </tr>
           </thead>
           <tbody>
-            {list.items.map((item, idx) => {
-              const isEven = idx % 2 === 0;
-              const rowBg = isEven ? '#edf4fa' : '#fafafa';
+            {list.items.map((item, index) => {
               const edit = itemEdits[item.id];
               const req = parseQuantity(item.quantity);
               const isChecked = edit?.checked ?? false;
@@ -984,43 +1097,44 @@ function ListContent() {
               const unitP = parseCurrency(
                 edit?.actualUnitPrice || item.unitPrice,
               );
-              const totalItem =
-                purchased > 0 ? purchased * unitP : req.number * unitP;
+              const subtotal = purchased * unitP;
+              const isEven = index % 2 === 0;
 
               return (
                 <tr
                   key={item.id}
                   style={{
-                    backgroundColor: rowBg,
-                    borderBottom: '1px solid rgba(0, 85, 156, 0.12)',
-                    pageBreakInside: 'avoid',
-                    breakInside: 'avoid',
+                    backgroundColor: isEven ? '#f8fafc' : '#ffffff',
+                    borderBottom: '1px solid #e2e8f0',
                   }}
                 >
                   <td
                     style={{
-                      padding: '7px 4px',
+                      padding: '5px 8px',
                       textAlign: 'center',
-                      fontWeight: 700,
-                      color: '#00559c',
-                      borderRight: '1px solid rgba(0,85,156,0.08)',
+                      color: '#64748b',
+                      fontWeight: 600,
                     }}
                   >
-                    {idx + 1}
+                    {index + 1}
                   </td>
                   <td
                     style={{
-                      padding: '7px 10px',
-                      borderRight: '1px solid rgba(0,85,156,0.08)',
+                      padding: '5px 8px',
+                      fontWeight: 600,
+                      color: '#0f172a',
                     }}
                   >
-                    <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                    {item.quantity || '1 un'}
+                  </td>
+                  <td style={{ padding: '5px 8px' }}>
+                    <div style={{ fontWeight: 600, color: '#0f172a' }}>
                       {item.name}
                     </div>
                     {item.description && (
                       <div
                         style={{
-                          fontSize: '10px',
+                          fontSize: '9px',
                           color: '#64748b',
                           marginTop: '1px',
                         }}
@@ -1031,71 +1145,45 @@ function ListContent() {
                   </td>
                   <td
                     style={{
-                      padding: '7px 8px',
+                      padding: '5px 8px',
                       textAlign: 'center',
-                      fontWeight: 700,
-                      color: '#0f172a',
-                      borderRight: '1px solid rgba(0,85,156,0.08)',
+                      fontWeight: 600,
+                      color: isChecked ? '#00559c' : '#94a3b8',
                     }}
                   >
-                    {req.number} {req.unit}
+                    {isChecked ? `${purchased} ${req.unit}` : '-'}
                   </td>
                   <td
                     style={{
-                      padding: '7px 8px',
-                      textAlign: 'center',
-                      borderRight: '1px solid rgba(0,85,156,0.08)',
-                    }}
-                  >
-                    {isChecked ? (
-                      purchased < req.number ? (
-                        <div style={{ color: '#b45309', fontWeight: 700 }}>
-                          {purchased} {req.unit}{' '}
-                          <span style={{ fontSize: '9.5px', color: '#d97706' }}>
-                            (Falta {req.number - purchased})
-                          </span>
-                        </div>
-                      ) : (
-                        <div style={{ color: '#00559c', fontWeight: 700 }}>
-                          {purchased} {req.unit} (OK)
-                        </div>
-                      )
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>-</span>
-                    )}
-                  </td>
-                  <td
-                    style={{
-                      padding: '7px 10px',
+                      padding: '5px 8px',
                       textAlign: 'right',
                       color: '#475569',
-                      borderRight: '1px solid rgba(0,85,156,0.08)',
                     }}
                   >
                     {unitP > 0 ? `R$ ${formatBRL(unitP)}` : '-'}
                   </td>
                   <td
                     style={{
-                      padding: '7px 10px',
+                      padding: '5px 8px',
                       textAlign: 'right',
-                      fontWeight: 700,
-                      color: '#00559c',
-                      borderRight: '1px solid rgba(0,85,156,0.08)',
+                      fontWeight: 600,
+                      color: '#0f172a',
                     }}
                   >
-                    {totalItem > 0 ? `R$ ${formatBRL(totalItem)}` : '-'}
+                    {subtotal > 0 ? `R$ ${formatBRL(subtotal)}` : '-'}
                   </td>
-                  <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                  <td style={{ padding: '5px 8px', textAlign: 'center' }}>
                     <div
                       style={{
-                        width: '14px',
-                        height: '14px',
-                        border: `1.5px solid ${isChecked ? '#00559c' : '#94a3b8'}`,
-                        borderRadius: '3px',
-                        margin: '0 auto',
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '4px',
+                        border: isChecked
+                          ? '1px solid #00559c'
+                          : '1px solid #cbd5e1',
                         backgroundColor: isChecked ? '#00559c' : '#ffffff',
                         color: '#ffffff',
                         fontSize: '9px',
@@ -1111,7 +1199,6 @@ function ListContent() {
           </tbody>
         </table>
 
-        {/* Rodapé da Impressão com Totais */}
         <div
           style={{
             marginTop: '12px',
@@ -1156,7 +1243,7 @@ function ListContent() {
           <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3.5">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center flex-wrap gap-2 mb-1">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#00559c] dark:text-[#58a6ff] uppercase tracking-widest">
                     <ShoppingCart size={14} weight="bold" />
                     Lista de Compras
@@ -1167,6 +1254,28 @@ function ListContent() {
                   <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                     {checkedCount} de {totalItemsCount} marcados
                   </span>
+                  {syncStatus === 'saving' && (
+                    <>
+                      <span className="text-slate-300 dark:text-slate-700">
+                        &bull;
+                      </span>
+                      <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 animate-pulse">
+                        <ArrowsClockwise size={12} className="animate-spin" />
+                        Salvando...
+                      </span>
+                    </>
+                  )}
+                  {syncStatus === 'saved' && (
+                    <>
+                      <span className="text-slate-300 dark:text-slate-700">
+                        &bull;
+                      </span>
+                      <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <CloudCheck size={13} weight="bold" />
+                        Sincronizado
+                      </span>
+                    </>
+                  )}
                 </div>
                 <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate leading-tight">
                   {list.title}
@@ -1209,601 +1318,438 @@ function ListContent() {
           </div>
         </div>
 
-        {/* Card Resumo Financeiro da Compra (Totalizador) */}
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4">
-          <div className="bg-white dark:bg-[#1C1F26] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-xl bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 border border-[#00559c]/20">
-                <Coins size={22} weight="duotone" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Total Gasto Comprado
-                </span>
-                <span className="text-xl sm:text-2xl font-black text-[#00559c] dark:text-[#58a6ff] tabular-nums">
-                  R$ {formatBRL(totalGastoCliente)}
-                </span>
-              </div>
+        {/* Conteúdo Principal */}
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-5 space-y-4">
+          {/* Banner de Boas-Vindas e Dica */}
+          <div className="bg-gradient-to-br from-[#00559c]/10 via-[#00559c]/5 to-transparent dark:from-[#00559c]/20 border border-[#00559c]/20 rounded-2xl p-4 flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-[#00559c] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+              <CheckCircle size={20} weight="fill" />
             </div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <strong className="text-slate-900 dark:text-white block text-sm font-bold mb-0.5">
+                Checklist Interativo de Materiais
+              </strong>
+              Toque no círculo para marcar o item como comprado. Toque no lápis
+              ou no card para informar a quantidade comprada e o preço pago real
+              na loja. Suas alterações são sincronizadas automaticamente!
+            </div>
+          </div>
 
-            <div className="text-right shrink-0">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Total Estimado
+          {/* Cards de Resumo Financeiro da Compra */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white dark:bg-[#1C1F26] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                Estimado na Lista
               </span>
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <div className="text-xl font-black text-slate-800 dark:text-slate-100 tabular-nums">
                 R$ {formatBRL(totalEstimadoLista)}
+              </div>
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                {totalItemsCount} materiais planejados
               </span>
-              {partialPurchasedCount > 0 && (
-                <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 text-[10px] font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40">
-                  <Warning size={12} weight="bold" />
-                  {partialPurchasedCount} parcial
-                </span>
-              )}
+            </div>
+
+            <div className="bg-white dark:bg-[#1C1F26] p-4 rounded-2xl border border-emerald-100 dark:border-emerald-950/40 shadow-sm bg-gradient-to-br from-emerald-500/5 to-transparent">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-1">
+                Gasto Real Efetuado
+              </span>
+              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                R$ {formatBRL(totalGastoCliente)}
+              </div>
+              <span className="text-[10px] text-emerald-700/70 dark:text-emerald-400/70 mt-1 block">
+                {checkedCount} itens adquiridos
+              </span>
             </div>
           </div>
-        </div>
 
-        {/* Botões Rápidos de Ação: Imprimir / PDF & Enviar WhatsApp & Compartilhar */}
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3 flex items-center justify-between gap-2 relative">
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-white dark:bg-[#1C1F26] border border-slate-200 dark:border-slate-800 hover:border-[#00559c]/50 text-slate-700 dark:text-slate-200 font-bold text-xs active:scale-[0.98] transition-all shadow-sm"
-            title="Imprimir ou Salvar em PDF"
-          >
-            <Printer
-              size={16}
-              weight="bold"
-              className="text-[#00559c] dark:text-[#58a6ff]"
-            />
-            <span>Imprimir / PDF</span>
-          </button>
-
-          {/* Botão Enviar com Menu Flutuante e Sobreposto */}
-          <div className="relative flex-1">
-            <button
-              type="button"
-              onClick={() => setIsSendMenuOpen(!isSendMenuOpen)}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs active:scale-[0.98] transition-all shadow-sm shadow-emerald-600/20"
-              title="Opções de envio no WhatsApp"
-            >
-              <WhatsappLogo
-                size={17}
-                weight="fill"
-                className="text-white shrink-0"
-              />
-              <span>Enviar</span>
-              <CaretDown
-                size={12}
-                weight="bold"
-                className={`transition-transform duration-200 ${isSendMenuOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {/* Backdrop invisível para fechar ao clicar fora */}
-            {isSendMenuOpen && (
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setIsSendMenuOpen(false)}
-              />
-            )}
-
-            {/* Menu Flutuante e Sobreposto */}
-            <AnimatePresence>
-              {isSendMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-[#1C1F26] rounded-2xl p-2 shadow-2xl border border-slate-200/90 dark:border-slate-800 z-50 overflow-hidden"
+          {/* Itens da Lista */}
+          <div className="space-y-2.5 pt-1">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Itens para Compra ({totalItemsCount})
+              </span>
+              {checkedCount > 0 && (
+                <button
+                  onClick={() => saveEdits({})}
+                  className="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors"
                 >
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800/80 mb-1">
-                    Como deseja enviar?
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    {/* Opção 1: Texto */}
-                    <button
-                      type="button"
-                      onClick={handleSendWhatsappSummary}
-                      className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 active:bg-slate-100 transition-colors flex items-start gap-3 group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200/60 dark:border-emerald-900/40 group-hover:scale-105 transition-transform">
-                        <ChatText size={18} weight="fill" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center justify-between">
-                          <span>Texto</span>
-                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.2 rounded">
-                            Resumo
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                          Envia resumo em texto com os itens atendidos, parciais
-                          e pendentes no WhatsApp.
-                        </p>
-                      </div>
-                    </button>
-
-                    {/* Opção 2: Link da Lista Atualizada */}
-                    <button
-                      type="button"
-                      onClick={handleSendWhatsappUpdatedLink}
-                      className="w-full text-left p-2.5 rounded-xl hover:bg-blue-50/50 dark:hover:bg-slate-800/60 active:bg-slate-100 transition-colors flex items-start gap-3 group border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 mt-0.5 border border-[#00559c]/20 group-hover:scale-105 transition-transform">
-                        <LinkIcon size={18} weight="bold" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center justify-between">
-                          <span>Link da lista atualizada</span>
-                          <span className="text-[10px] font-semibold text-[#00559c] dark:text-[#58a6ff] bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.2 rounded">
-                            Interativo
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                          Envia o link no WhatsApp com o estado atual: itens
-                          marcados e valores preenchidos.
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Ação secundária: Copiar Link */}
-                  <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800/80">
-                    <button
-                      type="button"
-                      onClick={handleCopyUpdatedLink}
-                      className="w-full py-1.5 px-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-[#00559c] dark:hover:text-[#58a6ff] hover:bg-slate-50 dark:hover:bg-slate-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      {copiedLink ? (
-                        <>
-                          <Check
-                            size={13}
-                            weight="bold"
-                            className="text-emerald-500"
-                          />
-                          <span className="text-emerald-600 dark:text-emerald-400">
-                            Link atualizado copiado!
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={13} />
-                          <span>Copiar link da lista atualizada</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </motion.div>
+                  Desmarcar todos
+                </button>
               )}
-            </AnimatePresence>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleShare}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#edf4fa] dark:bg-[#00559c]/20 border border-[#00559c]/30 hover:bg-[#00559c]/15 text-[#00559c] dark:text-[#58a6ff] font-bold text-xs active:scale-[0.98] transition-all shadow-sm"
-            title="Compartilhar Link"
-          >
-            <ShareNetwork size={16} weight="bold" />
-            <span className="hidden sm:inline">Compartilhar</span>
-          </button>
-        </div>
-
-        {/* Notificação se foi carregada de um link compartilhado com progresso */}
-        {isLoadedFromSharedLink && (
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-2">
-            <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/40 py-1.5 px-3 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs">
-              <span className="flex items-center gap-1.5 font-medium text-[11.5px]">
-                <CheckCircle
-                  size={14}
-                  weight="fill"
-                  className="text-emerald-600 dark:text-emerald-400 shrink-0"
-                />
-                <span>
-                  Lista sincronizada com as marcações e valores enviados no
-                  link.
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsLoadedFromSharedLink(false)}
-                className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 p-0.5"
-                title="Fechar aviso"
-              >
-                <X size={12} weight="bold" />
-              </button>
             </div>
-          </div>
-        )}
 
-        {/* Dica amigável para o cliente */}
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3">
-          <p className="text-[11.5px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 bg-slate-100/70 dark:bg-slate-800/50 py-1.5 px-3 rounded-lg">
-            <PencilSimple size={13} className="text-[#00559c] shrink-0" />
-            <span>
-              Toque em qualquer material para ajustar a{' '}
-              <strong>quantidade comprada</strong> e o{' '}
-              <strong>preço pago</strong>.
-            </span>
-          </p>
-        </div>
-
-        {/* Lista de Itens */}
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
-          <AnimatePresence>
-            {isComplete && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: -20 }}
-                className="bg-gradient-to-r from-[#00559c] to-[#0077d4] rounded-3xl p-5 mb-5 text-white shadow-lg shadow-[#00559c]/25 flex items-center justify-between"
-              >
-                <div>
-                  <h2 className="text-lg font-black mb-0.5">Tudo Pronto! 🎉</h2>
-                  <p className="text-blue-100 font-medium text-xs">
-                    Todos os itens solicitados foram adquiridos.
-                  </p>
-                </div>
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center shrink-0 backdrop-blur-md">
-                  <CheckCircle size={24} weight="fill" className="text-white" />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="flex flex-col gap-2.5">
-            <AnimatePresence mode="popLayout">
-              {list.items.length === 0 ? (
-                <motion.div className="text-center py-16 bg-white dark:bg-[#1C1F26] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <div className="w-16 h-16 bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Package size={32} weight="duotone" />
-                  </div>
-                  <p className="text-slate-500 dark:text-slate-400 font-medium">
-                    Nenhum material adicionado.
-                  </p>
-                </motion.div>
-              ) : (
-                [...list.items].map((item, idx) => {
-                  const isEven = idx % 2 === 0;
-                  const edit = itemEdits[item.id];
-                  const req = parseQuantity(item.quantity);
-                  const isChecked = edit?.checked ?? false;
-                  const purchased =
-                    edit?.purchasedQty !== undefined
-                      ? edit.purchasedQty
-                      : isChecked
-                        ? req.number
-                        : 0;
-                  const isPartial = isChecked && purchased < req.number;
-                  const unitP = parseCurrency(
-                    edit?.actualUnitPrice || item.unitPrice,
-                  );
-                  const totalItem = purchased > 0 ? purchased * unitP : 0;
-
-                  return (
-                    <motion.div
-                      layout
-                      key={item.id}
-                      onClick={() => openEditModal(item)}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{
-                        opacity: 0,
-                        scale: 0.95,
-                        transition: { duration: 0.2 },
-                      }}
-                      className={`group relative flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer active:scale-[0.99] transition-all overflow-hidden ${
-                        isChecked
-                          ? isPartial
-                            ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/40 shadow-none'
-                            : 'bg-slate-100/50 dark:bg-slate-800/30 border-transparent shadow-none'
-                          : `${isEven ? 'bg-[#edf4fa]/40 dark:bg-[#1C1F26]' : 'bg-white dark:bg-[#181a20]'} border-slate-100 dark:border-slate-800/80 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:border-[#00559c]/50`
-                      }`}
-                    >
-                      {/* Botão de Checkbox Direto */}
-                      <button
-                        type="button"
-                        onClick={(e) => toggleItemCheck(item, e)}
-                        className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          isChecked
-                            ? isPartial
-                              ? 'bg-amber-500 text-white scale-105 shadow-sm shadow-amber-500/30'
-                              : 'bg-[#00559c] text-white scale-105 shadow-sm shadow-[#00559c]/30'
-                            : 'border-[2px] border-slate-300 dark:border-slate-600 hover:border-[#00559c] text-transparent'
-                        }`}
-                        title={
-                          isChecked ? 'Desmarcar item' : 'Marcar como comprado'
-                        }
-                      >
-                        <CheckCircle
-                          size={18}
-                          weight="bold"
-                          className={isChecked ? 'opacity-100' : 'opacity-0'}
-                        />
-                      </button>
-
-                      {/* Conteúdo do Item */}
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* Badge de Quantidade - sem palavra 'necessário' */}
-                          {isChecked ? (
-                            isPartial ? (
-                              <span className="px-2 py-0.5 text-xs font-bold rounded-md shrink-0 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                                Comprou {purchased} de {req.number} {req.unit}{' '}
-                                (Falta {req.number - purchased})
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 text-xs font-bold rounded-md shrink-0 bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                                {purchased} {req.unit} atendidos
-                              </span>
-                            )
-                          ) : (
-                            <span className="px-2 py-0.5 text-xs font-bold rounded-md shrink-0 bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] border border-[#00559c]/20">
-                              {req.number} {req.unit}
-                            </span>
-                          )}
-
-                          <span
-                            className={`font-semibold text-[14.5px] truncate transition-all duration-300 ${
-                              isChecked && !isPartial
-                                ? 'text-slate-400 dark:text-slate-500 line-through'
-                                : 'text-slate-700 dark:text-slate-100'
-                            }`}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-2 mt-1 text-xs text-slate-400">
-                          <div className="flex items-center gap-2 min-w-0">
-                            {item.description && (
-                              <span className="truncate">
-                                {item.description}
-                              </span>
-                            )}
-                            {unitP > 0 && (
-                              <span className="text-slate-500 dark:text-slate-400">
-                                Unit:{' '}
-                                <strong className="text-slate-700 dark:text-slate-200">
-                                  R$ {formatBRL(unitP)}
-                                </strong>
-                              </span>
-                            )}
-                          </div>
-
-                          {isChecked && totalItem > 0 && (
-                            <span className="text-[#00559c] dark:text-[#58a6ff] font-bold shrink-0">
-                              Total: R$ {formatBRL(totalItem)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Botão de Editar visível */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(item);
-                        }}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#00559c] hover:bg-[#edf4fa] dark:hover:bg-[#00559c]/20 transition-all shrink-0"
-                        title="Editar quantidade ou preço"
-                      >
-                        <PencilSimple size={16} />
-                      </button>
-
-                      {isChecked && !isPartial && (
-                        <div className="absolute inset-0 border-2 border-[#00559c]/15 rounded-2xl pointer-events-none" />
-                      )}
-                    </motion.div>
-                  );
-                })
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* MODAL DE EDIÇÃO DO ITEM (Mobile Bottom Sheet / Desktop Modal) */}
-        <AnimatePresence>
-          {editingItem &&
-            (() => {
-              const req = parseQuantity(editingItem.quantity);
-              const unitVal = parseCurrency(editPrice || editingItem.unitPrice);
-              const subtotal = editQty * unitVal;
-              const diff = req.number - editQty;
+            {list.items.map((item, index) => {
+              const edit = itemEdits[item.id];
+              const isChecked = edit?.checked ?? false;
+              const req = parseQuantity(item.quantity);
+              const purchased =
+                edit?.purchasedQty !== undefined
+                  ? edit.purchasedQty
+                  : isChecked
+                    ? req.number
+                    : 0;
+              const unitP = parseCurrency(
+                edit?.actualUnitPrice || item.unitPrice,
+              );
+              const isPartial =
+                isChecked && purchased > 0 && purchased < req.number;
+              const hasPrice = unitP > 0;
 
               return (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
-                  <motion.div
-                    initial={{ opacity: 0, y: 100 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 100 }}
-                    className="bg-white dark:bg-[#1C1F26] w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto"
+                <div
+                  key={item.id}
+                  onClick={() => openEditModal(item)}
+                  className={`group relative flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer select-none ${
+                    isChecked
+                      ? 'bg-white dark:bg-[#1C1F26] border-emerald-200 dark:border-emerald-900/40 shadow-sm'
+                      : 'bg-white dark:bg-[#1C1F26] border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm'
+                  }`}
+                >
+                  {/* Botão de Check Circular */}
+                  <button
+                    type="button"
+                    onClick={(e) => toggleItemCheck(item, e)}
+                    className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-90 ${
+                      isChecked
+                        ? isPartial
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                        : 'border-2 border-slate-300 dark:border-slate-600 hover:border-[#00559c] dark:hover:border-[#58a6ff]'
+                    }`}
                   >
-                    <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                      <div>
-                        <span className="text-[10px] font-bold text-[#00559c] dark:text-[#58a6ff] uppercase tracking-widest block">
-                          Ajuste de Compra
+                    {isChecked && <Check size={14} weight="bold" />}
+                  </button>
+
+                  {/* Informações do Material */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span
+                        className={`text-base font-semibold transition-colors truncate ${
+                          isChecked && !isPartial
+                            ? 'line-through text-slate-400 dark:text-slate-500'
+                            : 'text-slate-800 dark:text-slate-100'
+                        }`}
+                      >
+                        {item.name}
+                      </span>
+
+                      {/* Quantidade Solicitada Badge */}
+                      <span className="shrink-0 px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 tabular-nums">
+                        {item.quantity || '1 un'}
+                      </span>
+                    </div>
+
+                    {item.description && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+
+                    {/* Linha de Status de Compra e Valores */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs">
+                      {isChecked ? (
+                        <>
+                          <span
+                            className={`inline-flex items-center gap-1 font-semibold ${
+                              isPartial
+                                ? 'text-amber-600 dark:text-amber-400'
+                                : 'text-emerald-600 dark:text-emerald-400'
+                            }`}
+                          >
+                            <CheckCircle size={14} weight="fill" />
+                            {isPartial
+                              ? `Comprado: ${purchased} de ${req.number} ${req.unit}`
+                              : `Comprado completo (${purchased} ${req.unit})`}
+                          </span>
+
+                          {hasPrice && (
+                            <>
+                              <span className="text-slate-300 dark:text-slate-700">
+                                &bull;
+                              </span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300">
+                                R$ {formatBRL(unitP)} / {req.unit}
+                              </span>
+                              <span className="text-slate-300 dark:text-slate-700">
+                                &bull;
+                              </span>
+                              <span className="font-extrabold text-[#00559c] dark:text-[#58a6ff]">
+                                Total: R$ {formatBRL(purchased * unitP)}
+                              </span>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                          <Package size={13} />
+                          Pendente de compra
+                          {item.unitPrice && (
+                            <>
+                              <span className="text-slate-300 dark:text-slate-700">
+                                &bull;
+                              </span>
+                              <span>Est.: R$ {item.unitPrice}</span>
+                            </>
+                          )}
                         </span>
-                        <h3 className="text-lg font-black text-slate-800 dark:text-white leading-snug">
-                          {editingItem.name}
-                        </h3>
-                        {editingItem.description && (
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {editingItem.description}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => setEditingItem(null)}
-                        className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <X size={20} weight="bold" />
-                      </button>
-                    </div>
+                      )}
 
-                    <div className="py-5 space-y-5">
-                      {/* Alerta da Quantidade Original Solicitada */}
-                      <div className="bg-[#edf4fa] dark:bg-[#00559c]/20 p-3.5 rounded-2xl border border-[#00559c]/20 flex items-center justify-between">
-                        <div>
-                          <span className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                            Quantidade Solicitada na Lista
-                          </span>
-                          <span className="text-base font-extrabold text-[#00559c] dark:text-[#58a6ff]">
-                            {req.number} {req.unit}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Stepper de Quantidade Comprada */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                          Quanto você comprou na loja?
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setEditQty(Math.max(0, editQty - 1))}
-                            className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700"
-                          >
-                            <Minus size={20} weight="bold" />
-                          </button>
-
-                          <div className="flex-1 relative">
-                            <input
-                              type="number"
-                              min="0"
-                              step="any"
-                              value={editQty}
-                              onChange={(e) =>
-                                setEditQty(
-                                  Math.max(0, parseFloat(e.target.value) || 0),
-                                )
-                              }
-                              className="w-full text-center text-2xl font-black py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-[#00559c]"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                              {req.unit}
-                            </span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setEditQty(editQty + 1)}
-                            className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700"
-                          >
-                            <Plus size={20} weight="bold" />
-                          </button>
-                        </div>
-
-                        {/* Botões de Atalho */}
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            type="button"
-                            onClick={() => setEditQty(req.number)}
-                            className="flex-1 py-1.5 px-2 text-xs font-bold rounded-lg bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] hover:bg-[#00559c]/15 transition-colors"
-                          >
-                            Comprei Tudo ({req.number} {req.unit})
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditQty(0)}
-                            className="py-1.5 px-3 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition-colors"
-                          >
-                            Não encontrei (0)
-                          </button>
-                        </div>
-
-                        {/* Feedback Dinâmico da Quantidade */}
-                        {diff > 0 && editQty > 0 && (
-                          <div className="mt-2.5 flex items-center gap-1.5 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-900/40">
-                            <Warning
-                              size={15}
-                              weight="bold"
-                              className="shrink-0 text-amber-600"
-                            />
-                            <span>
-                              Falta comprar{' '}
-                              <strong>
-                                {diff} {req.unit}
-                              </strong>{' '}
-                              para completar a solicitação do projeto.
-                            </span>
-                          </div>
-                        )}
-                        {diff < 0 && (
-                          <div className="mt-2.5 flex items-center gap-1.5 p-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-900/40">
-                            <span>
-                              Você comprou{' '}
-                              <strong>
-                                {Math.abs(diff)} {req.unit} a mais
-                              </strong>{' '}
-                              do que o especificado.
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Preço Unitário Pago Real com máscara brasileira (ex: 1050 -> 10,50) */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                          Preço Unitário Pago na Loja (R$)
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                            R$
-                          </span>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            placeholder="0,00"
-                            value={editPrice}
-                            onChange={(e) => handlePriceChange(e.target.value)}
-                            className="w-full pl-[40px_!important] pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-bold text-base focus:outline-none focus:border-[#00559c]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Totalizador do Item no Modal */}
-                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                        <div>
-                          <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                            Total Deste Item
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            {editQty} {req.unit} &times; R$ {formatBRL(unitVal)}
-                          </span>
-                        </div>
-                        <span className="text-xl font-black text-[#00559c] dark:text-[#58a6ff]">
-                          R$ {formatBRL(subtotal)}
-                        </span>
+                      {/* Botão de Edição Rápida */}
+                      <div className="ml-auto opacity-70 group-hover:opacity-100 flex items-center gap-1 text-[#00559c] dark:text-[#58a6ff] text-[11px] font-semibold">
+                        <PencilSimple size={13} />
+                        <span className="hidden sm:inline">Editar</span>
                       </div>
                     </div>
-
-                    {/* Ações do Modal */}
-                    <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setEditingItem(null)}
-                        className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSaveModal}
-                        className="flex-1 py-3 rounded-xl bg-[#00559c] hover:bg-[#004785] text-white font-bold text-sm shadow-lg shadow-[#00559c]/30 transition-all"
-                      >
-                        Salvar Alterações
-                      </button>
-                    </div>
-                  </motion.div>
+                  </div>
                 </div>
               );
-            })()}
+            })}
+          </div>
+        </div>
+
+        {/* Rodapé Fixo de Ações com Menu Flutuante Sobreposto */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#1C1F26]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 sm:p-4 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.08)] pb-safe">
+          <div className="max-w-2xl mx-auto flex items-center gap-2">
+            {/* Botão de Enviar com Menu Flutuante e Sobreposto */}
+            <div className="relative flex-1">
+              <button
+                type="button"
+                onClick={() => setIsSendMenuOpen(!isSendMenuOpen)}
+                className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-[#25D366]/20 transition-all text-sm"
+              >
+                <WhatsappLogo size={20} weight="fill" />
+                <span>Enviar</span>
+                <CaretDown
+                  size={14}
+                  weight="bold"
+                  className={`transition-transform duration-200 ${isSendMenuOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {/* Menu Flutuante e Sobreposto */}
+              <AnimatePresence>
+                {isSendMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 bg-black/20 dark:bg-black/40 backdrop-blur-[1px]"
+                      onClick={() => setIsSendMenuOpen(false)}
+                    />
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-white dark:bg-[#1F232B] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/80 p-2 overflow-hidden"
+                    >
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 border-b border-slate-100 dark:border-slate-800">
+                        Como deseja enviar?
+                      </div>
+
+                      {/* Opção 1: Texto (como funciona hoje) */}
+                      <button
+                        type="button"
+                        onClick={handleSendWhatsappSummary}
+                        className="w-full text-left flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-slate-800 dark:text-slate-100 group"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                          <ChatText size={18} weight="bold" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                            Texto
+                            <span className="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">
+                              Padrão
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                            Envia mensagem formatada com itens comprados e
+                            pendentes.
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* Opção 2: Link da Lista Atualizada */}
+                      <button
+                        type="button"
+                        onClick={handleSendWhatsappUpdatedLink}
+                        className="w-full text-left flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-slate-800 dark:text-slate-100 group"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-[#00559c]/10 dark:bg-[#00559c]/30 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                          <LinkIcon size={18} weight="bold" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                            Link da lista atualizada
+                            <span className="text-[10px] font-semibold bg-[#00559c]/10 text-[#00559c] dark:text-[#58a6ff] px-1.5 py-0.5 rounded">
+                              Curto & Sincronizado
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                            Gera um link curto e seguro que carrega exatamente a
+                            situação e marcações atuais.
+                          </p>
+                        </div>
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Compartilhar Geral / Copiar Link */}
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex items-center justify-center gap-2 bg-[#00559c] hover:bg-[#00447c] active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl shadow-md shadow-[#00559c]/20 transition-all text-sm"
+              title="Compartilhar ou Copiar Link"
+            >
+              {copiedLink ? (
+                <>
+                  <Check size={18} weight="bold" />
+                  <span className="hidden sm:inline">Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <ShareNetwork size={18} weight="bold" />
+                  <span className="hidden sm:inline">Compartilhar</span>
+                </>
+              )}
+            </button>
+
+            {/* Imprimir / Salvar PDF */}
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="p-3.5 text-slate-600 dark:text-slate-300 hover:text-[#00559c] hover:bg-[#edf4fa] dark:hover:bg-[#00559c]/20 border border-slate-200 dark:border-slate-800 rounded-xl transition-all"
+              title="Imprimir / Salvar em PDF"
+            >
+              <Printer size={18} weight="bold" />
+            </button>
+          </div>
+        </div>
+
+        {/* Modal de Edição Detalhada do Item */}
+        <AnimatePresence>
+          {editingItem && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="bg-white dark:bg-[#1C1F26] w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <span className="text-[11px] font-bold text-[#00559c] dark:text-[#58a6ff] uppercase tracking-wider block mb-1">
+                      Editar Item de Compra
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                      {editingItem.name}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full bg-slate-100 dark:bg-slate-800"
+                  >
+                    <X size={18} weight="bold" />
+                  </button>
+                </div>
+
+                {/* Quantidade Requisitada Original */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl flex items-center justify-between text-xs">
+                  <span className="text-slate-500">
+                    Quantidade solicitada no projeto:
+                  </span>
+                  <strong className="text-slate-800 dark:text-slate-100 font-bold">
+                    {editingItem.quantity || '1 un'}
+                  </strong>
+                </div>
+
+                {/* Controle de Quantidade Comprada */}
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
+                    Quantidade Efetivamente Comprada (
+                    {parseQuantity(editingItem.quantity).unit}):
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditQty(Math.max(0, editQty - 1))}
+                      className="w-12 h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all"
+                    >
+                      <Minus size={18} weight="bold" />
+                    </button>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={editQty}
+                      onChange={(e) =>
+                        setEditQty(parseFloat(e.target.value) || 0)
+                      }
+                      className="flex-1 h-12 text-center text-xl font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#00559c]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setEditQty(editQty + 1)}
+                      className="w-12 h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all"
+                    >
+                      <Plus size={18} weight="bold" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preço Unitário Pago */}
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
+                    Preço Unitário Pago na Loja (R$):
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                      R$
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0,00"
+                      value={editPrice}
+                      onChange={(e) => handlePriceChange(e.target.value)}
+                      className="w-full h-12 pl-12 pr-4 text-base font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#00559c]"
+                    />
+                  </div>
+                  {editPrice && editQty > 0 && (
+                    <div className="text-right text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1.5">
+                      Subtotal deste item: R${' '}
+                      {formatBRL(editQty * parseCurrency(editPrice))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Botões do Modal */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditQty(0);
+                      setEditPrice('');
+                    }}
+                    className="flex-1 py-3 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-colors border border-slate-200 dark:border-slate-700"
+                  >
+                    Zerar Item
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveModal}
+                    className="flex-[2] py-3 text-sm font-bold bg-[#00559c] hover:bg-[#00447c] text-white rounded-xl shadow-md shadow-[#00559c]/20 active:scale-[0.99] transition-all"
+                  >
+                    Confirmar e Salvar
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
         </AnimatePresence>
       </div>
     </>
@@ -1814,8 +1760,11 @@ export default function PublicListPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#181b20]">
-          <div className="w-8 h-8 border-4 border-[#00559c] border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#13151A]">
+          <div className="w-10 h-10 border-4 border-[#00559c]/20 border-t-[#00559c] rounded-full animate-spin"></div>
+          <p className="mt-4 text-slate-500 dark:text-slate-400 font-medium">
+            Carregando...
+          </p>
         </div>
       }
     >
