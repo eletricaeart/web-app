@@ -196,7 +196,6 @@ function ListContent() {
     setSyncStatus('saving');
     syncTimeoutRef.current = setTimeout(async () => {
       try {
-        const supabase = createClient();
         const updatedItems = currentItems.map((it) => {
           const edit = edits[it.id];
           const req = parseQuantity(it.quantity);
@@ -217,23 +216,50 @@ function ListContent() {
           };
         });
 
-        const { error: updateErr } = await supabase
-          .from('listas_materiais')
-          .update({
-            items: updatedItems,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', listId);
+        let synced = false;
 
-        if (updateErr) {
+        // 1. Tenta sincronizar via Server API Route (ignora restrições de RLS)
+        try {
+          const res = await fetch(`/api/lista/${encodeURIComponent(listId)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: updatedItems }),
+          });
+          if (res.ok) {
+            synced = true;
+          }
+        } catch (apiErr) {
           console.warn(
-            '[ListaPublica] Aviso na sincronização do Supabase:',
-            updateErr.message,
+            '[ListaPublica] Aviso na sincronização via API:',
+            apiErr,
           );
-          setSyncStatus('error');
-        } else {
+        }
+
+        // 2. Fallback via cliente direto do Supabase
+        if (!synced) {
+          try {
+            const supabase = createClient();
+            const { error: updateErr } = await supabase
+              .from('listas_materiais')
+              .update({
+                items: updatedItems,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', listId);
+
+            if (!updateErr) {
+              synced = true;
+            }
+          } catch (dbErr) {
+            console.warn('[ListaPublica] Erro no cliente Supabase:', dbErr);
+          }
+        }
+
+        if (synced) {
           setSyncStatus('saved');
           setTimeout(() => setSyncStatus('idle'), 3500);
+        } else {
+          setSyncStatus('error');
         }
       } catch (e) {
         console.error('[ListaPublica] Erro na sincronização:', e);
@@ -247,22 +273,53 @@ function ListContent() {
     const d = searchParams.get('d');
 
     const loadList = async () => {
-      // 1. Prioridade: Link Curto pelo ID do Supabase
+      // 1. ESTRATÉGIA PRIORITÁRIA: Carregamento por ID direto do Banco Compartilhado (Link Curto)
       if (listId) {
+        setIsLoadingDb(true);
+        setError(false);
         try {
-          setIsLoadingDb(true);
-          const supabase = createClient();
-          const { data: row, error: fetchErr } = await supabase
-            .from('listas_materiais')
-            .select('*')
-            .eq('id', listId)
-            .maybeSingle();
+          let row: any = null;
 
-          if (fetchErr) {
-            console.warn(
-              '[ListaPublica] Aviso ao consultar lista por ID no Supabase:',
-              fetchErr.message,
+          // 1.1 Tenta carregar pela rota de API do servidor (/api/lista/[id])
+          try {
+            const apiRes = await fetch(
+              `/api/lista/${encodeURIComponent(listId)}`,
+              {
+                cache: 'no-store',
+              },
             );
+            if (apiRes.ok) {
+              const resJson = await apiRes.json();
+              if (resJson?.data) {
+                row = resJson.data;
+              }
+            }
+          } catch (apiErr) {
+            console.warn(
+              '[ListaPublica] Tentativa via API route falhou, tentando cliente direto:',
+              apiErr,
+            );
+          }
+
+          // 1.2 Fallback: Tenta cliente Supabase do browser
+          if (!row) {
+            try {
+              const supabase = createClient();
+              const { data: dbRow, error: fetchErr } = await supabase
+                .from('listas_materiais')
+                .select('*')
+                .eq('id', listId)
+                .maybeSingle();
+
+              if (!fetchErr && dbRow) {
+                row = dbRow;
+              }
+            } catch (clientErr) {
+              console.warn(
+                '[ListaPublica] Erro no cliente direto do Supabase:',
+                clientErr,
+              );
+            }
           }
 
           if (row) {
@@ -291,6 +348,7 @@ function ListContent() {
 
             setList(loadedList);
 
+            // Reconstrução inteligente das marcações e valores salvos
             const editsKey = `@ea:public-list-edits:${row.id}`;
             const storedEdits = localStorage.getItem(editsKey);
             const initialEdits: Record<string, ClientItemEdit> = {};
@@ -326,15 +384,24 @@ function ListContent() {
             setIsLoadedFromSharedLink(true);
             setIsLoadingDb(false);
             return;
+          } else {
+            console.error(
+              '[ListaPublica] Lista não encontrada no banco para ID:',
+              listId,
+            );
+            setError(true);
+            setIsLoadingDb(false);
+            return;
           }
         } catch (err) {
           console.error('[ListaPublica] Falha ao carregar do banco:', err);
-        } finally {
+          setError(true);
           setIsLoadingDb(false);
+          return;
         }
       }
 
-      // 2. Fallback Retrocompatível para links antigos com payload 'd'
+      // 2. FALLBACK RETROCOMPATÍVEL: Decodificação de payload 'd' na URL
       if (d) {
         try {
           const decoded = decodePayload(d);
@@ -393,7 +460,7 @@ function ListContent() {
           console.error('Erro ao decodificar lista:', e);
           setError(true);
         }
-      } else if (!listId) {
+      } else {
         setError(true);
       }
     };
