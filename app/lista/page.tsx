@@ -17,6 +17,11 @@ import {
   WhatsappLogo,
   Warning,
   Coins,
+  CaretDown,
+  ChatText,
+  Link as LinkIcon,
+  Copy,
+  Check,
 } from '@phosphor-icons/react';
 
 interface MaterialItem {
@@ -26,6 +31,8 @@ interface MaterialItem {
   quantity?: string;
   description?: string;
   unitPrice?: string;
+  purchasedQty?: number;
+  actualUnitPrice?: string;
 }
 
 interface ClientItemEdit {
@@ -39,8 +46,89 @@ interface MaterialList {
   title: string;
   items: MaterialItem[];
   createdAt: number;
+  updatedAt?: number;
+  sharedAt?: number;
   clientName?: string;
   orcamentoName?: string;
+  clientEdits?: Record<string, ClientItemEdit>;
+}
+
+// Prefixo e chave para ofuscação binária segura (não legível para leigos na URL e URL-safe)
+const OBFUSCATE_PREFIX = 'eart_v2_';
+const MASK_KEY = [0x45, 0x41, 0x5f, 0x32, 0x30, 0x32, 0x36]; // 'EA_2026'
+
+function encodePayload(data: unknown): string {
+  const jsonStr = JSON.stringify(data);
+  const utf8Bytes = new TextEncoder().encode(jsonStr);
+  const masked = new Uint8Array(utf8Bytes.length);
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    masked[i] = utf8Bytes[i] ^ MASK_KEY[i % MASK_KEY.length];
+  }
+  let binary = '';
+  for (let i = 0; i < masked.length; i++) {
+    binary += String.fromCharCode(masked[i]);
+  }
+  const b64 = btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  return `${OBFUSCATE_PREFIX}${b64}`;
+}
+
+function decodePayload(raw: string): MaterialList | null {
+  if (!raw) return null;
+
+  // 1. Formato novo com ofuscação binária e proteção contra leitura a olho nu
+  if (raw.startsWith(OBFUSCATE_PREFIX)) {
+    try {
+      const cleanB64 = raw
+        .substring(OBFUSCATE_PREFIX.length)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+      const full = cleanB64.padEnd(
+        cleanB64.length + ((4 - (cleanB64.length % 4)) % 4),
+        '=',
+      );
+      const binary = atob(full);
+      const masked = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        masked[i] = binary.charCodeAt(i) ^ MASK_KEY[i % MASK_KEY.length];
+      }
+      const jsonStr = new TextDecoder().decode(masked);
+      return JSON.parse(jsonStr) as MaterialList;
+    } catch (err) {
+      console.error('Erro ao decodificar payload ofuscado v2:', err);
+    }
+  }
+
+  // 2. Fallback retrocompatível para Base64 convencional encodeURIComponent
+  try {
+    const padded = raw.replace(/-/g, '+').replace(/_/g, '/');
+    const full = padded.padEnd(
+      padded.length + ((4 - (padded.length % 4)) % 4),
+      '=',
+    );
+    const jsonStr = decodeURIComponent(atob(full));
+    return JSON.parse(jsonStr) as MaterialList;
+  } catch {
+    try {
+      const padded = raw.replace(/-/g, '+').replace(/_/g, '/');
+      const full = padded.padEnd(
+        padded.length + ((4 - (padded.length % 4)) % 4),
+        '=',
+      );
+      const binary = atob(full);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const jsonStr = new TextDecoder().decode(bytes);
+      return JSON.parse(jsonStr) as MaterialList;
+    } catch (err2) {
+      console.error('Erro no fallback de decodificação:', err2);
+      return null;
+    }
+  }
 }
 
 // Utilitário para separar número e unidade (ex: "9 un", "100m", "5")
@@ -83,6 +171,11 @@ function ListContent() {
   const [itemEdits, setItemEdits] = useState<Record<string, ClientItemEdit>>(
     {},
   );
+  const [isLoadedFromSharedLink, setIsLoadedFromSharedLink] = useState(false);
+
+  // Controle do menu flutuante e sobreposto de envio
+  const [isSendMenuOpen, setIsSendMenuOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Item selecionado para edição detalhada no Modal
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
@@ -93,14 +186,53 @@ function ListContent() {
     const d = searchParams.get('d');
     if (d) {
       try {
-        const decoded = JSON.parse(decodeURIComponent(atob(d))) as MaterialList;
+        const decoded = decodePayload(d);
+        if (!decoded || !decoded.items) {
+          throw new Error('Lista inválida ou corrompida');
+        }
         setList(decoded);
 
         // Carrega edição do cliente gravada localmente no navegador
         const editsKey = `@ea:public-list-edits:${decoded.id}`;
         const storedEdits = localStorage.getItem(editsKey);
 
-        if (storedEdits) {
+        // Verifica se o link traz marcações ou estado atualizado explícito compartilhado
+        const hasSharedState =
+          Boolean(decoded.sharedAt) ||
+          Boolean(
+            decoded.clientEdits && Object.keys(decoded.clientEdits).length > 0,
+          ) ||
+          decoded.items.some(
+            (it) => it.checked || it.purchasedQty !== undefined,
+          );
+
+        if (hasSharedState) {
+          const reconstructed: Record<string, ClientItemEdit> = {
+            ...(decoded.clientEdits || {}),
+          };
+
+          decoded.items.forEach((it) => {
+            if (!reconstructed[it.id]) {
+              const req = parseQuantity(it.quantity);
+              if (it.checked || it.purchasedQty !== undefined) {
+                reconstructed[it.id] = {
+                  checked: it.checked ?? false,
+                  purchasedQty:
+                    it.purchasedQty !== undefined
+                      ? it.purchasedQty
+                      : it.checked
+                        ? req.number
+                        : 0,
+                  actualUnitPrice: it.actualUnitPrice ?? it.unitPrice ?? '',
+                };
+              }
+            }
+          });
+
+          setItemEdits(reconstructed);
+          localStorage.setItem(editsKey, JSON.stringify(reconstructed));
+          setIsLoadedFromSharedLink(true);
+        } else if (storedEdits) {
           try {
             setItemEdits(JSON.parse(storedEdits));
           } catch (e) {
@@ -225,17 +357,58 @@ function ListContent() {
     setEditingItem(null);
   };
 
+  // Gera URL codificada com todos os dados e o estado atual da lista
+  const getUpdatedShareUrl = () => {
+    if (!list) return typeof window !== 'undefined' ? window.location.href : '';
+    const consolidatedItems: MaterialItem[] = list.items.map((it) => {
+      const edit = itemEdits[it.id];
+      const req = parseQuantity(it.quantity);
+      const isChecked = edit?.checked ?? it.checked ?? false;
+      return {
+        ...it,
+        checked: isChecked,
+        purchasedQty:
+          edit?.purchasedQty !== undefined
+            ? edit.purchasedQty
+            : isChecked
+              ? req.number
+              : undefined,
+        actualUnitPrice:
+          edit?.actualUnitPrice !== undefined
+            ? edit.actualUnitPrice
+            : it.unitPrice,
+      };
+    });
+
+    const updatedList: MaterialList = {
+      ...list,
+      items: consolidatedItems,
+      updatedAt: Date.now(),
+      sharedAt: Date.now(),
+      clientEdits: itemEdits,
+    };
+
+    const payload = encodePayload(updatedList);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const pathname =
+      typeof window !== 'undefined' ? window.location.pathname : '/lista';
+    return `${origin}${pathname}?d=${payload}`;
+  };
+
   const handleShare = () => {
+    const updatedUrl = getUpdatedShareUrl();
     if (navigator.share) {
       navigator
         .share({
           title: list?.title || 'Lista de Materiais',
-          url: window.location.href,
+          text: `Lista de materiais atualizada`,
+          url: updatedUrl,
         })
         .catch(console.error);
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert('Link copiado para a área de transferência!');
+      navigator.clipboard.writeText(updatedUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2200);
     }
   };
 
@@ -243,14 +416,15 @@ function ListContent() {
     window.print();
   };
 
-  // Enviar Resumo no WhatsApp para o Eletricista ou Fornecedor
+  // Opção 1: Enviar Resumo em Texto no WhatsApp (como funciona hoje)
   const handleSendWhatsappSummary = () => {
     if (!list) return;
+    setIsSendMenuOpen(false);
 
     let totalGasto = 0;
     let itensCompletos = 0;
-    let itensParciais: string[] = [];
-    let itensNaoComprados: string[] = [];
+    const itensParciais: string[] = [];
+    const itensNaoComprados: string[] = [];
 
     list.items.forEach((it) => {
       const edit = itemEdits[it.id];
@@ -296,10 +470,62 @@ function ListContent() {
       msg += `\n⏳ *Ainda Não Comprados:*\n${itensNaoComprados.join('\n')}\n`;
     }
 
-    msg += `\nLink da lista atualizada: ${window.location.href}`;
+    msg += `\nLink da lista atualizada: ${getUpdatedShareUrl()}`;
 
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
+  };
+
+  // Opção 2: Enviar Link da Lista Atualizada com os valores e marcações codificados na URL
+  const handleSendWhatsappUpdatedLink = () => {
+    if (!list) return;
+    setIsSendMenuOpen(false);
+    const updatedUrl = getUpdatedShareUrl();
+
+    let totalGasto = 0;
+    let marcadosCount = 0;
+    list.items.forEach((it) => {
+      const edit = itemEdits[it.id];
+      const req = parseQuantity(it.quantity);
+      const isChecked = edit?.checked ?? false;
+      const purchased =
+        edit?.purchasedQty !== undefined
+          ? edit.purchasedQty
+          : isChecked
+            ? req.number
+            : 0;
+      const unitP = parseCurrency(edit?.actualUnitPrice || it.unitPrice);
+      if (isChecked) marcadosCount++;
+      if (isChecked && purchased > 0) {
+        totalGasto += purchased * unitP;
+      }
+    });
+
+    const pct =
+      list.items.length > 0
+        ? Math.round((marcadosCount / list.items.length) * 100)
+        : 0;
+
+    let msg = `📋 *Lista de Materiais Atualizada: ${list.title}*\n`;
+    if (list.clientName) msg += `👤 *Cliente:* ${list.clientName}\n`;
+    if (list.orcamentoName) msg += `🏗️ *Obra / Ref:* ${list.orcamentoName}\n`;
+    msg += `---------------------------------\n`;
+    msg += `📊 *Progresso Atual:* ${marcadosCount} de ${list.items.length} itens marcados (${pct}%)\n`;
+    if (totalGasto > 0) {
+      msg += `💰 *Total Investido:* R$ ${formatBRL(totalGasto)}\n`;
+    }
+    msg += `\n🔗 *Acesse a lista interativa com os itens já marcados e atualizados:*\n${updatedUrl}\n\n`;
+    msg += `_(Ao abrir o link acima, a lista carregará o estado exato com as quantidades compradas e valores atualizados)_`;
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleCopyUpdatedLink = () => {
+    const updatedUrl = getUpdatedShareUrl();
+    navigator.clipboard.writeText(updatedUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2200);
   };
 
   if (error) {
@@ -406,7 +632,7 @@ function ListContent() {
           }}
         />
 
-        {/* EACard Oficial Elétrica & Art com degradê azul */}
+        {/* EACard Oficial Elétrica & Art com degradê azul sofisticado */}
         <div
           style={{
             display: 'grid',
@@ -985,26 +1211,26 @@ function ListContent() {
 
         {/* Card Resumo Financeiro da Compra (Totalizador) */}
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4">
-          <div className="bg-[#00559c] dark:bg-[#1C1F26] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
+          <div className="bg-white dark:bg-[#1C1F26] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-xl bg-[#58a6ff] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 border border-[#00559c]/20">
+              <div className="w-11 h-11 rounded-xl bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 border border-[#00559c]/20">
                 <Coins size={22} weight="duotone" />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                   Total Gasto Comprado
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-white dark:text-[#58a6ff] tabular-nums">
+                <span className="text-xl sm:text-2xl font-black text-[#00559c] dark:text-[#58a6ff] tabular-nums">
                   R$ {formatBRL(totalGastoCliente)}
                 </span>
               </div>
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-[10px] font-bold text-indigo-100 uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                 Total Estimado
               </span>
-              <span className="text-xs font-semibold text-[#f5f5f5] dark:text-slate-300">
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                 R$ {formatBRL(totalEstimadoLista)}
               </span>
               {partialPurchasedCount > 0 && (
@@ -1018,10 +1244,11 @@ function ListContent() {
         </div>
 
         {/* Botões Rápidos de Ação: Imprimir / PDF & Enviar WhatsApp & Compartilhar */}
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3 flex items-center justify-between gap-2">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3 flex items-center justify-between gap-2 relative">
           <button
+            type="button"
             onClick={handlePrint}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white dark:bg-[#1C1F26] border border-slate-200 dark:border-slate-800 hover:border-[#00559c]/50 text-slate-700 dark:text-slate-200 font-bold text-xs active:scale-[0.98] transition-all shadow-sm"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-white dark:bg-[#1C1F26] border border-slate-200 dark:border-slate-800 hover:border-[#00559c]/50 text-slate-700 dark:text-slate-200 font-bold text-xs active:scale-[0.98] transition-all shadow-sm"
             title="Imprimir ou Salvar em PDF"
           >
             <Printer
@@ -1032,28 +1259,165 @@ function ListContent() {
             <span>Imprimir / PDF</span>
           </button>
 
-          <button
-            onClick={handleSendWhatsappSummary}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-bold text-xs active:scale-[0.98] transition-all shadow-sm"
-            title="Enviar resumo das compras via WhatsApp"
-          >
-            <WhatsappLogo
-              size={17}
-              weight="fill"
-              className="text-emerald-600 dark:text-emerald-400"
-            />
-            <span>Enviar</span>
-          </button>
+          {/* Botão Enviar com Menu Flutuante e Sobreposto */}
+          <div className="relative flex-1">
+            <button
+              type="button"
+              onClick={() => setIsSendMenuOpen(!isSendMenuOpen)}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs active:scale-[0.98] transition-all shadow-sm shadow-emerald-600/20"
+              title="Opções de envio no WhatsApp"
+            >
+              <WhatsappLogo
+                size={17}
+                weight="fill"
+                className="text-white shrink-0"
+              />
+              <span>Enviar</span>
+              <CaretDown
+                size={12}
+                weight="bold"
+                className={`transition-transform duration-200 ${isSendMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {/* Backdrop invisível para fechar ao clicar fora */}
+            {isSendMenuOpen && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsSendMenuOpen(false)}
+              />
+            )}
+
+            {/* Menu Flutuante e Sobreposto */}
+            <AnimatePresence>
+              {isSendMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-[#1C1F26] rounded-2xl p-2 shadow-2xl border border-slate-200/90 dark:border-slate-800 z-50 overflow-hidden"
+                >
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800/80 mb-1">
+                    Como deseja enviar?
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    {/* Opção 1: Texto */}
+                    <button
+                      type="button"
+                      onClick={handleSendWhatsappSummary}
+                      className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 active:bg-slate-100 transition-colors flex items-start gap-3 group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200/60 dark:border-emerald-900/40 group-hover:scale-105 transition-transform">
+                        <ChatText size={18} weight="fill" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                          <span>Texto</span>
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.2 rounded">
+                            Resumo
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Envia resumo em texto com os itens atendidos, parciais
+                          e pendentes no WhatsApp.
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* Opção 2: Link da Lista Atualizada */}
+                    <button
+                      type="button"
+                      onClick={handleSendWhatsappUpdatedLink}
+                      className="w-full text-left p-2.5 rounded-xl hover:bg-blue-50/50 dark:hover:bg-slate-800/60 active:bg-slate-100 transition-colors flex items-start gap-3 group border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 mt-0.5 border border-[#00559c]/20 group-hover:scale-105 transition-transform">
+                        <LinkIcon size={18} weight="bold" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                          <span>Link da lista atualizada</span>
+                          <span className="text-[10px] font-semibold text-[#00559c] dark:text-[#58a6ff] bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.2 rounded">
+                            Interativo
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Envia o link no WhatsApp com o estado atual: itens
+                          marcados e valores preenchidos.
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Ação secundária: Copiar Link */}
+                  <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={handleCopyUpdatedLink}
+                      className="w-full py-1.5 px-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-[#00559c] dark:hover:text-[#58a6ff] hover:bg-slate-50 dark:hover:bg-slate-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      {copiedLink ? (
+                        <>
+                          <Check
+                            size={13}
+                            weight="bold"
+                            className="text-emerald-500"
+                          />
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            Link atualizado copiado!
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} />
+                          <span>Copiar link da lista atualizada</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <button
+            type="button"
             onClick={handleShare}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#edf4fa] dark:bg-[#00559c]/20 border border-[#00559c]/30 hover:bg-[#00559c]/15 text-[#00559c] dark:text-[#58a6ff] font-bold text-xs active:scale-[0.98] transition-all shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#edf4fa] dark:bg-[#00559c]/20 border border-[#00559c]/30 hover:bg-[#00559c]/15 text-[#00559c] dark:text-[#58a6ff] font-bold text-xs active:scale-[0.98] transition-all shadow-sm"
             title="Compartilhar Link"
           >
             <ShareNetwork size={16} weight="bold" />
             <span className="hidden sm:inline">Compartilhar</span>
           </button>
         </div>
+
+        {/* Notificação se foi carregada de um link compartilhado com progresso */}
+        {isLoadedFromSharedLink && (
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-2">
+            <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/40 py-1.5 px-3 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs">
+              <span className="flex items-center gap-1.5 font-medium text-[11.5px]">
+                <CheckCircle
+                  size={14}
+                  weight="fill"
+                  className="text-emerald-600 dark:text-emerald-400 shrink-0"
+                />
+                <span>
+                  Lista sincronizada com as marcações e valores enviados no
+                  link.
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsLoadedFromSharedLink(false)}
+                className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 p-0.5"
+                title="Fechar aviso"
+              >
+                <X size={12} weight="bold" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Dica amigável para o cliente */}
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3">
@@ -1275,7 +1639,7 @@ function ListContent() {
                       </div>
                       <button
                         onClick={() => setEditingItem(null)}
-                        className="p-[.75rem] rounded-[1.1rem] bg-[#ff999930] text-red-500 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       >
                         <X size={20} weight="bold" />
                       </button>
@@ -1383,7 +1747,7 @@ function ListContent() {
                         )}
                       </div>
 
-                      {/* Preço Unitário Pago Real com máscara brasileira */}
+                      {/* Preço Unitário Pago Real com máscara brasileira (ex: 1050 -> 10,50) */}
                       <div>
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                           Preço Unitário Pago na Loja (R$)
