@@ -985,26 +985,26 @@ function ListContent() {
 
         {/* Card Resumo Financeiro da Compra (Totalizador) */}
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4">
-          <div className="bg-white dark:bg-[#1C1F26] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
+          <div className="bg-[#00559c] dark:bg-[#1C1F26] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-xl bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 border border-[#00559c]/20">
+              <div className="w-11 h-11 rounded-xl bg-[#58a6ff] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] flex items-center justify-center shrink-0 border border-[#00559c]/20">
                 <Coins size={22} weight="duotone" />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-white uppercase tracking-wider block">
                   Total Gasto Comprado
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#00559c] dark:text-[#58a6ff] tabular-nums">
+                <span className="text-xl sm:text-2xl font-black text-white dark:text-[#58a6ff] tabular-nums">
                   R$ {formatBRL(totalGastoCliente)}
                 </span>
               </div>
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-indigo-100 uppercase tracking-wider block">
                 Total Estimado
               </span>
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <span className="text-xs font-semibold text-[#f5f5f5] dark:text-slate-300">
                 R$ {formatBRL(totalEstimadoLista)}
               </span>
               {partialPurchasedCount > 0 && (
@@ -1042,7 +1042,7 @@ function ListContent() {
               weight="fill"
               className="text-emerald-600 dark:text-emerald-400"
             />
-            <span>Resumo WhatsApp</span>
+            <span>Enviar</span>
           </button>
 
           <button
@@ -1275,7 +1275,7 @@ function ListContent() {
                       </div>
                       <button
                         onClick={() => setEditingItem(null)}
-                        className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="p-[.75rem] rounded-[1.1rem] bg-[#ff999930] text-red-500 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       >
                         <X size={20} weight="bold" />
                       </button>
