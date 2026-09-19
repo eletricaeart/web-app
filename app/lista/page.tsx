@@ -530,68 +530,101 @@ function ListContent() {
     }
   };
 
-  // Toggle simples ao clicar na caixa circular de check (Card Antigo)
-  const handleToggle = (itemId: string) => {
+  // Toggle simples ao clicar na caixa circular de check
+  const handleToggle = (itemId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!list) return;
     const targetItem = list.items.find((i) => i.id === itemId);
     if (!targetItem) return;
 
-    const currentChecked =
-      itemEdits[itemId]?.checked ?? targetItem.checked ?? false;
+    const currentEdit = itemEdits[itemId];
+    const currentChecked = currentEdit?.checked ?? false;
     const newChecked = !currentChecked;
     const req = parseQuantity(targetItem.quantity);
-
-    const updatedItems = list.items.map((it) =>
-      it.id === itemId ? { ...it, checked: newChecked } : it,
-    );
-    setList({ ...list, items: updatedItems });
 
     const newEdits = {
       ...itemEdits,
       [itemId]: {
         checked: newChecked,
-        purchasedQty: newChecked ? req.number : 0,
-        actualUnitPrice: targetItem.unitPrice || '',
+        purchasedQty: newChecked
+          ? currentEdit?.purchasedQty && currentEdit.purchasedQty > 0
+            ? currentEdit.purchasedQty
+            : req.number
+          : 0,
+        actualUnitPrice:
+          currentEdit?.actualUnitPrice ??
+          targetItem.actualUnitPrice ??
+          targetItem.unitPrice ??
+          '',
       },
     };
 
-    saveEdits(newEdits, updatedItems);
+    saveEdits(newEdits);
   };
 
-  // Abrir Modal de Edição do Item (Componente Antigo)
+  // Abrir Modal de Ajuste de Compra do Item
   const openEditModal = (item: MaterialItem) => {
-    setEditingItem({ ...item });
+    const edit = itemEdits[item.id];
+    const req = parseQuantity(item.quantity);
+    setEditingItem(item);
+
+    if (edit?.purchasedQty !== undefined) {
+      setEditQty(edit.purchasedQty);
+    } else if (edit?.checked) {
+      setEditQty(req.number);
+    } else {
+      setEditQty(req.number);
+    }
+
+    const priceStr =
+      edit?.actualUnitPrice !== undefined
+        ? edit.actualUnitPrice
+        : item.actualUnitPrice || item.unitPrice || '';
+    if (priceStr) {
+      const p = parseCurrency(priceStr);
+      setEditPrice(
+        p > 0
+          ? p.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : '',
+      );
+    } else {
+      setEditPrice('');
+    }
   };
 
-  // Atualiza campo do item em edição no modal antigo
-  const handleUpdateField = (field: keyof MaterialItem, value: string) => {
-    if (!editingItem) return;
-    setEditingItem({
-      ...editingItem,
-      [field]: value,
-    });
+  // Preço com máscara de centavos brasileira (ex: 1500 -> 15,00)
+  const handlePriceChange = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    if (!digits) {
+      setEditPrice('');
+      return;
+    }
+    const cents = parseInt(digits, 10) / 100;
+    setEditPrice(
+      cents.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    );
   };
 
-  // Salvar alterações do Modal antigo
+  // Salvar ajustes feitos pelo cliente no modal
   const handleSaveModal = () => {
     if (!editingItem || !list) return;
-
-    const updatedItems = list.items.map((it) =>
-      it.id === editingItem.id ? editingItem : it,
-    );
-    setList({ ...list, items: updatedItems });
-
-    const req = parseQuantity(editingItem.quantity);
+    const isPurchased = editQty > 0;
     const newEdits = {
       ...itemEdits,
       [editingItem.id]: {
-        checked: editingItem.checked ?? false,
-        purchasedQty: editingItem.checked ? req.number : 0,
-        actualUnitPrice: editingItem.unitPrice || '',
+        checked: isPurchased,
+        purchasedQty: editQty,
+        actualUnitPrice: editPrice.trim(),
       },
     };
 
-    saveEdits(newEdits, updatedItems);
+    saveEdits(newEdits);
     setEditingItem(null);
   };
 
@@ -804,32 +837,45 @@ function ListContent() {
 
   // Cálculos consolidados da lista
   const totalItemsCount = list.items.length;
-  let checkedCount = 0;
-  let totalEstimadoLista = 0;
+  let fullyPurchasedCount = 0;
+  let partialPurchasedCount = 0;
   let totalGastoCliente = 0;
+  let totalEstimadoLista = 0;
 
   list.items.forEach((it) => {
-    const isChecked = Boolean(it.checked);
+    const edit = itemEdits[it.id];
     const req = parseQuantity(it.quantity);
-    const unitP = parseCurrency(it.unitPrice);
+    const isChecked = edit?.checked ?? Boolean(it.checked);
+    const purchased =
+      edit?.purchasedQty !== undefined
+        ? edit.purchasedQty
+        : isChecked
+          ? req.number
+          : 0;
+    const unitP = parseCurrency(
+      edit?.actualUnitPrice || it.actualUnitPrice || it.unitPrice,
+    );
+    const originalUnitP = parseCurrency(it.unitPrice);
 
-    if (isChecked) {
-      checkedCount++;
-      if (unitP > 0) {
-        totalGastoCliente += req.number * unitP;
+    totalEstimadoLista += req.number * (originalUnitP || unitP);
+
+    if (isChecked && purchased > 0) {
+      totalGastoCliente += purchased * unitP;
+      if (purchased >= req.number) {
+        fullyPurchasedCount++;
+      } else {
+        partialPurchasedCount++;
       }
-    }
-    if (unitP > 0) {
-      totalEstimadoLista += req.number * unitP;
     }
   });
 
-  const fullyPurchasedCount = checkedCount;
+  const checkedCount = fullyPurchasedCount + partialPurchasedCount;
   const progress =
     totalItemsCount === 0
       ? 0
-      : Math.round((checkedCount / totalItemsCount) * 100);
-  const isComplete = totalItemsCount > 0 && checkedCount === totalItemsCount;
+      : Math.round((fullyPurchasedCount / totalItemsCount) * 100);
+  const isComplete =
+    totalItemsCount > 0 && fullyPurchasedCount === totalItemsCount;
 
   return (
     <>
@@ -1652,7 +1698,11 @@ function ListContent() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3">
           <p className="text-[11.5px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 bg-slate-100/70 dark:bg-slate-800/50 py-1.5 px-3 rounded-lg">
             <PencilSimple size={13} className="text-[#00559c] shrink-0" />
-            <span>Toque em qualquer material para ver detalhes ou editar.</span>
+            <span>
+              Toque em qualquer material para ajustar a{' '}
+              <strong>quantidade comprada</strong> e o{' '}
+              <strong>preço pago</strong>.
+            </span>
           </p>
         </div>
 
@@ -1693,7 +1743,26 @@ function ListContent() {
               ) : (
                 [...list.items].map((item, idx) => {
                   const isEven = idx % 2 === 0;
-                  const isChecked = Boolean(item.checked);
+                  const edit = itemEdits[item.id];
+                  const req = parseQuantity(item.quantity);
+                  const isChecked = edit?.checked ?? false;
+                  const purchased =
+                    edit?.purchasedQty !== undefined
+                      ? edit.purchasedQty
+                      : isChecked
+                        ? req.number
+                        : 0;
+                  const isPartial =
+                    isChecked && purchased < req.number && purchased > 0;
+                  const unitP = parseCurrency(
+                    edit?.actualUnitPrice ||
+                      item.actualUnitPrice ||
+                      item.unitPrice,
+                  );
+                  const totalItem =
+                    isChecked && purchased > 0 && unitP > 0
+                      ? purchased * unitP
+                      : 0;
 
                   return (
                     <motion.div
@@ -1709,7 +1778,9 @@ function ListContent() {
                       }}
                       className={`group flex items-center gap-3 p-4 rounded-2xl border cursor-pointer active:scale-[0.98] transition-all ${
                         isChecked
-                          ? 'bg-slate-50/80 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/60'
+                          ? isPartial
+                            ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/40 shadow-none'
+                            : 'bg-slate-50/80 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/60'
                           : `${isEven ? 'bg-[#edf4fa]/40 dark:bg-[#1f232b]' : 'bg-white dark:bg-[#1a1d24]'} border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-[#00559c]/50`
                       }`}
                     >
@@ -1718,11 +1789,13 @@ function ListContent() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggle(item.id);
+                          handleToggle(item.id, e);
                         }}
                         className={`w-6 h-6 rounded-full flex items-center justify-center transition-all shrink-0 ${
                           isChecked
-                            ? 'bg-[#00559c] text-white shadow-sm shadow-[#00559c]/30'
+                            ? isPartial
+                              ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/30'
+                              : 'bg-[#00559c] text-white shadow-sm shadow-[#00559c]/30'
                             : 'border-2 border-slate-300 dark:border-slate-600 hover:border-[#00559c] text-transparent'
                         }`}
                         title={
@@ -1738,21 +1811,27 @@ function ListContent() {
 
                       {/* Informações do Item */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {item.quantity && (
-                            <span
-                              className={`px-2 py-0.5 text-xs font-bold rounded-md shrink-0 ${
-                                isChecked
-                                  ? 'bg-slate-200/60 dark:bg-slate-800 text-slate-400'
-                                  : 'bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] border border-[#00559c]/20'
-                              }`}
-                            >
-                              {item.quantity}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {isChecked ? (
+                            isPartial ? (
+                              <span className="px-2 py-0.5 text-xs font-bold rounded-md shrink-0 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                                Comprou {purchased} de {req.number} {req.unit}{' '}
+                                (Falta {req.number - purchased})
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 text-xs font-bold rounded-md shrink-0 bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                {purchased} {req.unit} atendidos
+                              </span>
+                            )
+                          ) : (
+                            <span className="px-2 py-0.5 text-xs font-bold rounded-md shrink-0 bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] border border-[#00559c]/20">
+                              {req.number} {req.unit}
                             </span>
                           )}
+
                           <span
-                            className={`font-semibold text-[15px] truncate ${
-                              isChecked
+                            className={`font-semibold text-[15px] truncate transition-all ${
+                              isChecked && !isPartial
                                 ? 'line-through text-slate-400 dark:text-slate-500'
                                 : 'text-slate-800 dark:text-slate-100'
                             }`}
@@ -1761,41 +1840,43 @@ function ListContent() {
                           </span>
                         </div>
 
-                        {(item.description || item.unitPrice) &&
-                          (() => {
-                            let itemTotalStr = '';
-                            if (item.unitPrice) {
-                              const p = parseFloat(
-                                item.unitPrice
-                                  .replace(/\./g, '')
-                                  .replace(',', '.')
-                                  .replace(/[^\d.]/g, ''),
-                              );
-                              const q =
-                                parseFloat(
-                                  (item.quantity || '1').replace(/[^\d.]/g, ''),
-                                ) || 1;
-                              if (!isNaN(p) && p > 0 && q > 1) {
-                                itemTotalStr = ` (Total: R$ ${(p * q).toFixed(2).replace('.', ',')})`;
-                              }
-                            }
-                            return (
-                              <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
-                                {item.description && (
-                                  <span className="truncate">
-                                    {item.description}
-                                  </span>
-                                )}
-                                {item.unitPrice && (
-                                  <span className="text-[#00559c] dark:text-[#58a6ff] font-bold">
-                                    R$ {item.unitPrice}
-                                    {itemTotalStr}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })()}
+                        <div className="flex items-center justify-between gap-2 mt-1 text-xs text-slate-400">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {item.description && (
+                              <span className="truncate">
+                                {item.description}
+                              </span>
+                            )}
+                            {unitP > 0 && (
+                              <span className="text-slate-500 dark:text-slate-400">
+                                Unit:{' '}
+                                <strong className="text-slate-700 dark:text-slate-200">
+                                  R$ {formatBRL(unitP)}
+                                </strong>
+                              </span>
+                            )}
+                          </div>
+
+                          {isChecked && totalItem > 0 && (
+                            <span className="text-[#00559c] dark:text-[#58a6ff] font-bold shrink-0">
+                              Total: R$ {formatBRL(totalItem)}
+                            </span>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Botão de abrir modal de edição */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(item);
+                        }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#00559c] hover:bg-[#edf4fa] dark:hover:bg-[#00559c]/20 transition-all shrink-0"
+                        title="Ajustar compra ou preço"
+                      >
+                        <PencilSimple size={16} />
+                      </button>
                     </motion.div>
                   );
                 })
@@ -1804,108 +1885,213 @@ function ListContent() {
           </div>
         </div>
 
-        {/* MODAL DE EDIÇÃO DO ITEM (Componente Antigo: Detalhes do Material) */}
+        {/* MODAL DE AJUSTE DE COMPRA DO ITEM PELO CLIENTE */}
         <AnimatePresence>
-          {editingItem && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
-              <motion.div
-                initial={{ opacity: 0, y: 100 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 100 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="bg-slate-50 dark:bg-[#181b20] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col overflow-hidden"
-              >
-                <div className="px-6 pt-5 pb-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-amber-500 dark:text-amber-400">
-                    Detalhes do Material
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setEditingItem(null)}
-                    className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+          {editingItem &&
+            (() => {
+              const req = parseQuantity(editingItem.quantity);
+              const unitVal = parseCurrency(
+                editPrice ||
+                  editingItem.actualUnitPrice ||
+                  editingItem.unitPrice,
+              );
+              const subtotal = editQty * unitVal;
+              const diff = req.number - editQty;
+
+              return (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
+                  <motion.div
+                    initial={{ opacity: 0, y: 100 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 100 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    className="bg-white dark:bg-[#1C1F26] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col overflow-hidden"
                   >
-                    <X size={20} weight="bold" />
-                  </button>
-                </div>
-
-                <div className="p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 block">
-                      Nome do Material
-                    </label>
-                    <input
-                      value={editingItem.name}
-                      onChange={(e) =>
-                        handleUpdateField('name', e.target.value)
-                      }
-                      className="w-full !h-auto !p-3 !rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#21252b] focus:border-[#00559c] focus:ring-2 focus:ring-[#00559c]/20 outline-none transition-all font-semibold text-slate-800 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 block">
-                        Quantidade
-                      </label>
-                      <input
-                        value={editingItem.quantity || ''}
-                        onChange={(e) =>
-                          handleUpdateField('quantity', e.target.value)
-                        }
-                        className="w-full !h-auto !p-3 !rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#21252b] focus:border-[#00559c] focus:ring-2 focus:ring-[#00559c]/20 outline-none transition-all text-slate-800 dark:text-slate-100"
-                        placeholder="Ex: 10, 5m, 2cx"
-                      />
+                    <div className="px-6 pt-5 pb-3 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] font-bold text-[#00559c] dark:text-[#58a6ff] uppercase tracking-widest block">
+                          Ajuste de Compra
+                        </span>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-white leading-snug">
+                          {editingItem.name}
+                        </h3>
+                        {editingItem.description && (
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {editingItem.description}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingItem(null)}
+                        className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <X size={20} weight="bold" />
+                      </button>
                     </div>
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 block">
-                        Preço Unitário (R$)
-                      </label>
-                      <input
-                        type="text"
-                        value={editingItem.unitPrice || ''}
-                        onChange={(e) =>
-                          handleUpdateField('unitPrice', e.target.value)
-                        }
-                        className="w-full !h-auto !p-3 !rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#21252b] focus:border-[#00559c] focus:ring-2 focus:ring-[#00559c]/20 outline-none transition-all text-slate-800 dark:text-slate-100"
-                        placeholder="0,00"
-                      />
+
+                    <div className="p-5 sm:p-6 flex flex-col gap-4 overflow-y-auto max-h-[65vh]">
+                      {/* Exibição fixa da quantidade solicitada pelo profissional */}
+                      <div className="bg-[#edf4fa] dark:bg-[#00559c]/20 p-3.5 rounded-2xl border border-[#00559c]/20 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                            Quantidade Solicitada na Lista
+                          </span>
+                          <span className="text-base font-extrabold text-[#00559c] dark:text-[#58a6ff]">
+                            {req.number} {req.unit}
+                          </span>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-400">
+                          Definido na Obra
+                        </span>
+                      </div>
+
+                      {/* Stepper de Quantidade Comprada */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                          Quanto você comprou na loja?
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setEditQty(Math.max(0, editQty - 1))}
+                            className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700"
+                          >
+                            <Minus size={20} weight="bold" />
+                          </button>
+
+                          <div className="flex-1 relative">
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={editQty}
+                              onChange={(e) =>
+                                setEditQty(
+                                  Math.max(0, parseFloat(e.target.value) || 0),
+                                )
+                              }
+                              className="w-full text-center text-2xl font-black py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-[#00559c]"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                              {req.unit}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setEditQty(editQty + 1)}
+                            className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700"
+                          >
+                            <Plus size={20} weight="bold" />
+                          </button>
+                        </div>
+
+                        {/* Botões de Atalho */}
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditQty(req.number)}
+                            className="flex-1 py-1.5 px-2 text-xs font-bold rounded-lg bg-[#edf4fa] dark:bg-[#00559c]/20 text-[#00559c] dark:text-[#58a6ff] hover:bg-[#00559c]/15 transition-colors"
+                          >
+                            Comprei Tudo ({req.number} {req.unit})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditQty(0)}
+                            className="py-1.5 px-3 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition-colors"
+                          >
+                            Não encontrei (0)
+                          </button>
+                        </div>
+
+                        {/* Feedback Dinâmico da Quantidade */}
+                        {diff > 0 && editQty > 0 && (
+                          <div className="mt-2.5 flex items-center gap-1.5 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-900/40">
+                            <Warning
+                              size={16}
+                              weight="bold"
+                              className="shrink-0 text-amber-600"
+                            />
+                            <span>
+                              Falta comprar{' '}
+                              <strong>
+                                {diff} {req.unit}
+                              </strong>{' '}
+                              para completar a solicitação do projeto.
+                            </span>
+                          </div>
+                        )}
+                        {diff < 0 && (
+                          <div className="mt-2.5 flex items-center gap-1.5 p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-900/40">
+                            <span>
+                              Você comprou{' '}
+                              <strong>
+                                {Math.abs(diff)} {req.unit} a mais
+                              </strong>{' '}
+                              do que o especificado.
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Preço Unitário Pago na Loja (R$) */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                          Preço Unitário Pago na Loja (R$)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                            R$
+                          </span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="0,00"
+                            value={editPrice}
+                            onChange={(e) => handlePriceChange(e.target.value)}
+                            className="w-full pl-[40px_!important] pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-bold text-base focus:outline-none focus:border-[#00559c]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Totalizador do Item no Modal */}
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                        <div>
+                          <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                            Total Deste Item
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {editQty} {req.unit} &times; R$ {formatBRL(unitVal)}
+                          </span>
+                        </div>
+                        <span className="text-xl font-black text-[#00559c] dark:text-[#58a6ff]">
+                          R$ {formatBRL(subtotal)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 block">
-                      Observações / Descrição
-                    </label>
-                    <textarea
-                      value={editingItem.description || ''}
-                      onChange={(e) =>
-                        handleUpdateField('description', e.target.value)
-                      }
-                      className="w-full !h-auto !p-3 !rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#21252b] focus:border-[#00559c] focus:ring-2 focus:ring-[#00559c]/20 outline-none transition-all text-slate-800 dark:text-slate-100 min-h-[100px] resize-none"
-                      placeholder="Marca preferida, loja, etc..."
-                    />
-                  </div>
+                    {/* Ações do Modal */}
+                    <div className="pt-2 p-4 bg-slate-50 dark:bg-[#181b20] border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditingItem(null)}
+                        className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveModal}
+                        className="flex-1 bg-[#00559c] hover:bg-[#004785] text-white py-3 rounded-xl font-bold active:scale-[0.98] transition-transform shadow-lg shadow-[#00559c]/20"
+                      >
+                        Salvar Alterações
+                      </button>
+                    </div>
+                  </motion.div>
                 </div>
-
-                <div className="pt-2 p-4 bg-slate-50 dark:bg-[#181b20] border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setEditingItem(null)}
-                    className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveModal}
-                    className="flex-1 bg-[#00559c] hover:bg-[#004785] text-white py-3 rounded-xl font-bold active:scale-[0.98] transition-transform shadow-lg shadow-[#00559c]/20"
-                  >
-                    Pronto
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
+              );
+            })()}
         </AnimatePresence>
       </div>
     </>
