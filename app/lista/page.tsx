@@ -806,6 +806,7 @@ function ListContent() {
   const totalItemsCount = list.items.length;
   let checkedCount = 0;
   let totalEstimadoLista = 0;
+  let totalGastoCliente = 0;
 
   list.items.forEach((it) => {
     const isChecked = Boolean(it.checked);
@@ -814,12 +815,16 @@ function ListContent() {
 
     if (isChecked) {
       checkedCount++;
+      if (unitP > 0) {
+        totalGastoCliente += req.number * unitP;
+      }
     }
     if (unitP > 0) {
       totalEstimadoLista += req.number * unitP;
     }
   });
 
+  const fullyPurchasedCount = checkedCount;
   const progress =
     totalItemsCount === 0
       ? 0
